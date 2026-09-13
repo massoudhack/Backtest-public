@@ -1,4 +1,4 @@
-const CACHE = 'tj-cache-v10';
+const CACHE = 'tj-cache-v11';
 const ASSETS = [
   './',
   './index.html',
@@ -19,7 +19,6 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Network-first: fresh file preferred, cache as fallback offline
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
