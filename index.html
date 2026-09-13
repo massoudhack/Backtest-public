@@ -541,6 +541,10 @@ body.booting #dashSections{opacity:.35;pointer-events:none}
 body.booting .skeleton-wrap{display:block}
 body.booting .today-strip{opacity:.4}
 
+
+#dashSections > .dash-section > .today-strip,
+#dashSections > .dash-section > .underwater-card{margin-bottom:0}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -606,22 +610,28 @@ body.booting .today-strip{opacity:.4}
       <span>🖐 حالت چیدمان — دستگیره ⠿ برای جابه‌جایی · نوار آبی ↔ برای تغییر اندازه</span>
       <button class="btn btn-sm" onclick="toggleLayoutEdit(false)">تمام شد</button>
     </div>
-    <div class="today-strip" id="todayStrip">
-      <span class="ts-label">امروز</span>
-      <span class="ts-empty" id="todayStripBody">—</span>
-    </div>
-    <div class="underwater-card" id="underwaterCard">
-      <h4>📉 Drawdown زیر آب</h4>
-      <div class="uw-row" id="underwaterBody">
-        <div class="uw-item"><div class="lab">وضعیت</div><div class="val">—</div></div>
-      </div>
-    </div>
     <div class="skeleton-wrap" id="dashSkeleton">
       <div class="sk-row"><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div></div>
       <div class="sk sk-block"></div>
       <div class="sk-row"><div class="sk sk-card"></div><div class="sk sk-card"></div></div>
     </div>
     <div id="dashSections">
+      <div class="dash-section" data-key="today" data-layout-group="dashboard" data-layout-key="today" data-default-size="l">
+        <div class="drag-handle" draggable="true">⠿</div>
+        <div class="today-strip" id="todayStrip">
+          <span class="ts-label">امروز</span>
+          <span class="ts-empty" id="todayStripBody">—</span>
+        </div>
+      </div>
+      <div class="dash-section" data-key="drawdown" data-layout-group="dashboard" data-layout-key="drawdown" data-default-size="l">
+        <div class="drag-handle" draggable="true">⠿</div>
+        <div class="underwater-card" id="underwaterCard">
+          <h4>📉 Drawdown</h4>
+          <div class="uw-row" id="underwaterBody">
+            <div class="uw-item"><div class="lab">وضعیت</div><div class="val">—</div></div>
+          </div>
+        </div>
+      </div>
       <div class="dash-section" data-key="balance" data-layout-group="dashboard" data-layout-key="balance" data-default-size="l">
         <div class="drag-handle" draggable="true">⠿</div>
         <div class="balance-card">
@@ -1444,7 +1454,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v19 (today-strip, skeleton, underwater-dd, voice-compress)';
+const APP_BUILD = 'BUILD-v20 (today+drawdown in layout)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1476,6 +1486,7 @@ const PIP_SIZE_MAP = {
 };
 const DEFAULT_LAYOUT = {
   dashboard: {
+    today:{visible:true,size:'l'}, drawdown:{visible:true,size:'l'},
     balance:{visible:true,size:'l'}, stats:{visible:true,size:'l'}, charts:{visible:true,size:'l'},
     summary:{visible:true,size:'l'}, advquick:{visible:true,size:'l'}, rdistquick:{visible:true,size:'l'},
     perf:{visible:true,size:'l'}, heatmap:{visible:true,size:'l'}, direction:{visible:true,size:'m'},
@@ -1493,6 +1504,7 @@ const DEFAULT_LAYOUT = {
 };
 const LAYOUT_LABELS = { dashboard: 'میزکار', analysis: 'تب تحلیل', advanced: 'تحلیل پیشرفته' };
 const LAYOUT_KEY_LABELS = {
+  today:'خلاصه امروز', drawdown:'Drawdown',
   balance:'کارت موجودی', stats:'آمار بالا', charts:'منحنی و پای', summary:'خلاصه P/L',
   advquick:'آمار پیشرفته خلاصه', rdistquick:'R-Multiple خلاصه',
   perf:'تحلیل عملکرد', heatmap:'نقشه فعالیت', direction:'عملکرد جهت',
@@ -1744,6 +1756,13 @@ async function loadCustomFromSupabase(){
       if (!custom.checklists) custom.checklists = [];
       if (!custom.sessions || !custom.sessions.length) custom.sessions = JSON.parse(JSON.stringify(DEFAULT_SESSIONS));
       if (!custom.layout) custom.layout = {};
+      // merge new layout keys (today, drawdown, ...)
+      Object.keys(DEFAULT_LAYOUT).forEach(g => {
+        if (!custom.layout[g]) custom.layout[g] = {};
+        Object.keys(DEFAULT_LAYOUT[g]).forEach(k => {
+          if (!custom.layout[g][k]) custom.layout[g][k] = Object.assign({}, DEFAULT_LAYOUT[g][k]);
+        });
+      });
       if (!custom.badgeTargets) custom.badgeTargets = { profit500: 500, profit1000: 1000, profit5000: 5000 };
       localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
     } else await saveCustomToSupabase();
@@ -1961,6 +1980,12 @@ function loadCustom(){
   if (!custom.checklists) custom.checklists = [];
   if (!custom.sessions || !custom.sessions.length) custom.sessions = JSON.parse(JSON.stringify(DEFAULT_SESSIONS));
   if (!custom.layout) custom.layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+  Object.keys(DEFAULT_LAYOUT).forEach(g => {
+    if (!custom.layout[g]) custom.layout[g] = {};
+    Object.keys(DEFAULT_LAYOUT[g]).forEach(k => {
+      if (!custom.layout[g][k]) custom.layout[g][k] = Object.assign({}, DEFAULT_LAYOUT[g][k]);
+    });
+  });
   if (!custom.analyticsFromDate) custom.analyticsFromDate = '';
   if (custom.analyticsFromTradeNum == null) custom.analyticsFromTradeNum = null;
   if (!custom.badgeTargets) custom.badgeTargets = { profit500: 500, profit1000: 1000, profit5000: 5000 };
@@ -3122,10 +3147,10 @@ function renderUnderwater(equityPoints, totalPnL){
   }
   const under = curDD > 0.01;
   body.innerHTML =
-    '<div class="uw-item"><div class="lab">وضعیت</div><div class="val" style="color:' + (under ? 'var(--danger)' : 'var(--success)') + '">' + (under ? 'زیر آب' : 'در سقف') + '</div></div>' +
+    '<div class="uw-item"><div class="lab">وضعیت</div><div class="val" style="color:' + (under ? 'var(--danger)' : 'var(--success)') + '">' + (under ? 'در Drawdown' : 'در سقف') + '</div></div>' +
     '<div class="uw-item"><div class="lab">DD فعلی</div><div class="val pnl-neg">' + (curDD > 0 ? ('-' + curDD.toFixed(1) + '$') : '0$') + '</div></div>' +
     '<div class="uw-item"><div class="lab">Max DD</div><div class="val pnl-neg">' + (maxDD > 0 ? ('-' + maxDD.toFixed(1) + '$') : '0$') + '</div></div>' +
-    '<div class="uw-item"><div class="lab">روز زیر آب</div><div class="val">' + (under ? daysUnder : 0) + '</div></div>' +
+    '<div class="uw-item"><div class="lab">روز در DD</div><div class="val">' + (under ? daysUnder : 0) + '</div></div>' +
     '<div class="uw-item"><div class="lab">فاصله تا سقف</div><div class="val">' + (curDD > 0 ? (curDD.toFixed(1) + '$') : '—') + '</div></div>';
 }
 function renderDashboard(){
