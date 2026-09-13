@@ -316,6 +316,60 @@
 
       .sync-spinner{width:36px;height:36px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--primary);margin:4px auto 10px;animation:sync-spin .8s linear infinite}
     @keyframes sync-spin{to{transform:rotate(360deg)}}
+
+    /* ===== custom date range (dashboard + filters) ===== */
+    .custom-range-row{display:flex;align-items:center;gap:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin:-2px 0 12px;flex-wrap:wrap}
+    .custom-range-row input[type=date]{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:8px;font-family:inherit;font-size:.8rem}
+    .custom-range-row span{font-size:.78rem;color:var(--text-muted)}
+
+    /* ===== image upload fields (extra screenshots) ===== */
+    .img-input-row{display:flex;gap:6px}
+    .img-input-row input{flex:1;min-width:0}
+    .img-upload-btn{white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+    .img-preview-wrap{margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .img-preview-wrap img{max-width:120px;max-height:90px;border-radius:8px;border:1px solid var(--border);display:block;cursor:zoom-in;object-fit:cover}
+    .img-preview-remove{font-size:.72rem;color:var(--danger);background:var(--danger-bg);border:none;cursor:pointer;padding:5px 10px;border-radius:8px;font-family:inherit;font-weight:600}
+
+    /* ===== journal toolbar: sort / group / expand-collapse ===== */
+    .journal-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+    .journal-toolbar .filter-group{min-width:150px}
+    .journal-toolbar-actions{display:flex;gap:6px;margin-inline-start:auto}
+    @media(max-width:520px){.journal-toolbar-actions{margin-inline-start:0;width:100%}.journal-toolbar-actions .btn{flex:1;justify-content:center}}
+
+    /* ===== grouped journal list ===== */
+    .trade-group{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+    .trade-group summary{list-style:none;cursor:pointer}
+    .trade-group summary::-webkit-details-marker{display:none}
+    .trade-group-header{display:flex;align-items:center;gap:10px;padding:13px 14px;flex-wrap:wrap}
+    .trade-group-header:hover{background:var(--bg-hover)}
+    .tg-chevron{font-size:.75rem;color:var(--text-muted);transition:transform .2s;flex-shrink:0}
+    details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
+    .tg-name{font-weight:700;font-size:.88rem}
+    .tg-count{font-size:.75rem;color:var(--text-muted);background:var(--bg-subtle);padding:2px 9px;border-radius:12px}
+    .tg-pnl{font-weight:800;font-size:.9rem;margin-inline-start:auto}
+    .trade-group .table-scroll{border-top:1px solid var(--border)}
+
+    /* ===== redesigned trade detail modal ===== */
+    .detail-hero{background:linear-gradient(135deg,var(--primary-light),var(--bg-card) 70%);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+    .detail-hero-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+    .detail-hero-main .pnl-big{font-size:1.5rem;font-weight:800;margin-inline-start:auto}
+    .detail-hero-sub{font-size:.78rem;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+    .detail-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:10px}
+    .detail-section .section-title{margin:0 0 10px;padding-bottom:8px}
+    .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:12px 10px}
+    .detail-item{display:flex;flex-direction:column;gap:3px}
+    .detail-item span{font-size:.68rem;color:var(--text-muted)}
+    .detail-item strong{font-size:.86rem}
+    .detail-text-block{margin-top:10px}
+    .detail-text-block:first-child{margin-top:0}
+    .detail-text-label{font-size:.72rem;color:var(--text-muted);margin-bottom:4px;font-weight:600}
+    .detail-text{font-size:.83rem;color:var(--text);line-height:1.8;background:var(--bg-subtle);padding:9px 11px;border-radius:9px;white-space:pre-line}
+    .detail-media-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+    .detail-media-item{display:flex;flex-direction:column;gap:5px;align-items:center}
+    .detail-media-thumb{width:118px;height:86px;border-radius:10px;object-fit:cover;border:1px solid var(--border);cursor:zoom-in}
+    .detail-media-item span{font-size:.68rem;color:var(--text-muted)}
+    .detail-actions{display:flex;gap:8px;margin-top:6px}
+    .detail-actions .btn{flex:1;justify-content:center}
 </style>
   <meta name="theme-color" content="#3b6dfb">
   <meta name="mobile-web-app-capable" content="yes">
@@ -362,6 +416,13 @@
     <button class="period-tab" data-period="week">هفته</button>
     <button class="period-tab" data-period="month">ماه</button>
     <button class="period-tab" data-period="year">سال</button>
+    <button class="period-tab" data-period="custom">🗓️ بازه سفارشی</button>
+  </div>
+  <div class="custom-range-row" id="customRangeRow" style="display:none">
+    <input type="date" id="periodFrom">
+    <span>تا</span>
+    <input type="date" id="periodTo">
+    <button type="button" class="btn btn-sm" onclick="applyCustomPeriod()">اعمال</button>
   </div>
 
   <div class="main-tabs">
@@ -544,6 +605,7 @@
       <div class="filters-grid">
         <div class="filter-group"><label>نمادها</label><select id="fSymbol"><option value="">همه نمادها</option></select></div>
         <div class="filter-group"><label>تایم‌فریم</label><select id="fTimeframe"><option value="">همه</option></select></div>
+        <div class="filter-group" style="grid-column:1/-1"><label style="font-weight:700;color:var(--text);font-size:.75rem">📅 بازه سفارشی</label></div>
         <div class="filter-group"><label>از تاریخ</label><input type="date" id="fFrom"></div>
         <div class="filter-group"><label>تا تاریخ</label><input type="date" id="fTo"></div>
         <div class="filter-group"><label>سشن معاملاتی</label>
@@ -677,18 +739,38 @@
         <button class="btn btn-outline btn-sm" onclick="resetFilters()">پاک کردن</button>
       </div>
     </div>
-    <div class="table-wrapper">
-      <div class="table-scroll">
-        <table>
-          <thead><tr>
-            <th>#</th><th>نماد</th><th>جهت</th><th>تاریخ</th><th>نتیجه</th>
-            <th>P/L</th><th>Stop$</th><th>1R</th><th>1.5R</th><th>2R</th><th>3R</th>
-            <th>TF</th><th>ستاپ</th><th>Zone</th><th>لینک</th>
-          </tr></thead>
-          <tbody id="tradesBody"></tbody>
-        </table>
+    <div class="journal-toolbar">
+      <div class="filter-group"><label>مرتب‌سازی</label>
+        <select id="jSort">
+          <option value="date_desc">جدیدترین</option>
+          <option value="date_asc">قدیمی‌ترین</option>
+          <option value="pnl_desc">بیشترین سود</option>
+          <option value="pnl_asc">بیشترین ضرر</option>
+          <option value="r_desc">بالاترین R</option>
+          <option value="r_asc">پایین‌ترین R</option>
+          <option value="stop_desc">بیشترین Stop</option>
+          <option value="stop_asc">کمترین Stop</option>
+        </select>
+      </div>
+      <div class="filter-group"><label>گروه‌بندی</label>
+        <select id="jGroup">
+          <option value="">بدون گروه‌بندی</option>
+          <option value="symbol">نماد</option>
+          <option value="result">نتیجه</option>
+          <option value="setup">ستاپ</option>
+          <option value="zone">Zone</option>
+          <option value="day">تاریخ (روز)</option>
+          <option value="week">هفته</option>
+          <option value="month">ماه</option>
+          <option value="tf">تایم‌فریم</option>
+        </select>
+      </div>
+      <div class="journal-toolbar-actions">
+        <button type="button" class="btn btn-outline btn-sm" onclick="setAllGroups(true)">بازکردن همه</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="setAllGroups(false)">بستن همه</button>
       </div>
     </div>
+    <div class="table-wrapper" id="journalListArea"></div>
   </div>
 
   <!-- ========== ANALYSIS ========== -->
@@ -897,8 +979,24 @@
           </div>
           <div class="form-group"><label>لینک چارت تریگر</label><input type="url" id="tfTriggerImg" placeholder="https://www.tradingview.com/x/..."></div>
           <div class="form-group"><label>لینک چارت زون</label><input type="url" id="tfZoneImg"></div>
-          <div class="form-group"><label>عکس اضافی ۱</label><input type="url" id="tfImgExtra1"></div>
-          <div class="form-group"><label>عکس اضافی ۲</label><input type="url" id="tfImgExtra2"></div>
+          <div class="form-group"><label>عکس اضافی ۱</label>
+            <div class="img-input-row">
+              <input type="text" id="tfImgExtra1" placeholder="لینک تصویر یا آپلود از گالری" oninput="renderImgPreview('tfImgExtra1')">
+              <label class="btn btn-outline btn-sm img-upload-btn">📎 آپلود
+                <input type="file" accept="image/*" style="display:none" onchange="onImageFile(event,'tfImgExtra1')">
+              </label>
+            </div>
+            <div class="img-preview-wrap" id="tfImgExtra1_preview"></div>
+          </div>
+          <div class="form-group"><label>عکس اضافی ۲</label>
+            <div class="img-input-row">
+              <input type="text" id="tfImgExtra2" placeholder="لینک تصویر یا آپلود از گالری" oninput="renderImgPreview('tfImgExtra2')">
+              <label class="btn btn-outline btn-sm img-upload-btn">📎 آپلود
+                <input type="file" accept="image/*" style="display:none" onchange="onImageFile(event,'tfImgExtra2')">
+              </label>
+            </div>
+            <div class="img-preview-wrap" id="tfImgExtra2_preview"></div>
+          </div>
         </div>
 
         <div class="form-section" id="ftab-tags">
@@ -1616,13 +1714,29 @@ function fillSelect(id, items) {
   if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
 }
 
+let customPeriodFrom = null, customPeriodTo = null;
+
 function getPeriodRange() {
   const now = new Date(), today = now.toISOString().slice(0,10);
   if (currentPeriod === 'today') return { from: today, to: today };
   if (currentPeriod === 'week') { const d = new Date(now); d.setDate(d.getDate()-7); return { from: d.toISOString().slice(0,10), to: today }; }
   if (currentPeriod === 'month') { const d = new Date(now); d.setMonth(d.getMonth()-1); return { from: d.toISOString().slice(0,10), to: today }; }
   if (currentPeriod === 'year') { const d = new Date(now); d.setFullYear(d.getFullYear()-1); return { from: d.toISOString().slice(0,10), to: today }; }
+  if (currentPeriod === 'custom') return { from: customPeriodFrom || null, to: customPeriodTo || null };
   return { from: null, to: null };
+}
+
+function applyCustomPeriod() {
+  customPeriodFrom = document.getElementById('periodFrom').value || null;
+  customPeriodTo = document.getElementById('periodTo').value || null;
+  if (!customPeriodFrom && !customPeriodTo) { showToast('یک تاریخ برای بازه سفارشی انتخاب کن'); return; }
+  currentPeriod = 'custom';
+  document.querySelectorAll('.period-tab').forEach(t=>t.classList.remove('active'));
+  const tab = document.querySelector('.period-tab[data-period="custom"]');
+  if (tab) tab.classList.add('active');
+  const ff = document.getElementById('fFrom'); if (ff) ff.value = '';
+  const ft = document.getElementById('fTo'); if (ft) ft.value = '';
+  applyFilters();
 }
 
 function getFiltered() {
@@ -2356,33 +2470,141 @@ function renderHeatmap() {
 }
 
 // ========== TABLE ==========
+const JOURNAL_TABLE_HEAD = '<thead><tr>' +
+  '<th>#</th><th>نماد</th><th>جهت</th><th>تاریخ</th><th>نتیجه</th>' +
+  '<th>P/L</th><th>Stop$</th><th>1R</th><th>1.5R</th><th>2R</th><th>3R</th>' +
+  '<th>TF</th><th>ستاپ</th><th>Zone</th><th>لینک</th>' +
+  '</tr></thead>';
+
+function rRank(t) { return t.r3 ? 4 : (t.r2 ? 3 : (t.r15 ? 2 : (t.r1 ? 1 : 0))); }
+
+function sortJournalTrades(list, mode) {
+  const arr = [...list];
+  switch (mode) {
+    case 'date_asc':
+      arr.sort((a,b) => (a['Entry Date']||'').localeCompare(b['Entry Date']||'') || (getEntryHour(a)||0)-(getEntryHour(b)||0));
+      break;
+    case 'pnl_desc': arr.sort((a,b) => calcPnL(b) - calcPnL(a)); break;
+    case 'pnl_asc': arr.sort((a,b) => calcPnL(a) - calcPnL(b)); break;
+    case 'r_desc': arr.sort((a,b) => rRank(b) - rRank(a)); break;
+    case 'r_asc': arr.sort((a,b) => rRank(a) - rRank(b)); break;
+    case 'stop_desc': arr.sort((a,b) => (Number(b.stop_usd)||0) - (Number(a.stop_usd)||0)); break;
+    case 'stop_asc': arr.sort((a,b) => (Number(a.stop_usd)||0) - (Number(b.stop_usd)||0)); break;
+    case 'date_desc':
+    default:
+      arr.sort((a,b) => (b['Entry Date']||'').localeCompare(a['Entry Date']||'') || (getEntryHour(b)||0)-(getEntryHour(a)||0));
+  }
+  return arr;
+}
+
+function getWeekRangeKey(dateStr) {
+  if (!dateStr) return 'بدون تاریخ';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return 'بدون تاریخ';
+  const monday = new Date(d); monday.setDate(d.getDate() - ((d.getDay()+6)%7));
+  const end = new Date(monday); end.setDate(monday.getDate()+6);
+  return monday.toISOString().slice(0,10) + ' ← ' + end.toISOString().slice(0,10);
+}
+
+function journalGroupKey(t, mode) {
+  switch (mode) {
+    case 'symbol': return (t.Symbol || '—').toUpperCase();
+    case 'result': return t.Result === 'Win' ? '🟢 برد' : (t.Result === 'Loss' ? '🔴 ضرر' : '⚪ سر‌به‌سر');
+    case 'setup': return t.Setup || 'بدون ستاپ';
+    case 'zone': return t.zone || 'بدون Zone';
+    case 'day': return t['Entry Date'] || 'بدون تاریخ';
+    case 'week': return getWeekRangeKey(t['Entry Date']);
+    case 'month': return t['Entry Date'] ? t['Entry Date'].slice(0,7) : 'بدون تاریخ';
+    case 'tf': return t.Timeframe || '—';
+    default: return '';
+  }
+}
+
+function journalRowHtml(t, i) {
+  const pnl = calcPnL(t);
+  const pc = pnl > 0 ? 'pnl-pos' : (pnl < 0 ? 'pnl-neg' : '');
+  const r = (v) => v === 1 || v === true || v === '1' || Number(v) === 1 ? '✓' : '—';
+  const img = t.trigger_img ? '<a href="'+t.trigger_img+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗</a>' : '';
+  return '<tr onclick="showDetail(\''+String(t.id).replace(/'/g,'')+'\')" style="cursor:pointer">' +
+    '<td>'+(i+1)+'</td>' +
+    '<td><strong>'+(t.Symbol||'')+'</strong></td>' +
+    '<td>'+(t.Direction||'')+'</td>' +
+    '<td>'+(t['Entry Date']||'')+'</td>' +
+    '<td>'+(t.Result||'')+'</td>' +
+    '<td class="'+pc+'">'+(pnl>=0?'+':'')+pnl.toFixed(1)+'</td>' +
+    '<td>'+(t.stop_usd!=null?t.stop_usd:'')+'</td>' +
+    '<td>'+r(t.r1)+'</td><td>'+r(t.r15)+'</td><td>'+r(t.r2)+'</td><td>'+r(t.r3)+'</td>' +
+    '<td>'+(t.Timeframe||'')+'</td>' +
+    '<td>'+(t.Setup||'')+'</td>' +
+    '<td>'+(t.zone||'')+'</td>' +
+    '<td>'+img+'</td></tr>';
+}
+
+let journalGroupOpenState = {};
+
 function renderTable() {
-  const body = document.getElementById('tradesBody');
-  if (!body) return;
+  const area = document.getElementById('journalListArea');
+  if (!area) return;
+  const sortMode = document.getElementById('jSort')?.value || 'date_desc';
+  const groupMode = document.getElementById('jGroup')?.value || '';
+
   if (!filtered.length) {
-    body.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:24px;color:var(--text-muted)">معامله‌ای یافت نشد</td></tr>';
+    area.innerHTML = '<div class="table-scroll" style="text-align:center;padding:24px;color:var(--text-muted)">معامله‌ای یافت نشد</div>';
     return;
   }
-  const rows = [...filtered].sort((a,b) => (b['Entry Date']||'').localeCompare(a['Entry Date']||'')).map((t, i) => {
-    const pnl = calcPnL(t);
-    const pc = pnl > 0 ? 'pnl-pos' : (pnl < 0 ? 'pnl-neg' : '');
-    const r = (v) => v === 1 || v === true || v === '1' || Number(v) === 1 ? '✓' : '—';
-    const img = t.trigger_img ? '<a href="'+t.trigger_img+'" target="_blank" rel="noopener">🔗</a>' : '';
-    return '<tr onclick="showDetail(\''+String(t.id).replace(/'/g,'')+'\')" style="cursor:pointer">' +
-      '<td>'+(i+1)+'</td>' +
-      '<td><strong>'+(t.Symbol||'')+'</strong></td>' +
-      '<td>'+(t.Direction||'')+'</td>' +
-      '<td>'+(t['Entry Date']||'')+'</td>' +
-      '<td>'+(t.Result||'')+'</td>' +
-      '<td class="'+pc+'">'+(pnl>=0?'+':'')+pnl.toFixed(1)+'</td>' +
-      '<td>'+(t.stop_usd!=null?t.stop_usd:'')+'</td>' +
-      '<td>'+r(t.r1)+'</td><td>'+r(t.r15)+'</td><td>'+r(t.r2)+'</td><td>'+r(t.r3)+'</td>' +
-      '<td>'+(t.Timeframe||'')+'</td>' +
-      '<td>'+(t.Setup||'')+'</td>' +
-      '<td>'+(t.zone||'')+'</td>' +
-      '<td>'+img+'</td></tr>';
+
+  const sorted = sortJournalTrades(filtered, sortMode);
+
+  if (!groupMode) {
+    area.innerHTML = '<div class="table-scroll"><table>' + JOURNAL_TABLE_HEAD +
+      '<tbody>' + sorted.map((t,i) => journalRowHtml(t,i)).join('') + '</tbody></table></div>';
+    return;
+  }
+
+  const groups = new Map();
+  sorted.forEach(t => {
+    const key = journalGroupKey(t, groupMode) || '—';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(t);
+  });
+
+  let entries = [...groups.entries()];
+  if (groupMode === 'day' || groupMode === 'month' || groupMode === 'week') {
+    entries.sort((a,b) => b[0].localeCompare(a[0]));
+  } else {
+    entries.sort((a,b) => {
+      const sa = a[1].reduce((s,t) => s + calcPnL(t), 0);
+      const sb = b[1].reduce((s,t) => s + calcPnL(t), 0);
+      return sb - sa;
+    });
+  }
+
+  area.innerHTML = entries.map(([key, trades]) => {
+    const sum = trades.reduce((s,t) => s + calcPnL(t), 0);
+    const pc = sum > 0 ? 'pnl-pos' : (sum < 0 ? 'pnl-neg' : '');
+    const isOpen = journalGroupOpenState[key] !== false;
+    return '<details class="trade-group"' + (isOpen ? ' open' : '') + ' data-gkey="' + String(key).replace(/"/g,'&quot;') + '">' +
+      '<summary class="trade-group-header">' +
+        '<span class="tg-chevron">▾</span>' +
+        '<span class="tg-name">' + key + '</span>' +
+        '<span class="tg-count">' + trades.length + ' معامله</span>' +
+        '<span class="tg-pnl ' + pc + '">' + (sum>=0?'+':'') + sum.toFixed(1) + '$</span>' +
+      '</summary>' +
+      '<div class="table-scroll"><table>' + JOURNAL_TABLE_HEAD +
+        '<tbody>' + trades.map((t,i) => journalRowHtml(t,i)).join('') + '</tbody></table></div>' +
+    '</details>';
   }).join('');
-  body.innerHTML = rows;
+
+  area.querySelectorAll('details.trade-group').forEach(d => {
+    d.addEventListener('toggle', () => { journalGroupOpenState[d.dataset.gkey] = d.open; });
+  });
+}
+
+function setAllGroups(state) {
+  document.querySelectorAll('#journalListArea details.trade-group').forEach(d => {
+    d.open = state;
+    journalGroupOpenState[d.dataset.gkey] = state;
+  });
 }
 
 function renderAnalysis() {
@@ -2446,6 +2668,8 @@ function openAddModal(editTrade) {
   document.getElementById('confVal').textContent = '5';
   document.getElementById('execVal').textContent = '5';
   refreshCustomUI();
+  renderImgPreview('tfImgExtra1');
+  renderImgPreview('tfImgExtra2');
 
   if (editTrade) {
     document.getElementById('tfSymbol').value = editTrade.Symbol || '';
@@ -2482,6 +2706,8 @@ function openAddModal(editTrade) {
     document.getElementById('tfZoneImg').value = editTrade.zone_img || '';
     document.getElementById('tfImgExtra1').value = editTrade.img_extra1 || '';
     document.getElementById('tfImgExtra2').value = editTrade.img_extra2 || '';
+    renderImgPreview('tfImgExtra1');
+    renderImgPreview('tfImgExtra2');
     document.getElementById('tfVolume').value = editTrade.volume || '';
     if (editTrade.pre_emotions) {
       const pre = document.getElementById('tfPreEmotion');
@@ -2638,28 +2864,134 @@ function showDetail(id) {
   document.getElementById('detailTitle').textContent = (t.Symbol || '') + ' · ' + (t['Entry Date'] || '');
   const pnl = calcPnL(t);
   const pc = pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
-  document.getElementById('detailBody').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.85rem">
-      <div><strong>جهت:</strong> ${t.Direction||''}</div>
-      <div><strong>نتیجه:</strong> ${t.Result||''}</div>
-      <div><strong>P/L:</strong> <span class="${pc}">${pnl>=0?'+':''}${pnl.toFixed(1)}$</span></div>
-      <div><strong>Stop $:</strong> ${t.stop_usd??''}</div>
-      <div><strong>تایم‌فریم:</strong> ${t.Timeframe||''}</div>
-      <div><strong>ستاپ:</strong> ${t.Setup||''}</div>
-      <div><strong>ساعت:</strong> ${t['Entry Time']??''}</div>
-      <div><strong>Zone:</strong> ${t.zone||''}</div>
-      <div><strong>Entry:</strong> ${t['Entry Price']??''}</div>
-      <div><strong>SL:</strong> ${t['Stop Loss']??''}</div>
-      <div><strong>R:</strong> ${[t.r1&&'1R',t.r15&&'1.5R',t.r2&&'2R',t.r3&&'3R'].filter(Boolean).join(' · ')||'—'}</div>
-      <div><strong>واگرایی:</strong> ${t.divergence_type||'—'}</div>
-    </div>
-    ${t.Notes ? '<div style="margin-top:12px"><strong>یادداشت:</strong><p style="margin-top:4px;color:var(--text-muted)">'+t.Notes+'</p></div>' : ''}
-    ${t.has_voice ? '<div style="margin-top:12px" class="voice-box"><strong>ویس:</strong><div class="voice-row"><button type="button" class="btn btn-sm" onclick="playTradeVoice(\''+String(t.id)+'\')">▶ پخش ویس</button><button type="button" class="btn btn-icon-danger btn-sm" onclick="deleteTradeVoice(\''+String(t.id)+'\')">🗑️ حذف ویس</button></div><audio id="detailAudio" controls style="width:100%;margin-top:8px;display:none"></audio></div>' : ''}
-    ${t.trigger_img ? '<div style="margin-top:8px"><a href="'+t.trigger_img+'" target="_blank">لینک چارت تریگر</a></div>' : ''}
-    <div style="display:flex;gap:8px;margin-top:16px">
-      <button class="btn btn-sm" onclick="editTrade('${t.id}')">✏️ ویرایش</button>
-      <button class="btn btn-icon-danger btn-sm" onclick="deleteTrade('${t.id}')">🗑️ حذف معامله</button>
-    </div>`;
+  const resultBadge = t.Result === 'Win' ? '<span class="badge badge-win">سود</span>' :
+    (t.Result === 'Loss' ? '<span class="badge badge-loss">ضرر</span>' :
+    '<span class="badge" style="background:var(--bg-subtle);color:var(--text-muted)">سر‌به‌سر</span>');
+  const dirBadge = t.Direction === 'Buy' ? '<span class="badge badge-buy">خرید</span>' :
+    (t.Direction === 'Sell' ? '<span class="badge badge-sell">فروش</span>' : '');
+  const rHits = [t.r1&&'1R',t.r15&&'1.5R',t.r2&&'2R',t.r3&&'3R'].filter(Boolean).join(' · ') || '—';
+  let dowLabel = '';
+  if (t['Entry Date']) {
+    const d = new Date(t['Entry Date']+'T00:00:00');
+    if (!isNaN(d)) dowLabel = DOW_FA[d.getDay()];
+  }
+  const session = getSession(t);
+
+  let html = '<div class="detail-hero">' +
+    '<div class="detail-hero-main">' + resultBadge + dirBadge +
+      '<span class="pnl-big ' + pc + '">' + (pnl>=0?'+':'') + pnl.toFixed(1) + '$</span>' +
+    '</div>' +
+    '<div class="detail-hero-sub">' +
+      '<span>📅 ' + (t['Entry Date']||'—') + (dowLabel ? ' (' + dowLabel + ')' : '') + '</span>' +
+      (t['Entry Time'] != null && t['Entry Time'] !== '' ? '<span>🕐 ساعت ' + t['Entry Time'] + '</span>' : '') +
+      '<span>⏱ ' + (t.Timeframe||'—') + '</span>' +
+      '<span>🌍 ' + session + '</span>' +
+    '</div>' +
+  '</div>';
+
+  // ---- اطلاعات معامله ----
+  const infoItems = [];
+  if (t.stop_usd != null) infoItems.push(['Stop $', t.stop_usd]);
+  if (t['Entry Price'] != null && t['Entry Price'] !== '') infoItems.push(['قیمت ورود', t['Entry Price']]);
+  if (t['Stop Loss'] != null && t['Stop Loss'] !== '') infoItems.push(['حد ضرر (SL)', t['Stop Loss']]);
+  infoItems.push(['ریوارد رسیده', rHits]);
+  if (t.reward_from) infoItems.push(['برگشته از', t.reward_from]);
+  if (t.volume) infoItems.push(['حجم', t.volume]);
+  html += '<div class="detail-section"><div class="section-title">📌 اطلاعات معامله</div><div class="detail-grid">' +
+    infoItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+v+'</strong></div>').join('') +
+    '</div></div>';
+
+  // ---- ستاپ و تحلیل ----
+  const setupItems = [];
+  if (t.Setup) setupItems.push(['ستاپ', t.Setup]);
+  if (t.zone) setupItems.push(['Zone', t.zone]);
+  if (t.divergence_type) setupItems.push(['واگرایی', t.divergence_type]);
+  const analysisTextBlocks = [];
+  if (t.entry_reason) analysisTextBlocks.push(['دلیل ورود', t.entry_reason]);
+  if (t.exit_reason) analysisTextBlocks.push(['دلیل خروج', t.exit_reason]);
+  if (t.Notes) analysisTextBlocks.push(['یادداشت کلی', t.Notes]);
+  if (setupItems.length || analysisTextBlocks.length) {
+    html += '<div class="detail-section"><div class="section-title">🎯 ستاپ و تحلیل</div>';
+    if (setupItems.length) {
+      html += '<div class="detail-grid">' + setupItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+v+'</strong></div>').join('') + '</div>';
+    }
+    analysisTextBlocks.forEach(([label, text]) => {
+      html += '<div class="detail-text-block"><div class="detail-text-label">'+label+'</div><div class="detail-text">'+text+'</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // ---- روانشناسی ----
+  const preEm = Array.isArray(t.pre_emotions) ? t.pre_emotions.join('، ') : (t.pre_emotions || '');
+  const postEm = Array.isArray(t.post_emotions) ? t.post_emotions.join('، ') : (t.post_emotions || '');
+  const psyItems = [];
+  if (preEm) psyItems.push(['احساس قبل', preEm]);
+  if (postEm) psyItems.push(['احساس بعد', postEm]);
+  if (t.energy != null) psyItems.push(['انرژی', t.energy + '/10']);
+  if (t.confidence != null) psyItems.push(['اعتماد به ستاپ', t.confidence + '/10']);
+  if (t.exec_quality != null) psyItems.push(['کیفیت اجرا', t.exec_quality + '/10']);
+  const motives = Array.isArray(t.motives) ? t.motives : [];
+  const mistakes = Array.isArray(t.mistakes) ? t.mistakes : [];
+  if (psyItems.length || motives.length || mistakes.length || t.lessons) {
+    html += '<div class="detail-section"><div class="section-title">🧠 روانشناسی</div>';
+    if (psyItems.length) {
+      html += '<div class="detail-grid">' + psyItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+v+'</strong></div>').join('') + '</div>';
+    }
+    if (motives.length) {
+      html += '<div class="detail-text-block"><div class="detail-text-label">انگیزه ورود</div><div class="chip-group">' +
+        motives.map(m => '<span class="chip selected">'+m+'</span>').join('') + '</div></div>';
+    }
+    if (mistakes.length) {
+      html += '<div class="detail-text-block"><div class="detail-text-label">اشتباهات رفتاری</div><div class="chip-group">' +
+        mistakes.map(m => '<span class="chip selected" style="background:var(--danger);border-color:var(--danger)">'+m+'</span>').join('') + '</div></div>';
+    }
+    if (t.lessons) {
+      html += '<div class="detail-text-block"><div class="detail-text-label">درس‌های آموخته‌شده</div><div class="detail-text">'+t.lessons+'</div></div>';
+    }
+    html += '</div>';
+  }
+
+  // ---- برچسب‌ها ----
+  if (Array.isArray(t.tags) && t.tags.length) {
+    html += '<div class="detail-section"><div class="section-title">🏷️ برچسب‌ها</div><div class="tag-list">' +
+      t.tags.map(tag => '<span class="tag">'+tag+'</span>').join('') + '</div></div>';
+  }
+
+  // ---- رسانه ----
+  const mediaThumbs = [];
+  if (t.img_extra1) mediaThumbs.push(['عکس اضافی ۱', t.img_extra1]);
+  if (t.img_extra2) mediaThumbs.push(['عکس اضافی ۲', t.img_extra2]);
+  const chartLinks = [];
+  if (t.trigger_img) chartLinks.push(['چارت تریگر', t.trigger_img]);
+  if (t.zone_img) chartLinks.push(['چارت زون', t.zone_img]);
+  if (t.has_voice || mediaThumbs.length || chartLinks.length) {
+    html += '<div class="detail-section"><div class="section-title">🖼️ رسانه</div>';
+    if (t.has_voice) {
+      html += '<div class="voice-box" style="margin-bottom:10px"><div class="voice-row">' +
+        '<button type="button" class="btn btn-sm" onclick="playTradeVoice(\''+String(t.id)+'\')">▶ پخش ویس</button>' +
+        '<button type="button" class="btn btn-icon-danger btn-sm" onclick="deleteTradeVoice(\''+String(t.id)+'\')">🗑️ حذف ویس</button>' +
+        '</div><audio id="detailAudio" controls style="width:100%;margin-top:8px;display:none"></audio></div>';
+    }
+    if (chartLinks.length) {
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:' + (mediaThumbs.length ? '10px' : '0') + '">' +
+        chartLinks.map(([label,url]) => '<a class="btn btn-outline btn-sm" href="'+url+'" target="_blank" rel="noopener">🔗 '+label+'</a>').join('') +
+        '</div>';
+    }
+    if (mediaThumbs.length) {
+      html += '<div class="detail-media-grid">' + mediaThumbs.map(([label,src]) =>
+        '<div class="detail-media-item"><img class="detail-media-thumb" src="'+src+'" onclick="window.open(this.src,\'_blank\')" alt="'+label+'"><span>'+label+'</span></div>'
+      ).join('') + '</div>';
+    }
+    html += '</div>';
+  }
+
+  // ---- اکشن‌ها ----
+  html += '<div class="detail-actions">' +
+    '<button class="btn btn-sm" onclick="editTrade(\''+t.id+'\')">✏️ ویرایش</button>' +
+    '<button class="btn btn-icon-danger btn-sm" onclick="deleteTrade(\''+t.id+'\')">🗑️ حذف معامله</button>' +
+  '</div>';
+
+  document.getElementById('detailBody').innerHTML = html;
   document.getElementById('detailModal').classList.add('show');
 }
 function closeDetailModal() {
@@ -3265,6 +3597,60 @@ function playPendingVoice() {
   }
 }
 
+function resizeImageFile(file, maxDim, quality) {
+  maxDim = maxDim || 1280; quality = quality || 0.75;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const ratio = Math.min(maxDim / width, maxDim / height);
+        width = Math.round(width * ratio); height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = (err) => { URL.revokeObjectURL(url); reject(err); };
+    img.src = url;
+  });
+}
+
+async function onImageFile(e, fieldId) {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  try {
+    const dataUrl = await resizeImageFile(f);
+    const el = document.getElementById(fieldId);
+    if (el) el.value = dataUrl;
+    renderImgPreview(fieldId);
+    showToast('تصویر آپلود شد');
+  } catch (err) {
+    console.error(err);
+    showToast('خطا در آپلود تصویر');
+  }
+  e.target.value = '';
+}
+
+function renderImgPreview(fieldId) {
+  const input = document.getElementById(fieldId);
+  const wrap = document.getElementById(fieldId + '_preview');
+  if (!input || !wrap) return;
+  const val = input.value;
+  if (!val) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = '<img src="' + val + '" onclick="window.open(this.src,\'_blank\')" alt="پیش‌نمایش">' +
+    '<button type="button" class="img-preview-remove" onclick="clearImgField(\'' + fieldId + '\')">🗑️ حذف تصویر</button>';
+}
+
+function clearImgField(fieldId) {
+  const input = document.getElementById(fieldId);
+  if (input) input.value = '';
+  renderImgPreview(fieldId);
+}
+
 function onVoiceFile(e) {
   const f = e.target.files && e.target.files[0];
   if (!f) return;
@@ -3354,9 +3740,21 @@ function bindEvents() {
   document.querySelectorAll('.period-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.period-tab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active'); currentPeriod = tab.dataset.period; applyFilters();
+      tab.classList.add('active'); currentPeriod = tab.dataset.period;
+      const row = document.getElementById('customRangeRow');
+      if (currentPeriod === 'custom') {
+        if (row) row.style.display = 'flex';
+        if (!customPeriodFrom && !customPeriodTo) return; // wait for user to pick dates + press اعمال
+      } else {
+        if (row) row.style.display = 'none';
+        const ff = document.getElementById('fFrom'); if (ff) ff.value = '';
+        const ft = document.getElementById('fTo'); if (ft) ft.value = '';
+      }
+      applyFilters();
     });
   });
+  const jSortEl = document.getElementById('jSort'); if (jSortEl) jSortEl.addEventListener('change', renderTable);
+  const jGroupEl = document.getElementById('jGroup'); if (jGroupEl) jGroupEl.addEventListener('change', renderTable);
   bindMainTabs();
   document.querySelectorAll('.form-tab').forEach(tab => {
     tab.addEventListener('click', () => {
