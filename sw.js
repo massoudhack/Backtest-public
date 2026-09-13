@@ -1,4 +1,4 @@
-const CACHE = 'tj-cache-v5';
+const CACHE = 'tj-cache-v7';
 const ASSETS = [
   './',
   './index.html',
