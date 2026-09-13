@@ -716,6 +716,27 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
   color:#fff;
 }
 
+/* ===================== COLOR PICKER ===================== */
+.color-picker-grid{
+  display:flex;flex-wrap:wrap;gap:8px;
+  padding:10px;background:var(--bg-subtle);border-radius:12px;
+}
+.color-swatch{
+  width:34px;height:34px;border-radius:50%;cursor:pointer;
+  border:3px solid transparent;transition:all .15s;position:relative;
+  box-shadow:0 2px 6px rgba(0,0,0,.12);
+}
+.color-swatch:hover{transform:scale(1.12)}
+.color-swatch.selected{
+  border-color:var(--text);
+  box-shadow:0 0 0 2px var(--bg-card),0 0 0 5px var(--text);
+}
+.color-swatch.selected::after{
+  content:'✓';position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:900;font-size:1rem;text-shadow:0 1px 3px rgba(0,0,0,.4);
+}
+
 /* ===================== IMAGE PREVIEW ===================== */
 .img-input-row{display:flex;gap:8px}
 .img-input-row input{flex:1;min-width:0}
@@ -791,14 +812,14 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .save-success-msg{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px}
 .save-success-sub{font-size:.78rem;color:var(--text-muted)}
 
-/* Generic sync modal (for import/bulk) */
+/* Generic sync modal */
 .sync-spinner{
   width:42px;height:42px;border-radius:50%;
   border:3px solid var(--border);border-top-color:var(--primary);
   margin:6px auto 14px;animation:spin .75s linear infinite;
 }
 
-/* ===================== DETAIL MODAL (MODERN) ===================== */
+/* ===================== DETAIL MODAL ===================== */
 .detail-hero{
   background:linear-gradient(135deg,var(--primary-soft) 0%,var(--bg-card) 65%);
   border:1px solid var(--border);border-radius:var(--radius-lg);
@@ -835,7 +856,7 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .detail-actions{display:flex;gap:8px;margin-top:8px}
 .detail-actions .btn{flex:1;justify-content:center}
 
-/* ===================== HEATMAP ===================== */
+/* ===================== HEATMAP (COMPACT) ===================== */
 .heatmap-card{
   background:var(--bg-card);border-radius:var(--radius-lg);padding:18px;
   border:1px solid var(--border);box-shadow:var(--shadow-sm);margin-bottom:14px;
@@ -844,41 +865,50 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .hm-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .hm-nav{display:flex;align-items:center;gap:8px}
 .hm-nav button{
-  width:34px;height:34px;border-radius:10px;border:1px solid var(--border);
-  background:var(--bg-subtle);cursor:pointer;font-size:1rem;font-family:inherit;
+  width:30px;height:30px;border-radius:9px;border:1px solid var(--border);
+  background:var(--bg-subtle);cursor:pointer;font-size:.95rem;font-family:inherit;
   color:var(--text-muted);transition:all .15s;
 }
 .hm-nav button:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
-.hm-month-label{font-weight:700;font-size:.9rem;min-width:120px;text-align:center}
+.hm-month-label{font-weight:700;font-size:.86rem;min-width:110px;text-align:center}
 .hm-mode{display:flex;gap:4px}
 .hm-mode button{
-  padding:6px 12px;border-radius:9px;border:1px solid var(--border);
-  background:var(--bg-subtle);font-size:.73rem;cursor:pointer;
+  padding:5px 11px;border-radius:9px;border:1px solid var(--border);
+  background:var(--bg-subtle);font-size:.72rem;cursor:pointer;
   color:var(--text-muted);font-weight:600;transition:all .15s;
 }
 .hm-mode button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.hm-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:.76rem;color:var(--text-muted);margin-bottom:10px}
+.hm-stats{display:flex;gap:12px;flex-wrap:wrap;font-size:.74rem;color:var(--text-muted);margin-bottom:10px;justify-content:center}
 .hm-stats strong{color:var(--text);font-weight:700}
-.hm-grid-wrap{overflow-x:auto}
-.hm-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;text-align:center;font-size:.68rem;color:var(--text-muted);font-weight:600}
-.hm-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+
+/* KEY FIX: constrain heatmap to a compact size (was stretching to full card width on desktop) */
+.hm-grid-wrap{overflow-x:auto;display:flex;flex-direction:column;align-items:center}
+.hm-weekdays,
+.hm-grid{
+  width:100%;
+  max-width:400px;
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:4px;
+}
+.hm-weekdays{margin-bottom:4px;text-align:center;font-size:.66rem;color:var(--text-muted);font-weight:600}
 .hm-cell{
-  aspect-ratio:1;border-radius:8px;background:var(--bg-subtle);
+  aspect-ratio:1;border-radius:6px;background:var(--bg-subtle);
   display:flex;align-items:center;justify-content:center;
-  font-size:.68rem;color:var(--text-faint);position:relative;min-height:32px;
-  transition:transform .12s;
+  font-size:.62rem;color:var(--text-faint);position:relative;
+  min-height:0;transition:transform .12s;
 }
 .hm-cell.has{cursor:pointer;font-weight:700;color:#fff}
-.hm-cell.has:hover{transform:scale(1.08);z-index:3}
+.hm-cell.has:hover{transform:scale(1.12);z-index:3}
 .hm-cell.profit{background:linear-gradient(135deg,#10b981,#059669)}
 .hm-cell.profit-light{background:#6ee7b7;color:#065f46}
 .hm-cell.loss{background:linear-gradient(135deg,#ef4444,#dc2626)}
 .hm-cell.loss-light{background:#fca5a5;color:#7f1d1d}
 .hm-cell.neutral{background:var(--text-faint)}
 .hm-cell.other-month{opacity:.22}
-.hm-legend{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:.72rem;color:var(--text-muted);flex-wrap:wrap;font-weight:500}
+.hm-legend{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:.7rem;color:var(--text-muted);flex-wrap:wrap;font-weight:500;justify-content:center}
 .hm-legend span{display:inline-flex;align-items:center;gap:4px}
-.hm-leg-box{width:14px;height:14px;border-radius:4px;display:inline-block}
+.hm-leg-box{width:12px;height:12px;border-radius:3px;display:inline-block}
 .hm-tooltip{
   position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
   background:var(--overlay);color:#fff;padding:6px 10px;border-radius:8px;
@@ -1439,6 +1469,27 @@ body.layout-edit .drag-handle{display:flex}
   </div>
 </div>
 
+<!-- INPUT MODAL (custom popup for adding items / picking tag colors) -->
+<div class="modal-overlay" id="inputModal" style="z-index:1500">
+  <div class="modal" style="max-width:400px;border-radius:20px">
+    <div class="modal-header"><h2 id="inputModalTitle">افزودن</h2><button class="modal-close" onclick="closeInputModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label id="inputModalLabel">نام</label>
+        <input type="text" id="inputModalText" autocomplete="off" placeholder="...">
+      </div>
+      <div class="form-group" id="inputModalColorGroup" style="display:none">
+        <label>رنگ برچسب</label>
+        <div id="inputModalColors" class="color-picker-grid"></div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline" onclick="closeInputModal()">انصراف</button>
+        <button type="button" class="btn btn-success" id="inputModalOk">تأیید</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ADD/EDIT MODAL -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
@@ -1533,7 +1584,7 @@ body.layout-edit .drag-handle{display:flex}
           <div class="form-group"><label>یادداشت کلی</label><textarea id="tfNotes"></textarea></div>
         </div>
 
-        <!-- EMOTIONS (MODERN) -->
+        <!-- EMOTIONS -->
         <div class="form-section" id="ftab-emotions">
           <div class="emo-tabs">
             <button type="button" class="emo-tab active" data-etab="pre">
@@ -1740,6 +1791,10 @@ body.layout-edit .drag-handle{display:flex}
       </div>
 
       <div class="settings-pane active" id="spane-lists">
+        <div style="background:var(--primary-soft);border:1px solid var(--primary);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:.78rem;color:var(--primary);font-weight:500">
+          ☁️ این لیست‌ها روی Supabase ذخیره می‌شوند و در همه دستگاه‌ها هماهنگ هستند.
+        </div>
+
         <div class="section-title">ستاپ‌ها</div>
         <div class="manage-row"><input type="text" id="newSetup" placeholder="ستاپ جدید..."><button class="btn btn-sm" onclick="addCustom('setups','newSetup')">+</button></div>
         <div class="manage-list" id="listSetups"></div>
@@ -1814,9 +1869,9 @@ const SUPABASE_URL = 'https://erwimqqskkzcsayvhxot.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_KgowTs_lXEBsBc3pb78dxA_8zNU-D-I';
 const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
-const IMG_MARK = '@sbimg:';       // marker prefix for storage-stored images
+const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-2026-MODERN-v9';
+const APP_BUILD = 'BUILD-2026-MODERN-v10 (heatmap compact + tag colors + custom sync)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -1843,7 +1898,7 @@ let equityMode = 'manual';
 let equityChart = null, pieChart = null, sparkChart = null;
 let hmYear = null, hmMonth = null, hmMode = 'pnl';
 let editingId = null, currentPeriod = 'all', currentTags = [];
-let custom = { setups: [], zones: [], emotions: [], tags: [], checklists: [] };
+let custom = { setups: [], zones: [], emotions: [], tags: [], tagColors: {}, checklists: [] };
 let editingChecklistId = null;
 let clEditorItems = [];
 let activeFilterTags = [];
@@ -1852,13 +1907,14 @@ let modalCount = 0;
 let deferredPrompt = null;
 let syncModalContext = null;
 let lastSyncOk = false;
+let customSaveTimer = null;
+let customSyncedFromServer = false;
 
 let mediaRecorder = null;
 let recChunks = [];
 let pendingVoiceBlob = null;
 let pendingVoiceUrl = null;
 let isRecording = false;
-let pendingImages = { tfImgExtra1: null, tfImgExtra2: null };  // { blob } or { url } or { existing: path }
 
 /* ================================================================
    MODAL SCROLL LOCK
@@ -1870,6 +1926,7 @@ function unlockScroll(){ modalCount = Math.max(0, modalCount - 1); if (modalCoun
    TAG COLORS
 ================================================================ */
 function tagColor(name){
+  if (custom.tagColors && custom.tagColors[name]) return custom.tagColors[name];
   let h = 0;
   const s = String(name || '');
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
@@ -2054,15 +2111,14 @@ function isStorageRef(v){ return typeof v === 'string' && v.startsWith(IMG_MARK)
 function extractStoragePath(v){ return v.slice(IMG_MARK.length); }
 async function persistImageField(value, tradeId, slot){
   if (!value) return null;
-  if (isStorageRef(value)) return value;  // already stored
+  if (isStorageRef(value)) return value;
   if (value.startsWith('data:')) {
     try { return await uploadImageToStorage(tradeId, slot, value); }
     catch (e) { console.error('upload img', e); return null; }
   }
-  return value;  // external URL
+  return value;
 }
 function getImgPreviewSource(value){
-  // returns { type:'direct'|'storage'|'none', src, path }
   if (!value) return { type:'none' };
   if (isStorageRef(value)) return { type:'storage', path: extractStoragePath(value) };
   return { type:'direct', src: value };
@@ -2122,7 +2178,8 @@ async function init(){
 
 async function bootApp(){
   loadTheme();
-  loadCustom();
+  loadCustom();                       // load from localStorage first (fast)
+  await loadCustomFromSupabase();     // then try to sync from Supabase (overwrites if data exists)
   await loadTradesFromSupabase();
   ensureUniqueIds();
   hmYear = null; hmMonth = null;
@@ -2139,6 +2196,66 @@ async function bootApp(){
   try { fillChecklistSelects(); } catch(e){ console.error(e); }
   const bi = document.getElementById('buildInfo');
   if (bi) bi.textContent = '🔧 نسخه فایل: ' + APP_BUILD;
+}
+
+/* ================================================================
+   CUSTOM CONFIG SYNC (Supabase journal_config table)
+================================================================ */
+async function loadCustomFromSupabase(){
+  try {
+    const { data, error } = await supabaseClient
+      .from('journal_config')
+      .select('data')
+      .eq('id', 'main')
+      .maybeSingle();
+
+    if (error) {
+      if (error.message && (error.message.includes('does not exist') || error.code === '42P01')) {
+        console.warn('⚠️ جدول journal_config وجود ندارد — لیست‌های سفارشی بین دستگاه‌ها همگام نمی‌شوند. راه‌حل در README.');
+      } else {
+        console.error('load custom', error);
+      }
+      return;
+    }
+    if (data && data.data && Object.keys(data.data).length) {
+      custom = Object.assign({ tagColors: {} }, custom, data.data);
+      if (!custom.setups || !custom.setups.length) custom.setups = [...DEFAULT_SETUPS];
+      if (!custom.emotions || !custom.emotions.length) custom.emotions = [...DEFAULT_EMOTIONS];
+      if (!custom.zones) custom.zones = [];
+      if (!custom.tags) custom.tags = [];
+      if (!custom.tagColors) custom.tagColors = {};
+      if (!custom.checklists) custom.checklists = [];
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
+      customSyncedFromServer = true;
+      console.log('✓ custom config loaded from Supabase');
+    } else {
+      // first time on this account — push local up
+      await saveCustomToSupabase();
+      customSyncedFromServer = true;
+    }
+  } catch (e) {
+    console.error('loadCustomFromSupabase failed', e);
+  }
+}
+
+async function saveCustomToSupabase(){
+  try {
+    const { error } = await supabaseClient
+      .from('journal_config')
+      .upsert({ id: 'main', data: custom, updated_at: new Date().toISOString() });
+    if (error) {
+      if (error.message && (error.message.includes('does not exist') || error.code === '42P01')) {
+        console.warn('⚠️ جدول journal_config وجود ندارد — تغییرات فقط محلی ذخیره شد.');
+      } else {
+        console.error('save custom', error);
+      }
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('saveCustomToSupabase failed', e);
+    return false;
+  }
 }
 
 /* ================================================================
@@ -2305,6 +2422,7 @@ function loadCustom(){
   if (!custom.emotions || !custom.emotions.length) custom.emotions = [...DEFAULT_EMOTIONS];
   if (!custom.zones) custom.zones = [];
   if (!custom.tags) custom.tags = [];
+  if (!custom.tagColors) custom.tagColors = {};
   if (!custom.checklists) custom.checklists = [];
   if (!custom.checklists.length) {
     custom.checklists = [{
@@ -2318,11 +2436,17 @@ function loadCustom(){
     }];
   }
 }
-function saveCustom(){ localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); }
+function saveCustom(){
+  // 1) save locally (instant)
+  localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
+  // 2) sync to Supabase (debounced)
+  if (customSaveTimer) clearTimeout(customSaveTimer);
+  customSaveTimer = setTimeout(() => { saveCustomToSupabase(); }, 600);
+}
 function saveToStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(allTrades)); updateStorageInfo(); }
 function updateStorageInfo(){
   const el = document.getElementById('storageInfo');
-  if (el) el.textContent = '☁️ ' + allTrades.length + ' معامله روی Supabase — از «خروجی» برای پشتیبان هم استفاده کنید';
+  if (el) el.textContent = '☁️ ' + allTrades.length + ' معامله + لیست‌های سفارشی روی Supabase — از «خروجی» برای پشتیبان هم استفاده کنید';
 }
 function showToast(msg){
   const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
@@ -2330,14 +2454,12 @@ function showToast(msg){
 }
 
 function refreshCustomUI(){
-  // setup select
   const sel = document.getElementById('tfSetup');
   if (sel) {
     const cur = sel.value;
-    sel.innerHTML = '<option value="">— انتخاب —</option>' + custom.setups.map(s => '<option value="'+s+'">'+s+'</option>').join('');
+    sel.innerHTML = '<option value="">— انتخاب —</option>' + custom.setups.map(s => '<option value="'+escapeHtml(s)+'">'+escapeHtml(s)+'</option>').join('');
     if (cur) sel.value = cur;
   }
-  // emotions grid (before)
   const pre = document.getElementById('preEmotionChips');
   if (pre) {
     pre.innerHTML = custom.emotions.map(e => `
@@ -2356,7 +2478,6 @@ function refreshCustomUI(){
         <span class="emo-radio"></span>
       </label>`).join('');
   }
-  // zone select
   const tfz = document.getElementById('tfZone');
   if (tfz) {
     const cur = tfz.value;
@@ -2380,7 +2501,6 @@ function escapeHtml(s){
 }
 
 function onEmoCardClick(el, e, hiddenId){
-  // let the label handle the checkbox toggle naturally, then sync
   setTimeout(() => {
     const cb = el.querySelector('input');
     el.classList.toggle('selected', cb.checked);
@@ -2394,6 +2514,14 @@ function onEmoCardClick(el, e, hiddenId){
 function renderManageList(elId, arr, key){
   const el = document.getElementById(elId);
   if (!el) return;
+  if (key === 'tags') {
+    // tag render with color dots
+    el.innerHTML = (arr || []).map(function(v, i){
+      const col = tagColor(v);
+      return '<span class="manage-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+col+'"></span> ' + escapeHtml(v) + ' <span class="del" data-key="' + key + '" data-idx="' + i + '" onclick="removeCustom(this.dataset.key, +this.dataset.idx)">×</span></span>';
+    }).join('');
+    return;
+  }
   el.innerHTML = (arr || []).map(function(v, i){
     return '<span class="manage-item">' + escapeHtml(v) + ' <span class="del" data-key="' + key + '" data-idx="' + i + '" onclick="removeCustom(this.dataset.key, +this.dataset.idx)">×</span></span>';
   }).join('');
@@ -2432,22 +2560,36 @@ function renderTagManager(){
       <button type="button" class="tag-icon-btn" onclick="removeCustom('tags', ${i})" title="حذف">🗑️</button>
     </div>`).join('');
 }
-function editTag(i){
+
+async function editTag(i){
   const old = custom.tags[i];
-  const nv = prompt('نام جدید برچسب:', old);
-  if (!nv || !nv.trim() || nv.trim() === old) return;
-  const trimmed = nv.trim();
-  if (custom.tags.includes(trimmed)) { showToast('این نام قبلاً وجود دارد'); return; }
-  custom.tags[i] = trimmed;
-  // update in all trades
-  allTrades.forEach(t => {
-    if (Array.isArray(t.tags)) {
-      t.tags = t.tags.map(x => x === old ? trimmed : x);
-    }
+  const oldColor = tagColor(old);
+  const result = await showInputModal({
+    title: 'ویرایش برچسب',
+    label: 'نام برچسب',
+    defaultValue: old,
+    showColor: true,
+    defaultColor: oldColor,
   });
-  currentTags = currentTags.map(x => x === old ? trimmed : x);
+  if (!result) return;
+  const trimmed = result.value;
+  if (trimmed !== old && custom.tags.includes(trimmed)) { showToast('این نام قبلاً وجود دارد'); return; }
+  if (!custom.tagColors) custom.tagColors = {};
+  if (trimmed !== old) {
+    custom.tags[i] = trimmed;
+    if (custom.tagColors[old]) {
+      custom.tagColors[trimmed] = custom.tagColors[old];
+      delete custom.tagColors[old];
+    }
+    allTrades.forEach(t => {
+      if (Array.isArray(t.tags)) t.tags = t.tags.map(x => x === old ? trimmed : x);
+    });
+    currentTags = currentTags.map(x => x === old ? trimmed : x);
+  }
+  if (result.color) custom.tagColors[trimmed] = result.color;
   saveCustom();
   refreshCustomUI();
+  setupFilters();
   showToast('ویرایش شد');
 }
 function renderFilterTagChips(){
@@ -2483,40 +2625,131 @@ function toggleFilterTag(el){
   }
   applyFilters();
 }
-function addCustom(key, inputId){
+
+async function addCustom(key, inputId){
   const inp = document.getElementById(inputId);
-  const v = inp.value.trim();
-  if (!v) return;
-  if (!custom[key].includes(v)) {
-    custom[key].push(v);
+  const v = (inp && inp.value || '').trim();
+  const isTag = key === 'tags';
+  const labels = { setups:'ستاپ جدید', zones:'Zone جدید', emotions:'احساس جدید', tags:'برچسب جدید' };
+  const result = await showInputModal({
+    title: labels[key] || 'افزودن مورد جدید',
+    label: 'نام',
+    defaultValue: v,
+    showColor: isTag,
+  });
+  if (!result) { if (inp) inp.value = ''; return; }
+  const val = result.value;
+  if (!custom[key].includes(val)) {
+    custom[key].push(val);
+    if (isTag && result.color) {
+      if (!custom.tagColors) custom.tagColors = {};
+      custom.tagColors[val] = result.color;
+    }
     saveCustom();
     refreshCustomUI();
     setupFilters();
-    showToast('اضافه شد: ' + v);
+    showToast('اضافه شد: ' + val);
   } else {
     showToast('قبلاً وجود داشت');
   }
-  inp.value = '';
+  if (inp) inp.value = '';
 }
+
 function removeCustom(key, idx){
   custom[key].splice(idx, 1);
   saveCustom();
   refreshCustomUI();
   setupFilters();
 }
-function addCustomInline(key, selectId){
-  const v = prompt('مقدار جدید:');
-  if (!v || !v.trim()) return;
-  const trimmed = v.trim();
+
+async function addCustomInline(key, selectId){
+  const isTag = key === 'tags';
+  const labels = { setups:'افزودن ستاپ', zones:'افزودن Zone', emotions:'افزودن احساس', tags:'افزودن برچسب' };
+  const result = await showInputModal({
+    title: labels[key] || 'افزودن مورد جدید',
+    label: 'نام',
+    showColor: isTag,
+  });
+  if (!result) return;
+  const trimmed = result.value;
   if (!custom[key].includes(trimmed)) {
     custom[key].push(trimmed);
+    if (isTag && result.color) {
+      if (!custom.tagColors) custom.tagColors = {};
+      custom.tagColors[trimmed] = result.color;
+    }
     saveCustom();
     refreshCustomUI();
     setupFilters();
+    if (selectId) {
+      const sel = document.getElementById(selectId);
+      if (sel) sel.value = trimmed;
+    }
+    showToast('اضافه شد: ' + trimmed);
+  } else {
+    if (selectId) {
+      const sel = document.getElementById(selectId);
+      if (sel) sel.value = trimmed;
+    }
+    showToast('قبلاً وجود داشت');
   }
-  const sel = document.getElementById(selectId);
-  if (sel) sel.value = trimmed;
-  showToast('اضافه شد');
+}
+
+/* ================================================================
+   INPUT MODAL (custom popup with optional color picker)
+================================================================ */
+let inputModalResolve = null;
+let inputModalSelectedColor = null;
+
+function showInputModal({ title='افزودن', label='نام', placeholder='', defaultValue='', showColor=false, defaultColor=null } = {}){
+  return new Promise(resolve => {
+    inputModalResolve = resolve;
+    document.getElementById('inputModalTitle').textContent = title;
+    document.getElementById('inputModalLabel').textContent = label;
+    const inp = document.getElementById('inputModalText');
+    inp.value = defaultValue || '';
+    inp.placeholder = placeholder || '...';
+    const colorGroup = document.getElementById('inputModalColorGroup');
+    const colorsBox = document.getElementById('inputModalColors');
+    if (showColor) {
+      colorGroup.style.display = '';
+      inputModalSelectedColor = defaultColor || TAG_COLORS[Math.floor(Math.random() * TAG_COLORS.length)];
+      colorsBox.innerHTML = TAG_COLORS.map(c => `<div class="color-swatch${c === inputModalSelectedColor ? ' selected' : ''}" style="background:${c}" data-color="${c}"></div>`).join('');
+      colorsBox.querySelectorAll('.color-swatch').forEach(sw => {
+        sw.onclick = () => {
+          inputModalSelectedColor = sw.dataset.color;
+          colorsBox.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+          sw.classList.add('selected');
+        };
+      });
+    } else {
+      colorGroup.style.display = 'none';
+    }
+    document.getElementById('inputModal').classList.add('show');
+    lockScroll();
+    setTimeout(() => { try { inp.focus(); inp.select(); } catch(e){} }, 120);
+  });
+}
+function closeInputModal(){
+  const modal = document.getElementById('inputModal');
+  if (!modal.classList.contains('show')) return;
+  modal.classList.remove('show');
+  unlockScroll();
+  if (inputModalResolve) {
+    const r = inputModalResolve;
+    inputModalResolve = null;
+    r(null);
+  }
+}
+function confirmInputModal(){
+  const v = (document.getElementById('inputModalText').value || '').trim();
+  if (!v) { showToast('مقدار را وارد کنید'); return; }
+  const result = { value: v, color: inputModalSelectedColor };
+  const resolve = inputModalResolve;
+  inputModalResolve = null;
+  document.getElementById('inputModal').classList.remove('show');
+  unlockScroll();
+  if (resolve) resolve(result);
 }
 
 /* ================================================================
@@ -3312,7 +3545,6 @@ function renderTable(){
   area.innerHTML = entries.map(([key, trades]) => {
     const sum = trades.reduce((s,t) => s + calcPnL(t), 0);
     const pc = sum > 0 ? 'pnl-pos' : (sum < 0 ? 'pnl-neg' : '');
-    // default CLOSED — user explicitly requested this
     const isOpen = journalGroupOpenState[key] === true;
     return '<details class="trade-group"' + (isOpen ? ' open' : '') + ' data-gkey="' + escapeHtml(key) + '">' +
       '<summary class="trade-group-header">' +
@@ -3363,7 +3595,7 @@ function resetFilters(){
 }
 
 /* ================================================================
-   IMAGE HANDLING (FORM)
+   IMAGE HANDLING
 ================================================================ */
 function resizeImageFile(file, maxDim, quality){
   maxDim = maxDim || 1400; quality = quality || 0.8;
@@ -3412,13 +3644,13 @@ async function renderImgPreview(fieldId){
     wrap.innerHTML = '<img src="' + escapeHtml(info.src) + '" onclick="window.open(this.src,\'_blank\')" alt="پیش‌نمایش">' +
       '<button type="button" class="img-preview-remove" onclick="clearImgField(\'' + fieldId + '\')">🗑️ حذف تصویر</button>';
   } else if (info.type === 'storage') {
-    wrap.innerHTML = '<div class="img-loading">در حال بارگذاری از سرور...</div>';
+    wrap.innerHTML = '<div class="img-loading">در حال بارگذاری...</div>';
     const src = await loadImageFromStorage(info.path);
     if (src) {
       wrap.innerHTML = '<img src="' + src + '" onclick="window.open(this.src,\'_blank\')" alt="پیش‌نمایش">' +
         '<button type="button" class="img-preview-remove" onclick="clearImgField(\'' + fieldId + '\')">🗑️ حذف تصویر</button>';
     } else {
-      wrap.innerHTML = '<div style="font-size:.78rem;color:var(--danger)">خطا در بارگذاری تصویر</div>' +
+      wrap.innerHTML = '<div style="font-size:.78rem;color:var(--danger)">خطا در بارگذاری</div>' +
         '<button type="button" class="img-preview-remove" onclick="clearImgField(\'' + fieldId + '\')">حذف</button>';
     }
   }
@@ -3492,7 +3724,7 @@ async function toggleVoiceRec(){
     return;
   }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showToast('این مرورگر میکروفون را پشتیبانی نمی‌کند — فایل صدا پیوست کنید');
+    showToast('این مرورگر میکروفون را پشتیبانی نمی‌کند');
     return;
   }
   if (!window.isSecureContext) { showToast('برای میکروفون باید روی HTTPS باشید'); return; }
@@ -3623,7 +3855,6 @@ function openAddModal(editTrade){
     renderImgPreview('tfImgExtra1');
     renderImgPreview('tfImgExtra2');
     document.getElementById('tfVolume').value = editTrade.volume || '';
-    // emotions - check the right cards
     const pre = Array.isArray(editTrade.pre_emotions) ? editTrade.pre_emotions : [];
     const post = Array.isArray(editTrade.post_emotions) ? editTrade.post_emotions : [];
     document.getElementById('tfPreEmotion').value = pre.join(',');
@@ -3636,7 +3867,6 @@ function openAddModal(editTrade){
       const cb = el.querySelector('input');
       if (post.includes(cb.value)) { cb.checked = true; el.classList.add('selected'); }
     });
-    // motives / mistakes
     const motives = editTrade.motives || [];
     document.querySelectorAll('#motiveChecks .check-item').forEach(it => {
       const cb = it.querySelector('input');
@@ -3728,11 +3958,9 @@ async function saveTrade(e){
   const newId = editingId != null ? editingId : Date.now();
   const prevTrade = editingId != null ? allTrades.find(t => String(t.id) === String(editingId)) : null;
 
-  // Persist images FIRST (they may need upload)
   const img1Val = document.getElementById('tfImgExtra1').value.trim();
   const img2Val = document.getElementById('tfImgExtra2').value.trim();
 
-  // show saving state
   const btn = document.getElementById('saveBtn');
   const prevTxt = btn.innerHTML;
   btn.disabled = true;
@@ -3791,7 +4019,6 @@ async function saveTrade(e){
   };
   trade.id = newId;
 
-  // voice
   if (pendingVoiceBlob) {
     try {
       await saveVoiceBlob(newId, pendingVoiceBlob);
@@ -3980,7 +4207,6 @@ async function showDetail(id){
   document.getElementById('detailModal').classList.add('show');
   lockScroll();
 
-  // async load storage images
   const grid = document.getElementById('detailMediaGrid');
   if (grid) {
     const items = grid.querySelectorAll('[data-storage-path]');
@@ -3988,7 +4214,8 @@ async function showDetail(id){
       const path = item.dataset.storagePath;
       const src = await loadImageFromStorage(path);
       if (src) {
-        item.innerHTML = `<img class="detail-media-thumb" src="${src}" onclick="window.open(this.src,'_blank')" alt=""><span>${item.querySelector('span').textContent}</span>`;
+        const label = item.querySelector('span') ? item.querySelector('span').textContent : '';
+        item.innerHTML = `<img class="detail-media-thumb" src="${src}" onclick="window.open(this.src,'_blank')" alt=""><span>${label}</span>`;
       } else {
         item.innerHTML = '<div style="font-size:.72rem;color:var(--danger)">خطا در بارگذاری</div>';
       }
@@ -4022,23 +4249,32 @@ async function deleteTrade(id){
 }
 
 /* ================================================================
-   TAGS
+   TAGS (FORM)
 ================================================================ */
-function addTag(){
+async function addTag(){
   const inp = document.getElementById('tfTagInput');
-  const v = (inp.value || '').trim();
-  if (!v) return;
+  const v = (inp && inp.value || '').trim();
+  const result = await showInputModal({
+    title: 'افزودن برچسب',
+    label: 'نام برچسب',
+    defaultValue: v,
+    showColor: true,
+  });
+  if (!result) { if (inp) inp.value = ''; return; }
+  const trimmed = result.value;
   if (!custom.tags) custom.tags = [];
-  if (!custom.tags.includes(v)) {
-    custom.tags.push(v);
+  if (!custom.tagColors) custom.tagColors = {};
+  if (!custom.tags.includes(trimmed)) {
+    custom.tags.push(trimmed);
+    if (result.color) custom.tagColors[trimmed] = result.color;
     saveCustom();
   }
-  if (!currentTags.includes(v)) currentTags.push(v);
-  inp.value = '';
+  if (!currentTags.includes(trimmed)) currentTags.push(trimmed);
+  if (inp) inp.value = '';
   renderFormTagChips();
   renderTagManager();
   renderFilterTagChips();
-  showToast('برچسب اضافه شد: ' + v);
+  showToast('برچسب اضافه شد: ' + trimmed);
 }
 
 /* ================================================================
@@ -4412,7 +4648,6 @@ function renderTradeChecklist(){
       </div>
       <div class="cl-modern-items" id="clModernItems">${itemsHtml}</div>
     </div>`;
-  // attach click handler to label so clicking anywhere toggles
   box.querySelectorAll('.cl-modern-item').forEach(label => {
     label.addEventListener('click', (e) => {
       if (e.target.tagName === 'INPUT') return;
@@ -4504,7 +4739,6 @@ function bindEvents(){
       if (sec) sec.classList.add('active');
     });
   });
-  // emotion sub-tabs
   document.querySelectorAll('.emo-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.emo-tab').forEach(t => t.classList.remove('active'));
@@ -4514,7 +4748,6 @@ function bindEvents(){
       if (pane) pane.classList.add('active');
     });
   });
-  // chip items (motives/mistakes)
   document.querySelectorAll('#motiveChecks .check-item, #mistakeChecks .check-item').forEach(it => {
     it.addEventListener('click', (e) => {
       const cb = it.querySelector('input');
@@ -4568,6 +4801,19 @@ function bindEvents(){
   if (clm) clm.addEventListener('click', e => { if (e.target.id === 'checklistModal') closeChecklistEditor(); });
   const sm = document.getElementById('syncModal');
   if (sm) sm.addEventListener('click', e => { if (e.target.id === 'syncModal') closeSyncModal(); });
+
+  // input modal (custom popup)
+  const im = document.getElementById('inputModal');
+  if (im) {
+    im.addEventListener('click', e => { if (e.target.id === 'inputModal') closeInputModal(); });
+    const inp = document.getElementById('inputModalText');
+    if (inp) inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); confirmInputModal(); }
+      else if (e.key === 'Escape') { e.preventDefault(); closeInputModal(); }
+    });
+    const okBtn = document.getElementById('inputModalOk');
+    if (okBtn) okBtn.addEventListener('click', confirmInputModal);
+  }
 }
 
 /* ================================================================
