@@ -1,4 +1,4 @@
-const CACHE = 'tj-cache-v4';
+const CACHE = 'tj-cache-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -17,14 +17,18 @@ self.addEventListener('activate', (e) => {
       .then(() => self.clients.claim())
   );
 });
+// NETWORK-FIRST: always try the network for the freshest file first.
+// Only fall back to the cached copy if there's no connection at all.
+// (Previously this was cache-first, which meant a new deploy could sit
+// invisible behind the old cached version indefinitely.)
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+    fetch(e.request).then(res => {
       try {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(e.request, copy)).catch(()=>{});
       } catch(err) {}
       return res;
-    }).catch(() => caches.match('./index.html')))
+    }).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
   );
 });

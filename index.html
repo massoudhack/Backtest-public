@@ -609,6 +609,7 @@
   </div>
 
   <p class="storage-info" id="storageInfo">داده‌ها در مرورگر ذخیره می‌شوند</p>
+  <p id="buildInfo" style="text-align:center;font-size:.72rem;padding:6px;margin-top:4px;background:#fffbeb;color:#92400e;border-radius:8px;font-weight:600;"></p>
 </div>
 
 <button class="btn btn-lg fab" onclick="openAddModal()">+ معامله جدید</button>
@@ -902,6 +903,13 @@ let custom = { setups: [], zones: [], emotions: [], tags: [], checklists: [] };
 let editingChecklistId = null;
 let clEditorItems = [];
 let activeFilterTags = []; // tags selected in filter panel
+
+// ========== BUILD VERSION (visible at bottom of page — confirm this changes after every deploy) ==========
+const APP_BUILD = 'BUILD-2026-09-13-04 (sync-modal + network-first-sw)';
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('buildInfo');
+  if (el) el.textContent = '🔧 نسخه فایل: ' + APP_BUILD;
+});
 
 // ========== SUPABASE (data + voice storage + auth) ==========
 const SUPABASE_URL = 'https://erwimqqskkzcsayvhxot.supabase.co';
