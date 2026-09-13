@@ -38,9 +38,11 @@ body.dark{
   color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scrollbar-gutter:stable}
 html,body{overscroll-behavior-y:none}
 body{font-family:'Vazirmatn',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.65;padding-bottom:110px;transition:background .25s,color .25s;-webkit-font-smoothing:antialiased}
 body.modal-open{overflow:hidden}
+body.modal-open .fab{opacity:0 !important;visibility:hidden !important;pointer-events:none !important;transition:opacity .15s}
 ::selection{background:var(--primary);color:#fff}
 button,input,select,textarea{color-scheme:inherit;font-family:inherit}
 input,select,textarea,button{-webkit-appearance:none;appearance:none;border-radius:var(--radius-sm)}
@@ -196,26 +198,10 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .chip{padding:8px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg-subtle);font-size:.79rem;cursor:pointer;color:var(--text-muted);font-weight:500}
 .chip.selected{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 10px var(--primary-glow)}
 
-/* ========== SLIDER (RTL-safe, LTR forced) ========== */
 .slider-row{display:flex;align-items:center;gap:12px;margin-top:6px}
-.slider-row input[type=range]{
-  flex:1;
-  direction: ltr;          /* force left=min, right=max */
-  -webkit-appearance:none;appearance:none;
-  height:10px;border-radius:6px;outline:none;
-  background:linear-gradient(90deg,#ef4444 0%,#f59e0b 50%,#10b981 100%);
-  cursor:pointer;
-}
-.slider-row input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;appearance:none;
-  width:24px;height:24px;border-radius:50%;background:#fff;
-  border:3px solid var(--primary);cursor:pointer;
-  box-shadow:0 2px 8px rgba(0,0,0,.18);
-}
-.slider-row input[type=range]::-moz-range-thumb{
-  width:22px;height:22px;border-radius:50%;background:#fff;
-  border:3px solid var(--primary);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);
-}
+.slider-row input[type=range]{flex:1;direction:ltr;-webkit-appearance:none;appearance:none;height:10px;border-radius:6px;outline:none;background:linear-gradient(90deg,#ef4444 0%,#f59e0b 50%,#10b981 100%);cursor:pointer}
+.slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--primary);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.slider-row input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--primary);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .slider-val{min-width:38px;text-align:center;font-weight:700;color:#fff;font-size:.85rem;background:var(--primary);padding:3px 9px;border-radius:9px;box-shadow:0 2px 6px var(--primary-glow)}
 .slider-hint{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-muted);margin-top:2px}
 
@@ -248,7 +234,6 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .emo-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0}
 .emo-item.selected .emo-radio{border-color:var(--primary);background:var(--primary);box-shadow:inset 0 0 0 3px var(--bg-card)}
 
-/* ========== CHECKLIST COLUMNS (always side-by-side) ========== */
 .cl-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 @media(max-width:380px){.cl-columns{grid-template-columns:1fr}}
 .cl-column{background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius);padding:12px;transition:box-shadow .15s;min-width:0}
@@ -423,14 +408,14 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .menu-row .mi-label{flex:1;font-weight:600;font-size:.85rem;display:flex;align-items:center;gap:8px}
 .menu-row .mi-arrows{display:flex;gap:4px}
 .menu-row .mi-arrows button{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;color:var(--text-muted);font-size:.8rem}
-.menu-row .switch{position:relative;width:42px;height:24px;flex:none}
-.menu-row .switch input{opacity:0;width:0;height:0}
-.menu-row .switch .slider{position:absolute;inset:0;background:var(--border-strong);border-radius:24px;cursor:pointer;transition:.2s}
-.menu-row .switch .slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
-.menu-row .switch input:checked+.slider{background:var(--success)}
-.menu-row .switch input:checked+.slider::before{transform:translateX(-18px)}
 
-/* ========== LAYOUT MANAGER ========== */
+.switch{position:relative;width:42px;height:24px;flex:0 0 42px;display:inline-block;vertical-align:middle}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch .slider{position:absolute;inset:0;background:var(--border-strong);border-radius:24px;cursor:pointer;transition:.2s}
+.switch .slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.switch input:checked+.slider{background:var(--success)}
+.switch input:checked+.slider::before{transform:translateX(-18px)}
+
 .layout-group-card{background:var(--bg-subtle);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
 .layout-group-card h4{font-size:.88rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .layout-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;flex-wrap:wrap}
@@ -438,10 +423,12 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .layout-size-btns{display:flex;gap:3px}
 .layout-size-btns button{width:32px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg-subtle);color:var(--text-muted);cursor:pointer;font-size:.72rem;font-weight:700;font-family:inherit}
 .layout-size-btns button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.layout-eye-btn{width:38px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg-card);color:var(--primary);cursor:pointer;font-size:.95rem;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;flex:0 0 auto}
+.layout-eye-btn:hover{background:var(--primary-soft);border-color:var(--primary)}
+.layout-eye-btn.off{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
 
-/* ========== DASHBOARD GRID + SIZES ========== */
 #dashSections{display:grid;grid-template-columns:1fr;gap:14px}
-.dash-section{min-width:0}
+.dash-section{min-width:0;position:relative}
 @media(min-width:900px){
   #dashSections{grid-template-columns:repeat(6,1fr)}
   .dash-section{grid-column:span 6}
@@ -449,12 +436,10 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
   .dash-section[data-size="m"]{grid-column:span 3}
   .dash-section[data-size="l"]{grid-column:span 6}
 }
-/* ensure inner cards don't have external margins inside grid */
 #dashSections > .dash-section > .balance-card,
 #dashSections > .dash-section > .breakdown-card,
 #dashSections > .dash-section > .heatmap-card{margin-bottom:0}
 
-/* analysis grid sizes */
 #analysisGrid{display:grid;grid-template-columns:1fr;gap:14px}
 @media(min-width:900px){
   #analysisGrid{grid-template-columns:repeat(6,1fr)}
@@ -463,6 +448,22 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
   #analysisGrid > [data-layout-key][data-size="m"]{grid-column:span 3}
   #analysisGrid > [data-layout-key][data-size="l"]{grid-column:span 6}
 }
+
+.resize-handle{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:64px;height:24px;background:var(--primary);color:#fff;border-radius:12px;align-items:center;justify-content:center;cursor:ew-resize;z-index:20;box-shadow:0 6px 16px var(--primary-glow);user-select:none;touch-action:none;transition:transform .12s}
+.resize-handle:hover{transform:translateX(-50%) scale(1.08)}
+body.layout-edit .resize-handle{display:flex}
+body.layout-edit .fab{display:none !important}
+.rh-grip{width:22px;height:3px;background:#fff;border-radius:2px;position:relative}
+.rh-grip::before,.rh-grip::after{content:'';position:absolute;left:0;right:0;height:3px;background:#fff;border-radius:2px}
+.rh-grip::before{top:-5px}
+.rh-grip::after{top:5px}
+.dash-section.resizing{outline:2px solid var(--primary) !important;z-index:100 !important}
+.resize-preview{display:none;position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:5px 14px;border-radius:9px;font-size:.78rem;font-weight:800;z-index:25;box-shadow:0 6px 16px var(--primary-glow);letter-spacing:.08em}
+body.layout-edit .dash-section{outline:2px dashed transparent;border-radius:var(--radius);transition:outline-color .15s}
+body.layout-edit .dash-section:hover{outline-color:var(--primary)}
+.drag-handle{display:none;position:absolute;top:8px;left:8px;z-index:5;width:34px;height:34px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;align-items:center;justify-content:center;cursor:grab;color:var(--text-muted);font-size:1.1rem;box-shadow:var(--shadow-sm)}
+body.layout-edit .drag-handle{display:flex}
+.dash-section.dragging{opacity:.4}
 
 .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--overlay);color:#fff;padding:12px 20px;border-radius:14px;font-size:.85rem;z-index:2000;opacity:0;transition:.3s;pointer-events:none;backdrop-filter:blur(8px);font-weight:500;box-shadow:var(--shadow-lg)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -477,12 +478,6 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 
 .layout-editbar{position:sticky;top:0;z-index:30;background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;border-radius:14px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;font-size:.83rem;font-weight:600;box-shadow:var(--shadow-lg)}
 .layout-editbar .btn{background:#fff;color:var(--primary);padding:7px 14px}
-.dash-section{position:relative}
-.drag-handle{display:none;position:absolute;top:8px;left:8px;z-index:5;width:34px;height:34px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;align-items:center;justify-content:center;cursor:grab;color:var(--text-muted);font-size:1.1rem;box-shadow:var(--shadow-sm)}
-body.layout-edit .dash-section{outline:2px dashed transparent;border-radius:var(--radius);transition:outline-color .15s}
-body.layout-edit .dash-section:hover{outline-color:var(--primary)}
-body.layout-edit .drag-handle{display:flex}
-.dash-section.dragging{opacity:.4}
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -543,7 +538,7 @@ body.layout-edit .drag-handle{display:flex}
   <!-- DASHBOARD -->
   <div class="main-panel active" id="panel-dashboard">
     <div class="layout-editbar" id="layoutEditbar" style="display:none">
-      <span>🖐 حالت چیدمان — بخش‌ها را با دستگیره جابه‌جا کن</span>
+      <span>🖐 حالت چیدمان — دستگیره ⠿ برای جابه‌جایی · نوار آبی ↔ برای تغییر اندازه</span>
       <button class="btn btn-sm" onclick="toggleLayoutEdit(false)">تمام شد</button>
     </div>
     <div id="dashSections">
@@ -625,13 +620,6 @@ body.layout-edit .drag-handle{display:flex}
         <div class="breakdown-card">
           <h3>عملکرد جهت معامله</h3>
           <div class="dir-cards" id="dirCards"></div>
-        </div>
-      </div>
-      <div class="dash-section" data-key="pips" data-layout-group="dashboard" data-layout-key="pips" data-default-size="m">
-        <div class="drag-handle" draggable="true">⠿</div>
-        <div class="breakdown-card">
-          <h3>📏 میانگین فاصله استاپ (پیپ)</h3>
-          <div id="pipStats"></div>
         </div>
       </div>
       <div class="dash-section" data-key="perfsummary" data-layout-group="dashboard" data-layout-key="perfsummary" data-default-size="l">
@@ -1149,7 +1137,9 @@ body.layout-edit .drag-handle{display:flex}
       </div>
 
       <div class="settings-pane" id="spane-layout">
-        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px">برای هر بخش: نمایش/مخفی کن و اندازه‌اش رو انتخاب کن. تغییرات روی Supabase ذخیره میشن.</p>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px">
+          برای هر بخش: 👁️ نمایش/مخفی · S/M/L اندازه · می‌تونی از حالت «🧩 چیدمان» هم با کشیدن نوار آبی پایین کارت اندازه رو عوض کنی.
+        </p>
         <div id="layoutManager"></div>
       </div>
 
@@ -1197,7 +1187,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v12 (layout manager + slider fix + cl-columns)';
+const APP_BUILD = 'BUILD-v13 (drag-resize + eye + pip removed)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1233,7 +1223,6 @@ const DEFAULT_LAYOUT = {
     perf:       { visible: true, size: 'l' },
     heatmap:    { visible: true, size: 'l' },
     direction:  { visible: true, size: 'm' },
-    pips:       { visible: true, size: 'm' },
     perfsummary:{ visible: true, size: 'l' },
     risk:       { visible: true, size: 'm' },
     session:    { visible: true, size: 'm' },
@@ -1248,13 +1237,11 @@ const DEFAULT_LAYOUT = {
 };
 const LAYOUT_LABELS = {
   dashboard: 'میزکار',
-  analysis: 'تب تحلیل',
-  journals: 'ژورنال‌ها',
-  checklist: 'چک‌لیست'
+  analysis: 'تب تحلیل'
 };
 const LAYOUT_KEY_LABELS = {
   balance:'کارت موجودی', stats:'آمار بالا', charts:'منحنی و پای', summary:'خلاصه P/L',
-  perf:'تحلیل عملکرد', heatmap:'نقشه فعالیت', direction:'عملکرد جهت', pips:'میانگین پیپ',
+  perf:'تحلیل عملکرد', heatmap:'نقشه فعالیت', direction:'عملکرد جهت',
   perfsummary:'خلاصه عملکرد', risk:'توزیع ریسک', session:'عملکرد سشن', symbols:'برترین نمادها',
   anSymbol:'تحلیل نمادها', anSetup:'تحلیل ستاپ', anTF:'تحلیل تایم‌فریم', anZone:'تحلیل Zone'
 };
@@ -1274,6 +1261,7 @@ let modalCount = 0;
 let deferredPrompt = null;
 let customSaveTimer = null;
 let mediaRecorder = null, recChunks = [], pendingVoiceBlob = null, pendingVoiceUrl = null, isRecording = false;
+let resizeState = null;
 
 function lockScroll(){ modalCount++; document.body.classList.add('modal-open'); }
 function unlockScroll(){ modalCount = Math.max(0, modalCount - 1); if (modalCount === 0) document.body.classList.remove('modal-open'); }
@@ -1449,7 +1437,7 @@ async function bootApp(){
   if (allTrades.length) showToast(allTrades.length + ' معامله بارگذاری شد');
   try { document.getElementById('tfDate').value = new Date().toISOString().slice(0,10); } catch(e){}
   try { refreshCustomUI(); } catch(e){ console.error(e); }
-  try { applyLayoutConfig(); } catch(e){ console.error(e); }
+  try { applyLayoutConfig(); initResizeHandles(); } catch(e){ console.error(e); }
   try { setupFilters(); } catch(e){ console.error(e); }
   try { applyFilters(); } catch(e){ console.error(e); }
   try { bindEvents(); } catch(e){ console.error(e); }
@@ -1464,10 +1452,7 @@ async function bootApp(){
 async function loadCustomFromSupabase(){
   try {
     const { data, error } = await supabaseClient.from('journal_config').select('data').eq('id', 'main').maybeSingle();
-    if (error) {
-      if (error.message && (error.message.includes('does not exist') || error.code === '42P01')) console.warn('⚠️ journal_config نیست');
-      return;
-    }
+    if (error) { if (error.message && (error.message.includes('does not exist') || error.code === '42P01')) console.warn('⚠️ journal_config نیست'); return; }
     if (data && data.data && Object.keys(data.data).length) {
       custom = Object.assign({ tagColors: {}, sessions: [], layout: {} }, custom, data.data);
       if (!custom.setups || !custom.setups.length) custom.setups = [...DEFAULT_SETUPS];
@@ -1478,18 +1463,14 @@ async function loadCustomFromSupabase(){
       if (!custom.checklists) custom.checklists = [];
       if (!custom.sessions || !custom.sessions.length) custom.sessions = JSON.parse(JSON.stringify(DEFAULT_SESSIONS));
       if (!custom.layout) custom.layout = {};
+      if (custom.layout.dashboard && custom.layout.dashboard.pips) delete custom.layout.dashboard.pips;
       localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
-    } else {
-      await saveCustomToSupabase();
-    }
+    } else await saveCustomToSupabase();
   } catch(e){ console.error(e); }
 }
 async function saveCustomToSupabase(){
-  try {
-    const { error } = await supabaseClient.from('journal_config').upsert({ id: 'main', data: custom, updated_at: new Date().toISOString() });
-    if (error) return false;
-    return true;
-  } catch(e){ return false; }
+  try { const { error } = await supabaseClient.from('journal_config').upsert({ id: 'main', data: custom, updated_at: new Date().toISOString() }); if (error) return false; return true; }
+  catch(e){ return false; }
 }
 function loadTheme(){
   const dark = localStorage.getItem('journal_theme') === 'dark';
@@ -1576,6 +1557,7 @@ function toggleLayoutEdit(force){
   const bar = document.getElementById('layoutEditbar');
   if (bar) bar.style.display = on ? 'flex' : 'none';
   if (on) { const dashTab = document.querySelector('.main-tab[data-main="dashboard"]'); if (dashTab) dashTab.click(); }
+  initResizeHandles();
 }
 function initDashDragDrop(){
   const container = document.getElementById('dashSections'); if (!container) return;
@@ -1599,6 +1581,78 @@ function initDashDragDrop(){
   });
 }
 
+/* ====== RESIZE HANDLES ====== */
+function initResizeHandles(){
+  const sections = document.querySelectorAll('#dashSections .dash-section');
+  sections.forEach(sec => {
+    if (sec.querySelector('.resize-handle')) return;
+    const rh = document.createElement('div');
+    rh.className = 'resize-handle';
+    rh.title = 'برای تغییر اندازه بکش چپ/راست';
+    rh.innerHTML = '<span class="rh-grip"></span>';
+    rh.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); startResize(e.clientX, sec); });
+    rh.addEventListener('touchstart', e => { e.preventDefault(); startResize(e.touches[0].clientX, sec); }, { passive: false });
+    sec.appendChild(rh);
+  });
+}
+function startResize(clientX, sec){
+  const group = sec.dataset.layoutGroup;
+  const key = sec.dataset.layoutKey;
+  if (!group || !key) return;
+  const sizes = ['s','m','l'];
+  const currentSize = sec.dataset.size || 'l';
+  const startIdx = Math.max(0, sizes.indexOf(currentSize));
+  resizeState = { sec, group, key, startIdx, startX: clientX, previewSize: currentSize };
+  sec.classList.add('resizing');
+  document.body.style.cursor = 'ew-resize';
+  document.addEventListener('mousemove', onResizeMove);
+  document.addEventListener('touchmove', onResizeMove, { passive: false });
+  document.addEventListener('mouseup', endResize);
+  document.addEventListener('touchend', endResize);
+  let badge = sec.querySelector('.resize-preview');
+  if (!badge) { badge = document.createElement('div'); badge.className = 'resize-preview'; sec.appendChild(badge); }
+  badge.textContent = currentSize.toUpperCase();
+  badge.style.display = 'block';
+}
+function onResizeMove(e){
+  if (!resizeState) return;
+  e.preventDefault();
+  const x = (e.clientX != null) ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : null);
+  if (x == null) return;
+  const delta = x - resizeState.startX;
+  const step = 110;
+  const levels = Math.round(delta / step);
+  let newIdx = resizeState.startIdx - levels;
+  newIdx = Math.max(0, Math.min(2, newIdx));
+  const newSize = ['s','m','l'][newIdx];
+  if (newSize !== resizeState.previewSize) {
+    resizeState.previewSize = newSize;
+    resizeState.sec.dataset.size = newSize;
+    const badge = resizeState.sec.querySelector('.resize-preview');
+    if (badge) badge.textContent = newSize.toUpperCase();
+  }
+}
+function endResize(){
+  if (!resizeState) return;
+  const { sec, group, key } = resizeState;
+  const newSize = sec.dataset.size || 'l';
+  if (!custom.layout[group]) custom.layout[group] = {};
+  if (!custom.layout[group][key]) custom.layout[group][key] = { visible: true, size: newSize };
+  else custom.layout[group][key].size = newSize;
+  saveCustom();
+  const badge = sec.querySelector('.resize-preview');
+  if (badge) setTimeout(() => { badge.style.display = 'none'; }, 500);
+  sec.classList.remove('resizing');
+  resizeState = null;
+  document.body.style.cursor = '';
+  document.removeEventListener('mousemove', onResizeMove);
+  document.removeEventListener('touchmove', onResizeMove);
+  document.removeEventListener('mouseup', endResize);
+  document.removeEventListener('touchend', endResize);
+  const layoutPane = document.getElementById('spane-layout');
+  if (layoutPane && layoutPane.classList.contains('active')) renderLayoutManager();
+}
+
 /* ====== CUSTOM LISTS ====== */
 function loadCustom(){
   const s = localStorage.getItem(CUSTOM_KEY);
@@ -1611,6 +1665,7 @@ function loadCustom(){
   if (!custom.checklists) custom.checklists = [];
   if (!custom.sessions || !custom.sessions.length) custom.sessions = JSON.parse(JSON.stringify(DEFAULT_SESSIONS));
   if (!custom.layout) custom.layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
+  if (custom.layout.dashboard && custom.layout.dashboard.pips) delete custom.layout.dashboard.pips;
   if (!custom.checklists.length) {
     custom.checklists = [{ id: 'cl_default', name: 'قبل ترید', advanced: true, items: [
       { id: 'i1', text: 'واگرایی داره؟', weight: 50 },
@@ -1635,14 +1690,16 @@ function renderLayoutManager(){
     if (!keys.length) return '';
     const rows = keys.map(k => {
       const cfg = (custom.layout[g] && custom.layout[g][k]) || DEFAULT_LAYOUT[g][k];
-      return `<div class="layout-row">
+      const visible = cfg.visible !== false;
+      const size = cfg.size || 'l';
+      return `<div class="layout-row" style="opacity:${visible?1:.55}">
         <span class="lr-label">${LAYOUT_KEY_LABELS[k] || k}</span>
         <div class="layout-size-btns">
-          <button type="button" class="${cfg.size==='s'?'active':''}" onclick="setLayoutSize('${g}','${k}','s')">S</button>
-          <button type="button" class="${cfg.size==='m'?'active':''}" onclick="setLayoutSize('${g}','${k}','m')">M</button>
-          <button type="button" class="${cfg.size==='l'?'active':''}" onclick="setLayoutSize('${g}','${k}','l')">L</button>
+          <button type="button" class="${size==='s'?'active':''}" onclick="setLayoutSize('${g}','${k}','s')" title="کوچک">S</button>
+          <button type="button" class="${size==='m'?'active':''}" onclick="setLayoutSize('${g}','${k}','m')" title="متوسط">M</button>
+          <button type="button" class="${size==='l'?'active':''}" onclick="setLayoutSize('${g}','${k}','l')" title="بزرگ">L</button>
         </div>
-        <label class="switch"><input type="checkbox" ${cfg.visible!==false?'checked':''} onchange="setLayoutVisible('${g}','${k}',this.checked)"><span class="slider"></span></label>
+        <button type="button" class="layout-eye-btn ${visible?'':'off'}" onclick="setLayoutVisible('${g}','${k}',${visible?'false':'true'})" title="${visible?'مخفی کن':'نمایش بده'}">${visible ? '👁️' : '🚫'}</button>
       </div>`;
     }).join('');
     return `<div class="layout-group-card"><h4>📁 ${LAYOUT_LABELS[g]}</h4>${rows}</div>`;
@@ -1658,7 +1715,7 @@ function setLayoutVisible(group, key, visible){
   if (!custom.layout[group]) custom.layout[group] = {};
   if (!custom.layout[group][key]) custom.layout[group][key] = { visible: true, size: 'l' };
   custom.layout[group][key].visible = visible;
-  saveCustom(); applyLayoutConfig();
+  saveCustom(); applyLayoutConfig(); renderLayoutManager();
 }
 function applyLayoutConfig(){
   const layout = custom.layout || {};
@@ -1695,9 +1752,7 @@ function refreshCustomUI(){
     const key = ['setups','zones','emotions','tags'][i];
     if (document.getElementById(id)) renderManageList(id, custom[key] || [], key);
   });
-  renderFormTagChips();
-  renderTagManager();
-  renderFilterTagChips();
+  renderFormTagChips(); renderTagManager(); renderFilterTagChips();
 }
 function onEmoCardClick(el, e, hiddenId){
   setTimeout(() => {
@@ -2055,12 +2110,6 @@ function getPipSize(symbol){
   if (s.length === 6) return 0.0001;
   return 0.0001;
 }
-function getStopPips(t){
-  const entry = parseFloat(t['Entry Price']);
-  const sl = parseFloat(t['Stop Loss']) || parseFloat(t.initial_stop);
-  if (!entry || !sl || isNaN(entry) || isNaN(sl)) return null;
-  return Math.abs(entry - sl) / getPipSize(t.Symbol);
-}
 let perfTab = 'symbol';
 function applyFilters(){
   filtered = getFiltered();
@@ -2134,7 +2183,6 @@ function renderDashboard(){
     <div class="stat-card"><div class="label">مجموع ضررها</div><div class="value pnl-neg">-${lossSum.toFixed(0)}$</div></div>`;
   renderPerfTab();
   try { renderHeatmap(); } catch(e){ console.error(e); }
-  try { renderPipStats(); } catch(e){ console.error(e); }
   const buyT = filtered.filter(t => t.Direction === 'Buy');
   const sellT = filtered.filter(t => t.Direction === 'Sell');
   const buyPnL = buyT.reduce((s, t) => s + calcPnL(t), 0);
@@ -2215,20 +2263,6 @@ function renderBarBreak(data, byPnl){
     const color = v.pnl >= 0 ? 'linear-gradient(90deg,#10b981,#34d399)' : 'linear-gradient(90deg,#ef4444,#f87171)';
     return `<div class="perf-bar-row"><span class="perf-bar-label">${escapeHtml(k)}</span><div class="perf-bar-track"><div class="perf-bar-fill" style="width:${pct}%;background:${color}">${v.pnl >= 0 ? '+' : ''}${v.pnl.toFixed(0)}</div></div><span class="perf-bar-meta">${v.n || tot} · ${wr}% WR</span></div>`;
   }).join('') || '<div class="empty-state">داده‌ای نیست</div>';
-}
-function renderPipStats(){
-  const el = document.getElementById('pipStats'); if (!el) return;
-  const bySymbol = {};
-  filtered.forEach(t => { const pips = getStopPips(t); if (pips == null) return; const k = (t.Symbol||'').toUpperCase(); if (!bySymbol[k]) bySymbol[k] = []; bySymbol[k].push(pips); });
-  const entries = Object.entries(bySymbol).map(([k, arr]) => ({ symbol: k, avg: arr.reduce((a,b)=>a+b,0) / arr.length, min: Math.min(...arr), max: Math.max(...arr), count: arr.length })).sort((a,b) => b.count - a.count);
-  if (!entries.length) { el.innerHTML = '<div class="empty-state">قیمت ورود/استاپ ثبت نشده</div>'; return; }
-  const maxAvg = Math.max(...entries.map(e => e.avg));
-  el.innerHTML = entries.slice(0, 15).map(e => `
-    <div class="perf-bar-row">
-      <span class="perf-bar-label">${escapeHtml(e.symbol)}</span>
-      <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${Math.min(100, e.avg/maxAvg*100)}%;background:linear-gradient(90deg,#4f46e5,#7c3aed)">${e.avg.toFixed(1)} pips</div></div>
-      <span class="perf-bar-meta">${e.count} · ${e.min.toFixed(0)}-${e.max.toFixed(0)}</span>
-    </div>`).join('');
 }
 function renderPerfTab(){
   const el = document.getElementById('perfContent'); if (!el) return;
@@ -2799,7 +2833,7 @@ async function showDetail(id){
   const rHits = [t.r1&&'1R',t.r15&&'1.5R',t.r2&&'2R',t.r3&&'3R'].filter(Boolean).join(' · ') || '—';
   let dowLabel = '';
   if (t['Entry Date']) { const d = new Date(t['Entry Date']+'T00:00:00'); if (!isNaN(d)) dowLabel = DOW_FA[d.getDay()]; }
-  const session = getSession(t); const pips = getStopPips(t);
+  const session = getSession(t);
   let html = '<div class="detail-hero"><div class="detail-hero-main">' + resultBadge + dirBadge + '<span class="pnl-big ' + pc + '">' + (pnl>=0?'+':'') + pnl.toFixed(1) + '$</span></div><div class="detail-hero-sub"><span>📅 ' + (t['Entry Date']||'—') + (dowLabel ? ' (' + dowLabel + ')' : '') + '</span>' + (t['Entry Time'] != null && t['Entry Time'] !== '' ? '<span>🕐 ' + t['Entry Time'] + '</span>' : '') + '<span>⏱ ' + (t.Timeframe||'—') + '</span><span>🌍 ' + session + '</span></div></div>';
   const infoItems = [];
   if (t.stop_usd != null) infoItems.push(['ریسک دلاری', t.stop_usd + '$']);
@@ -2807,7 +2841,6 @@ async function showDetail(id){
   if (t['Stop Loss'] != null && t['Stop Loss'] !== '') infoItems.push(['استاپ لحظه ورود', t['Stop Loss']]);
   if (t.initial_stop != null) infoItems.push(['استاپ اولیه', t.initial_stop]);
   if (t.final_stop != null) infoItems.push(['استاپ نهایی', t.final_stop]);
-  if (pips != null) infoItems.push(['فاصله پیپ', pips.toFixed(1) + ' pips']);
   infoItems.push(['ریوارد', rHits]);
   if (t.reward_from) infoItems.push(['برگشته از', t.reward_from]);
   if (t.volume) infoItems.push(['حجم', t.volume]);
