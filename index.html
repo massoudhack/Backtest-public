@@ -981,11 +981,18 @@ async function loadTradesFromSupabase() {
 }
 async function upsertTradeRemote(trade) {
   const { error } = await supabaseClient.from('journal_trades').upsert(tradeToRow(trade));
-  if (error) { console.error(error); showToast('خطا در ذخیره روی Supabase: ' + error.message); }
+  if (error) { console.error(error); showToast('خطا در ذخیره روی Supabase: ' + error.message); return false; }
+  return true;
 }
 async function deleteTradeRemote(id) {
   const { error } = await supabaseClient.from('journal_trades').delete().eq('id', id);
   if (error) { console.error(error); showToast('خطا در حذف از Supabase'); }
+}
+async function deleteAllTradesRemote() {
+  // ids are always positive (timestamps / positive sequential numbers), so this deletes every row
+  const { error } = await supabaseClient.from('journal_trades').delete().gt('id', -1);
+  if (error) { console.error(error); showToast('خطا در پاک کردن داده‌های قدیمی: ' + error.message); return false; }
+  return true;
 }
 async function bulkUpsertRemote(trades) {
   const rows = trades.map(tradeToRow);
@@ -2150,20 +2157,23 @@ async function saveTrade(e) {
   }
   clearPendingVoice();
 
-  await upsertTradeRemote(trade);
+  const savedOk = await upsertTradeRemote(trade);
 
   if (editingId != null) {
     const idx = allTrades.findIndex(t => String(t.id) === String(editingId));
     if (idx >= 0) {
       allTrades[idx] = trade;
-      showToast('✓ معامله ویرایش و روی Supabase ذخیره شد');
+      if (savedOk) showToast('✓ معامله ویرایش و روی Supabase ذخیره شد');
     } else {
       allTrades.push(trade);
-      showToast('✓ معامله ذخیره شد (شناسه جدید)');
+      if (savedOk) showToast('✓ معامله ذخیره شد (شناسه جدید)');
     }
   } else {
     allTrades.push(trade);
-    showToast('✓ معامله ثبت و روی Supabase ذخیره شد');
+    if (savedOk) showToast('✓ معامله ثبت و روی Supabase ذخیره شد');
+  }
+  if (!savedOk) {
+    showToast('⚠️ ذخیره روی Supabase ناموفق بود — این معامله فقط موقتاً روی صفحه هست و با رفرش از بین می‌رود. کنسول رو چک کن.');
   }
   ensureUniqueIds();
   // seed custom lists (kept local — just convenience dropdown history)
@@ -2347,14 +2357,53 @@ function importData(event) {
         if (t.id == null) t.id = Date.now() + i;
         return t;
       });
-      if (!confirm(trades.length + ' معامله ایمپورت شود؟ داده‌های فعلی جایگزین می‌شوند.')) {
-        event.target.value = '';
-        return;
+
+      // ask: replace everything, append to existing, or cancel
+      const doReplace = confirm(
+        trades.length + ' معامله در فایل پیدا شد.\n\n' +
+        'OK = جایگزینی کامل: همه‌ی ' + allTrades.length + ' معامله‌ی فعلی روی Supabase پاک می‌شود و این ' + trades.length + ' تا جایگزین می‌شود.\n' +
+        'Cancel = برای انتخاب «اضافه کردن به داده‌های فعلی» به‌جای جایگزینی'
+      );
+      let doAppend = false;
+      if (!doReplace) {
+        doAppend = confirm(
+          'به‌جای جایگزینی، این ' + trades.length + ' معامله به ' + allTrades.length + ' معامله‌ی فعلی اضافه شود؟\n' +
+          '(معاملات قبلی پاک نمی‌شوند)\n\nOK = اضافه کن   Cancel = لغو ایمپورت'
+        );
+        if (!doAppend) {
+          event.target.value = '';
+          showToast('ایمپورت لغو شد');
+          return;
+        }
       }
-      allTrades = trades;
+
+      let tradesToPush;
+      if (doReplace) {
+        showToast('در حال پاک کردن ' + allTrades.length + ' معامله‌ی قبلی از Supabase...');
+        const ok = await deleteAllTradesRemote();
+        if (!ok) { event.target.value = ''; return; }
+        allTrades = trades;
+        tradesToPush = allTrades;
+      } else {
+        // append: avoid id collisions with what's already loaded
+        const existingIds = new Set(allTrades.map(t => String(t.id)));
+        trades.forEach(t => {
+          if (existingIds.has(String(t.id))) {
+            t.id = Date.now() + Math.floor(Math.random() * 1000000);
+          }
+          existingIds.add(String(t.id));
+        });
+        allTrades = allTrades.concat(trades);
+        tradesToPush = trades;
+      }
       ensureUniqueIds();
-      showToast('در حال ارسال ' + allTrades.length + ' معامله به Supabase...');
-      await bulkUpsertRemote(allTrades);
+      showToast('در حال ارسال ' + tradesToPush.length + ' معامله به Supabase...');
+      const pushOk = await bulkUpsertRemote(tradesToPush);
+      // trust the server, not our local guess: reload what's actually stored
+      await loadTradesFromSupabase();
+      if (!pushOk) {
+        showToast('ارسال به Supabase با خطا مواجه شد — الان ' + allTrades.length + ' معامله واقعاً روی Supabase ذخیره‌ست، لطفاً کنسول رو چک کن');
+      }
       if (importedCustom) {
         custom = Object.assign(custom, importedCustom);
         saveCustom();
@@ -2392,7 +2441,7 @@ function importData(event) {
         }
         if (ok) voiceMsg = ' + ' + ok + ' ویس';
       }
-      showToast(allTrades.length + ' معامله روی Supabase ایمپورت شد' + voiceMsg);
+      showToast((doReplace ? 'جایگزین شد: ' : 'اضافه شد: ') + tradesToPush.length + ' معامله — مجموع فعلی ' + allTrades.length + ' معامله روی Supabase' + voiceMsg);
     } catch (err) {
       console.error(err);
       showToast('خطا در خواندن فایل: ' + err.message);
