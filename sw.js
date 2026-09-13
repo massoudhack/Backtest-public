@@ -1,4 +1,4 @@
-const CACHE = 'tj-cache-v8';
+const CACHE = 'tj-cache-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -7,20 +7,21 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png'
 ];
+
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
+
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
-// NETWORK-FIRST: always try the network for the freshest file first.
-// Only fall back to the cached copy if there's no connection at all.
-// (Previously this was cache-first, which meant a new deploy could sit
-// invisible behind the old cached version indefinitely.)
+
+// Network-first: fresh file preferred, cache as fallback offline
 self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
   e.respondWith(
     fetch(e.request).then(res => {
       try {
