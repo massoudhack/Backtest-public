@@ -157,6 +157,8 @@
     .notes-box{background:var(--bg);border-radius:9px;padding:10px;margin-top:8px;border:1px solid var(--border);font-size:.84rem;line-height:1.6}
     .empty-state{text-align:center;padding:36px 14px;color:var(--text-muted);font-size:.88rem}
     .toast{position:fixed;bottom:85px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:11px 18px;border-radius:11px;font-size:.85rem;z-index:2000;opacity:0;transition:.3s;pointer-events:none}
+    .sync-spinner{width:36px;height:36px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--primary);margin:4px auto 10px;animation:sync-spin .8s linear infinite}
+    @keyframes sync-spin{to{transform:rotate(360deg)}}
     .toast.show{opacity:1}
     .storage-info{font-size:.7rem;color:var(--text-muted);text-align:center;margin-top:8px;padding:5px}
     .save-bar{background:var(--primary);color:#fff;text-align:center;padding:11px;border-radius:9px;font-weight:600;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px}
@@ -612,6 +614,16 @@
 <button class="btn btn-lg fab" onclick="openAddModal()">+ معامله جدید</button>
 <div class="toast" id="toast"></div>
 
+<!-- SYNC STATUS MODAL (loading / success / error while talking to Supabase) -->
+<div class="modal-overlay" id="syncModal" style="z-index:2000;align-items:center;">
+  <div class="modal" style="max-width:320px;border-radius:16px;text-align:center;padding:22px 18px;">
+    <div id="syncSpinner" class="sync-spinner"></div>
+    <div id="syncIcon" style="font-size:2rem;display:none;margin-bottom:6px;"></div>
+    <div id="syncMsg" style="font-size:.88rem;line-height:1.7;white-space:pre-line;margin:8px 0 14px;"></div>
+    <button id="syncOkBtn" class="btn btn-sm" style="display:none;width:100%;justify-content:center;" onclick="closeSyncModal()">باشه</button>
+  </div>
+</div>
+
 <!-- ADD/EDIT MODAL -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
@@ -996,10 +1008,22 @@ async function deleteAllTradesRemote() {
 }
 async function bulkUpsertRemote(trades) {
   const rows = trades.map(tradeToRow);
+  let failCount = 0;
+  let lastError = '';
   for (let i = 0; i < rows.length; i += 50) {
     const chunk = rows.slice(i, i + 50);
     const { error } = await supabaseClient.from('journal_trades').upsert(chunk);
-    if (error) { console.error(error); showToast('خطا در همگام‌سازی با Supabase: ' + error.message); return false; }
+    if (error) {
+      console.error('chunk', i / 50, 'failed:', error, 'ids in chunk:', chunk.map(r => r.id));
+      failCount += chunk.length;
+      lastError = error.message;
+      // keep going instead of stopping, so one bad chunk doesn't wipe out the rest
+      continue;
+    }
+  }
+  if (failCount > 0) {
+    showToast('خطا: ' + failCount + ' معامله ذخیره نشد (' + lastError + ') — بقیه ذخیره شدن، کنسول رو چک کن');
+    return false;
   }
   return true;
 }
@@ -1066,6 +1090,36 @@ function updateStorageInfo() {
 function showToast(msg) {
   const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ---- Sync status modal: shows a spinner while an operation is running,
+// then requires a manual "باشه" tap to dismiss (both on success and on error),
+// so a real error never disappears on its own before you get to read it. ----
+let syncModalContext = null;
+let lastSyncOk = true;
+function openSyncModal(loadingMsg) {
+  const m = document.getElementById('syncModal');
+  document.getElementById('syncSpinner').style.display = '';
+  document.getElementById('syncIcon').style.display = 'none';
+  document.getElementById('syncOkBtn').style.display = 'none';
+  document.getElementById('syncMsg').textContent = loadingMsg || 'در حال ارسال به Supabase...';
+  m.classList.add('show');
+}
+function finishSyncModal(ok, msg) {
+  lastSyncOk = ok;
+  document.getElementById('syncSpinner').style.display = 'none';
+  const icon = document.getElementById('syncIcon');
+  icon.style.display = '';
+  icon.textContent = ok ? '✅' : '⚠️';
+  document.getElementById('syncMsg').textContent = msg;
+  document.getElementById('syncOkBtn').style.display = '';
+}
+function closeSyncModal() {
+  document.getElementById('syncModal').classList.remove('show');
+  if (syncModalContext === 'saveTrade' && lastSyncOk) {
+    closeAddModal();
+  }
+  syncModalContext = null;
 }
 
 function refreshCustomUI() {
@@ -2142,14 +2196,18 @@ async function saveTrade(e) {
   const prevTrade = editingId != null ? allTrades.find(t => String(t.id) === String(editingId)) : null;
   trade.id = newId;
 
+  syncModalContext = 'saveTrade';
+  openSyncModal('در حال ذخیره معامله روی Supabase...');
+
   // voice: upload new recording/file if provided, otherwise keep whatever the trade already had
+  let voiceWarning = '';
   if (pendingVoiceBlob) {
     try {
       await saveVoiceBlob(newId, pendingVoiceBlob);
       trade.has_voice = true;
     } catch (err) {
       console.error(err);
-      showToast('ذخیره ویس ناموفق بود؛ بقیه معامله ذخیره شد');
+      voiceWarning = '\n(⚠️ ذخیره ویس ناموفق بود، بقیه معامله ذخیره شد)';
       trade.has_voice = !!(prevTrade && prevTrade.has_voice);
     }
   } else {
@@ -2159,22 +2217,21 @@ async function saveTrade(e) {
 
   const savedOk = await upsertTradeRemote(trade);
 
+  let resultMsg;
   if (editingId != null) {
     const idx = allTrades.findIndex(t => String(t.id) === String(editingId));
     if (idx >= 0) {
       allTrades[idx] = trade;
-      if (savedOk) showToast('✓ معامله ویرایش و روی Supabase ذخیره شد');
+      resultMsg = savedOk ? '✓ معامله ویرایش و روی Supabase ذخیره شد' : 'ذخیره ویرایش روی Supabase ناموفق بود.\nاین تغییر فقط موقتاً روی صفحه‌ست و با رفرش از بین می‌رود.';
     } else {
       allTrades.push(trade);
-      if (savedOk) showToast('✓ معامله ذخیره شد (شناسه جدید)');
+      resultMsg = savedOk ? '✓ معامله ذخیره شد (شناسه جدید)' : 'ذخیره روی Supabase ناموفق بود.\nاین معامله فقط موقتاً روی صفحه‌ست و با رفرش از بین می‌رود.';
     }
   } else {
     allTrades.push(trade);
-    if (savedOk) showToast('✓ معامله ثبت و روی Supabase ذخیره شد');
+    resultMsg = savedOk ? '✓ معامله ثبت و روی Supabase ذخیره شد' : 'ثبت روی Supabase ناموفق بود.\nاین معامله فقط موقتاً روی صفحه‌ست و با رفرش از بین می‌رود.';
   }
-  if (!savedOk) {
-    showToast('⚠️ ذخیره روی Supabase ناموفق بود — این معامله فقط موقتاً روی صفحه هست و با رفرش از بین می‌رود. کنسول رو چک کن.');
-  }
+  finishSyncModal(savedOk, resultMsg + voiceWarning);
   ensureUniqueIds();
   // seed custom lists (kept local — just convenience dropdown history)
   if (trade.Setup && !custom.setups.includes(trade.Setup)) {
@@ -2183,7 +2240,6 @@ async function saveTrade(e) {
   if (trade.zone && !custom.zones.includes(trade.zone)) {
     custom.zones.push(trade.zone); saveCustom();
   }
-  closeAddModal();
   setupFilters();
   applyFilters();
 }
@@ -2357,6 +2413,29 @@ function importData(event) {
         if (t.id == null) t.id = Date.now() + i;
         return t;
       });
+      // de-duplicate ids WITHIN the imported file itself (e.g. a broken Excel export
+      // that gave several different trades the same id). Without this, Supabase's
+      // upsert fails with "ON CONFLICT DO UPDATE command cannot affect row a second time"
+      // whenever two rows sharing an id land in the same 50-row batch, silently
+      // truncating the import partway through.
+      {
+        const seenIds = new Set();
+        let maxSeenId = 0;
+        trades.forEach(t => { const n = Number(t.id); if (!isNaN(n) && n > maxSeenId) maxSeenId = n; });
+        let dupCount = 0;
+        trades.forEach(t => {
+          const key = String(t.id);
+          if (seenIds.has(key)) {
+            dupCount++;
+            maxSeenId += 1;
+            t.id = maxSeenId;
+          }
+          seenIds.add(String(t.id));
+        });
+        if (dupCount > 0) {
+          showToast('⚠️ ' + dupCount + ' معامله توی فایل آیدی تکراری داشتن، آیدی جدید بهشون داده شد (بدون حذف داده)');
+        }
+      }
 
       // ask: replace everything, append to existing, or cancel
       const doReplace = confirm(
