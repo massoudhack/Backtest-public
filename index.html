@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>ژورنال ترید | Trading Journal</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="trades_data.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -262,6 +263,16 @@
   <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
+<div id="loginOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;padding:30px 24px;max-width:340px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.1);text-align:center">
+    <div style="font-size:2.2rem;margin-bottom:8px">🔒</div>
+    <h2 style="margin:0 0 6px;font-size:1.15rem">ژورنال معاملاتی</h2>
+    <p style="color:var(--text-muted);font-size:.85rem;margin:0 0 18px">برای ورود، رمز رو وارد کن</p>
+    <input type="password" id="loginPassword" placeholder="رمز عبور" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:9px;text-align:center;font-size:1rem;margin-bottom:10px;box-sizing:border-box" autocomplete="current-password" onkeydown="if(event.key==='Enter') handleLogin()">
+    <button class="btn" style="width:100%" onclick="handleLogin()" id="loginBtn">ورود</button>
+    <p id="loginError" style="color:var(--danger);font-size:.8rem;margin-top:10px;display:none"></p>
+  </div>
+</div>
 <div class="container">
   <header>
     <h1>📊 <span>ژورنال ترید</span></h1>
@@ -880,22 +891,122 @@ let editingChecklistId = null;
 let clEditorItems = [];
 let activeFilterTags = []; // tags selected in filter panel
 
+// ========== SUPABASE (data + voice storage + auth) ==========
+const SUPABASE_URL = 'https://erwimqqskkzcsayvhxot.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_KgowTs_lXEBsBc3pb78dxA_8zNU-D-I';
+const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
+const VOICE_BUCKET = 'journal-voices';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function handleLogin() {
+  const pw = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  if (!pw) return;
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'در حال ورود...';
+  const { error } = await supabaseClient.auth.signInWithPassword({ email: APP_LOGIN_EMAIL, password: pw });
+  btn.disabled = false; btn.textContent = 'ورود';
+  if (error) {
+    errEl.textContent = 'رمز اشتباهه یا مشکلی پیش اومد';
+    errEl.style.display = 'block';
+    return;
+  }
+  document.getElementById('loginOverlay').style.display = 'none';
+  await bootApp();
+}
+
+function voicePathFor(id) { return String(id) + '.webm'; }
+
+function tradeToRow(t) {
+  return {
+    id: t.id,
+    symbol: t.Symbol || null,
+    direction: t.Direction || null,
+    entry_date: t['Entry Date'] || null,
+    entry_time: t['Entry Time'] != null ? String(t['Entry Time']) : null,
+    entry_price: t['Entry Price'] != null ? t['Entry Price'] : null,
+    stop_loss: t['Stop Loss'] != null ? t['Stop Loss'] : null,
+    result: t.Result || null,
+    timeframe: t.Timeframe || null,
+    setup: t.Setup || null,
+    notes: t.Notes || null,
+    manual_pnl: t.manual_pnl != null ? t.manual_pnl : null,
+    stop_usd: t.stop_usd != null ? t.stop_usd : null,
+    r1: !!t.r1, r15: !!t.r15, r2: !!t.r2, r3: !!t.r3,
+    reward_from: t.reward_from || null,
+    divergence_type: t.divergence_type || null,
+    zone: t.zone || null,
+    trigger_img: t.trigger_img || null,
+    zone_img: t.zone_img || null,
+    img_extra1: t.img_extra1 || null,
+    img_extra2: t.img_extra2 || null,
+    entry_reason: t.entry_reason || null,
+    exit_reason: t.exit_reason || null,
+    lessons: t.lessons || null,
+    volume: t.volume || null,
+    energy: t.energy != null ? t.energy : null,
+    confidence: t.confidence != null ? t.confidence : null,
+    exec_quality: t.exec_quality != null ? t.exec_quality : null,
+    pre_emotions: t.pre_emotions || [],
+    post_emotions: t.post_emotions || [],
+    tags: t.tags || [],
+    motives: t.motives || [],
+    mistakes: t.mistakes || [],
+    checklist: t.checklist || null,
+    voice_path: t.has_voice ? voicePathFor(t.id) : null,
+  };
+}
+function rowToTrade(r) {
+  return {
+    id: r.id,
+    Symbol: r.symbol, Direction: r.direction, 'Entry Date': r.entry_date, 'Entry Time': r.entry_time,
+    'Entry Price': r.entry_price, 'Stop Loss': r.stop_loss, Result: r.result, Timeframe: r.timeframe,
+    Setup: r.setup, Notes: r.notes, manual_pnl: r.manual_pnl, stop_usd: r.stop_usd,
+    r1: r.r1 ? 1 : null, r15: r.r15 ? 1 : null, r2: r.r2 ? 1 : null, r3: r.r3 ? 1 : null,
+    reward_from: r.reward_from, divergence_type: r.divergence_type, zone: r.zone,
+    trigger_img: r.trigger_img, zone_img: r.zone_img, img_extra1: r.img_extra1, img_extra2: r.img_extra2,
+    entry_reason: r.entry_reason, exit_reason: r.exit_reason, lessons: r.lessons, volume: r.volume,
+    energy: r.energy, confidence: r.confidence, exec_quality: r.exec_quality,
+    pre_emotions: r.pre_emotions || [], post_emotions: r.post_emotions || [],
+    tags: r.tags || [], motives: r.motives || [], mistakes: r.mistakes || [],
+    checklist: r.checklist || null,
+    has_voice: !!r.voice_path, voice_path: r.voice_path || null,
+  };
+}
+async function loadTradesFromSupabase() {
+  const { data, error } = await supabaseClient.from('journal_trades').select('*').order('id', { ascending: false });
+  if (error) { console.error(error); showToast('خطا در دریافت داده از Supabase'); return; }
+  allTrades = (data || []).map(rowToTrade);
+}
+async function upsertTradeRemote(trade) {
+  const { error } = await supabaseClient.from('journal_trades').upsert(tradeToRow(trade));
+  if (error) { console.error(error); showToast('خطا در ذخیره روی Supabase: ' + error.message); }
+}
+async function deleteTradeRemote(id) {
+  const { error } = await supabaseClient.from('journal_trades').delete().eq('id', id);
+  if (error) { console.error(error); showToast('خطا در حذف از Supabase'); }
+}
+async function bulkUpsertRemote(trades) {
+  const rows = trades.map(tradeToRow);
+  for (let i = 0; i < rows.length; i += 50) {
+    const chunk = rows.slice(i, i + 50);
+    const { error } = await supabaseClient.from('journal_trades').upsert(chunk);
+    if (error) { console.error(error); showToast('خطا در همگام‌سازی با Supabase: ' + error.message); return false; }
+  }
+  return true;
+}
+
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
 const DEFAULT_EMOTIONS = ['آرام','مطمئن','مضطرب','ترسیده','طمع‌کار','هیجان‌زده','ناامید','خنثی','عصبانی','خسته','راضی','پشیمان','خوشحال','ناراحت','بی‌تفاوت'];
 const DOW_FA = ['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'];
 
-function init() {
+async function bootApp() {
   loadCustom();
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try {
-      allTrades = JSON.parse(saved);
-      ensureUniqueIds();
-      hmYear = null; hmMonth = null;
-      if (allTrades.length) showToast(allTrades.length + ' معامله از حافظه بارگذاری شد');
-    } catch(e) { allTrades = []; }
-  }
-  // داده اولیه خودکار لود نمی‌شود — فقط با ایمپورت یا دکمه «داده اکسل»
+  await loadTradesFromSupabase();
+  ensureUniqueIds();
+  hmYear = null; hmMonth = null;
+  if (allTrades.length) showToast(allTrades.length + ' معامله از Supabase بارگذاری شد');
   try {
     document.getElementById('tfDate').value = new Date().toISOString().slice(0,10);
   } catch(e) {}
@@ -904,6 +1015,20 @@ function init() {
   try { applyFilters(); } catch(e) { console.error('applyFilters', e); }
   try { bindEvents(); } catch(e) { console.error('bindEvents', e); }
   try { updateStorageInfo(); } catch(e) { console.error('updateStorageInfo', e); }
+  try { renderChecklistBoard(); } catch(e) { console.error('renderChecklistBoard', e); }
+  try { fillChecklistSelects(); } catch(e) { console.error('fillChecklistSelects', e); }
+}
+
+async function init() {
+  try {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data && data.session) {
+      document.getElementById('loginOverlay').style.display = 'none';
+      await bootApp();
+      return;
+    }
+  } catch (e) { console.error('session check failed', e); }
+  document.getElementById('loginOverlay').style.display = 'flex';
 }
 
 function loadCustom() {
@@ -929,7 +1054,7 @@ function loadCustom() {
 function saveCustom() { localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom)); }
 function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(allTrades)); updateStorageInfo(); }
 function updateStorageInfo() {
-  document.getElementById('storageInfo').textContent = '💾 ' + allTrades.length + ' معامله در مرورگر — از «خروجی» برای پشتیبان استفاده کنید';
+  document.getElementById('storageInfo').textContent = '☁️ ' + allTrades.length + ' معامله روی Supabase — از «خروجی» برای پشتیبان محلی هم استفاده کنید';
 }
 function showToast(msg) {
   const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
@@ -1929,6 +2054,10 @@ function openAddModal(editTrade) {
       window._tradeClChecked = Object.assign({}, editTrade.checklist.checked || {});
       renderTradeChecklist();
     }
+    if (editTrade.has_voice) {
+      const st = document.getElementById('voiceStatus');
+      if (st) st.textContent = 'این معامله یه ویس ذخیره‌شده داره — برای گوش دادن یا حذفش از صفحه جزئیات معامله استفاده کن. ضبط/انتخاب فایل جدید اینجا جایگزینش می‌کنه.';
+    }
   }
   document.getElementById('addModal').classList.add('show');
 }
@@ -1954,12 +2083,13 @@ function setResult(res) {
   if (l) { l.classList.toggle('active-loss', res === 'Loss'); l.classList.toggle('active', res === 'Loss'); }
 }
 
-function saveTrade(e) {
+async function saveTrade(e) {
   e.preventDefault();
   const symbol = document.getElementById('tfSymbol').value.trim();
   if (!symbol) { showToast('نماد را وارد کنید'); return; }
   const manual = Number(document.getElementById('tfManualPnL').value);
   if (isNaN(manual)) { showToast('مقدار P/L را وارد کنید'); return; }
+  if (isRecording) { showToast('اول ضبط ویس را متوقف کنید'); return; }
 
   const trade = {
     Symbol: symbol.toLowerCase(),
@@ -2001,45 +2131,48 @@ function saveTrade(e) {
     mistakes: [...document.querySelectorAll('#mistakeChecks input:checked')].map(c => c.value),
   };
 
+  const newId = editingId != null ? editingId : Date.now();
+  const prevTrade = editingId != null ? allTrades.find(t => String(t.id) === String(editingId)) : null;
+  trade.id = newId;
+
+  // voice: upload new recording/file if provided, otherwise keep whatever the trade already had
+  if (pendingVoiceBlob) {
+    try {
+      await saveVoiceBlob(newId, pendingVoiceBlob);
+      trade.has_voice = true;
+    } catch (err) {
+      console.error(err);
+      showToast('ذخیره ویس ناموفق بود؛ بقیه معامله ذخیره شد');
+      trade.has_voice = !!(prevTrade && prevTrade.has_voice);
+    }
+  } else {
+    trade.has_voice = !!(prevTrade && prevTrade.has_voice);
+  }
+  clearPendingVoice();
+
+  await upsertTradeRemote(trade);
+
   if (editingId != null) {
     const idx = allTrades.findIndex(t => String(t.id) === String(editingId));
-    trade.id = editingId;
     if (idx >= 0) {
       allTrades[idx] = trade;
-      showToast('✓ معامله ویرایش و ذخیره شد');
+      showToast('✓ معامله ویرایش و روی Supabase ذخیره شد');
     } else {
-      // id not found (legacy data) — still save as update by pushing with same id
       allTrades.push(trade);
       showToast('✓ معامله ذخیره شد (شناسه جدید)');
     }
   } else {
-    trade.id = Date.now();
     allTrades.push(trade);
-    showToast('✓ معامله ثبت و ذخیره شد');
+    showToast('✓ معامله ثبت و روی Supabase ذخیره شد');
   }
   ensureUniqueIds();
-  // seed custom lists
+  // seed custom lists (kept local — just convenience dropdown history)
   if (trade.Setup && !custom.setups.includes(trade.Setup)) {
     custom.setups.push(trade.Setup); saveCustom();
   }
   if (trade.zone && !custom.zones.includes(trade.zone)) {
     custom.zones.push(trade.zone); saveCustom();
   }
-  // save voice blob if any
-  const tid = trade.id;
-  const voiceBlob = pendingVoiceBlob;
-  if (voiceBlob) {
-    saveVoiceBlob(tid, voiceBlob).then(() => {
-      const ix = allTrades.findIndex(t => String(t.id) === String(tid));
-      if (ix >= 0) allTrades[ix].has_voice = true;
-      saveToStorage();
-      clearPendingVoice();
-    }).catch(err => {
-      console.error(err);
-      showToast('ترید ذخیره شد؛ ذخیره ویس ناموفق بود');
-    });
-  }
-  saveToStorage();
   closeAddModal();
   setupFilters();
   applyFilters();
@@ -2084,11 +2217,11 @@ function editTrade(id) {
   if (t) openAddModal(t);
   else showToast('معامله پیدا نشد');
 }
-function deleteTrade(id) {
+async function deleteTrade(id) {
   if (!confirm('این معامله حذف شود؟')) return;
   removeVoiceBlob(id).catch(()=>{});
   allTrades = allTrades.filter(t => String(t.id) !== String(id));
-  saveToStorage();
+  await deleteTradeRemote(id);
   closeDetailModal();
   setupFilters();
   applyFilters();
@@ -2126,43 +2259,65 @@ function renderTags() {
 
 // ========== IMPORT / EXPORT ==========
 
-function reloadSeed() {
+async function reloadSeed() {
   if (typeof window.TRADES_DATA === 'undefined' || !window.TRADES_DATA.length) {
     showToast('داده اولیه در دسترس نیست');
     return;
   }
-  if (!confirm('داده اولیه اکسل (' + window.TRADES_DATA.length + ' معامله) بارگذاری شود؟ داده‌های فعلی جایگزین می‌شوند.')) return;
+  if (!confirm('داده اولیه اکسل (' + window.TRADES_DATA.length + ' معامله) روی Supabase بارگذاری شود؟ داده‌های فعلی جایگزین می‌شوند.')) return;
   allTrades = JSON.parse(JSON.stringify(window.TRADES_DATA));
   ensureUniqueIds();
   const sSet = new Set(custom.setups);
   const sZone = new Set(custom.zones);
   allTrades.forEach(t => { if (t.Setup) sSet.add(t.Setup); if (t.zone) sZone.add(t.zone); });
   custom.setups = [...sSet]; custom.zones = [...sZone];
-  saveCustom(); saveToStorage(); hmYear = null; hmMonth = null; setupFilters(); applyFilters();
-  showToast(allTrades.length + ' معامله از اکسل بارگذاری شد');
+  saveCustom();
+  showToast('در حال ارسال ' + allTrades.length + ' معامله به Supabase...');
+  await bulkUpsertRemote(allTrades);
+  hmYear = null; hmMonth = null; setupFilters(); applyFilters();
+  showToast(allTrades.length + ' معامله از اکسل روی Supabase ذخیره شد');
 }
 
-function exportData() {
+async function exportData() {
+  showToast('در حال آماده‌سازی خروجی (شامل ویس‌ها)...');
+  const voices = {};
+  try {
+    const { data: files } = await supabaseClient.storage.from(VOICE_BUCKET).list('');
+    for (const f of (files || [])) {
+      const id = f.name.replace(/\.webm$/, '');
+      const blob = await loadVoiceBlob(id);
+      if (!blob) continue;
+      const b64 = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onloadend = () => res(String(r.result).split(',')[1] || '');
+        r.onerror = rej;
+        r.readAsDataURL(blob);
+      });
+      voices[id] = { data: b64, type: blob.type || 'audio/webm' };
+    }
+  } catch (err) { console.error('export voices', err); }
   const payload = {
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
     trades: allTrades,
-    custom: custom
+    custom: custom,
+    voices: voices
   };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'trading-journal-backup-' + new Date().toISOString().slice(0,10) + '.json';
   a.click();
   URL.revokeObjectURL(a.href);
-  showToast('فایل خروجی دانلود شد');
+  const voiceCount = Object.keys(voices).length;
+  showToast('فایل خروجی دانلود شد' + (voiceCount ? ' (شامل ' + voiceCount + ' ویس)' : ''));
 }
 
 function importData(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(ev) {
+  reader.onload = async function(ev) {
     try {
       let text = ev.target.result;
       // support trades_data.js style: window.TRADES_DATA = [...]
@@ -2174,11 +2329,13 @@ function importData(event) {
       const data = JSON.parse(text);
       let trades = [];
       let importedCustom = null;
+      let importedVoices = null;
       if (Array.isArray(data)) {
         trades = data;
       } else if (data && Array.isArray(data.trades)) {
         trades = data.trades;
         if (data.custom) importedCustom = data.custom;
+        if (data.voices) importedVoices = data.voices;
       } else if (data && Array.isArray(data.TRADES_DATA)) {
         trades = data.TRADES_DATA;
       } else {
@@ -2196,6 +2353,8 @@ function importData(event) {
       }
       allTrades = trades;
       ensureUniqueIds();
+      showToast('در حال ارسال ' + allTrades.length + ' معامله به Supabase...');
+      await bulkUpsertRemote(allTrades);
       if (importedCustom) {
         custom = Object.assign(custom, importedCustom);
         saveCustom();
@@ -2211,11 +2370,29 @@ function importData(event) {
         custom.zones = [...sZone];
         saveCustom();
       }
-      saveToStorage();
       hmYear = null; hmMonth = null;
       setupFilters();
       applyFilters();
-      showToast(allTrades.length + ' معامله ایمپورت شد');
+      let voiceMsg = '';
+      if (importedVoices && typeof importedVoices === 'object') {
+        const ids = Object.keys(importedVoices);
+        let ok = 0;
+        for (const id of ids) {
+          const v = importedVoices[id];
+          if (v && v.data) {
+            try {
+              const byteChars = atob(v.data);
+              const byteNumbers = new Array(byteChars.length);
+              for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+              const blob = new Blob([new Uint8Array(byteNumbers)], { type: v.type || 'audio/webm' });
+              await saveVoiceBlob(id, blob);
+              ok++;
+            } catch (err) { console.error('restore voice', id, err); }
+          }
+        }
+        if (ok) voiceMsg = ' + ' + ok + ' ویس';
+      }
+      showToast(allTrades.length + ' معامله روی Supabase ایمپورت شد' + voiceMsg);
     } catch (err) {
       console.error(err);
       showToast('خطا در خواندن فایل: ' + err.message);
@@ -2465,50 +2642,30 @@ function getTradeChecklistData() {
 
 
 
-// ========== VOICE + INDEXEDDB ==========
+// ========== VOICE (Supabase Storage backend) ==========
+// Same function names/signatures as before so call sites don't change —
+// voice clips now live in the Supabase Storage bucket, one object per trade id.
 let mediaRecorder = null;
 let recChunks = [];
 let pendingVoiceBlob = null;
 let pendingVoiceUrl = null;
 let isRecording = false;
 
-function openVoiceDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open('trading_journal_voice_v1', 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains('voices')) db.createObjectStore('voices');
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
 async function saveVoiceBlob(tradeId, blob) {
-  const db = await openVoiceDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('voices', 'readwrite');
-    tx.objectStore('voices').put(blob, String(tradeId));
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  const { error } = await supabaseClient.storage.from(VOICE_BUCKET)
+    .upload(voicePathFor(tradeId), blob, { upsert: true, contentType: blob.type || 'audio/webm' });
+  if (error) throw error;
+  return true;
 }
 async function loadVoiceBlob(tradeId) {
-  const db = await openVoiceDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('voices', 'readonly');
-    const req = tx.objectStore('voices').get(String(tradeId));
-    req.onsuccess = () => resolve(req.result || null);
-    req.onerror = () => reject(req.error);
-  });
+  const { data, error } = await supabaseClient.storage.from(VOICE_BUCKET).download(voicePathFor(tradeId));
+  if (error) { console.error('voice download', error); return null; }
+  return data;
 }
 async function removeVoiceBlob(tradeId) {
-  const db = await openVoiceDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('voices', 'readwrite');
-    tx.objectStore('voices').delete(String(tradeId));
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  const { error } = await supabaseClient.storage.from(VOICE_BUCKET).remove([voicePathFor(tradeId)]);
+  if (error) console.error('voice delete', error);
+  return true;
 }
 
 function setVoiceUI(state) {
@@ -2633,7 +2790,7 @@ async function deleteTradeVoice(tradeId) {
   if (!confirm('ویس این معامله حذف شود؟')) return;
   await removeVoiceBlob(tradeId);
   const t = allTrades.find(x => String(x.id) === String(tradeId));
-  if (t) { t.has_voice = false; saveToStorage(); }
+  if (t) { t.has_voice = false; await upsertTradeRemote(t); }
   showToast('ویس حذف شد');
   showDetail(tradeId);
 }
