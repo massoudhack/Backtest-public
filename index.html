@@ -102,7 +102,7 @@ header h1 span{background:linear-gradient(135deg,var(--primary),#7c3aed);-webkit
 .ma-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;margin-bottom:10px}
 .ma-stats span{color:var(--text-muted)}
 .ma-stats strong{color:var(--text);font-weight:700}
-.breakdown-card{background:var(--bg-card);border-radius:var(--radius-lg);padding:18px;border:1px solid var(--border);box-shadow:var(--shadow-sm)}
+.breakdown-card{background:var(--bg-card);border-radius:var(--radius-lg);padding:18px;border:1px solid var(--border);box-shadow:var(--shadow-sm);min-width:0;max-width:100%}
 .breakdown-card h3{font-size:.9rem;margin-bottom:12px;font-weight:700}
 .breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:.83rem}
 .breakdown-row:last-child{border-bottom:none;padding-bottom:0}
@@ -502,16 +502,6 @@ body.layout-edit .drag-handle{display:flex}
 @media(min-width:640px){.badge-stats{grid-template-columns:repeat(4,1fr)}}
 
 /* Position size calculator */
-.psc-box{background:linear-gradient(135deg,var(--primary-soft),var(--bg-subtle));border:1.5px solid var(--primary);border-radius:14px;padding:14px;margin-top:8px}
-.psc-head{font-size:.78rem;font-weight:800;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.psc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-.psc-grid label{font-size:.68rem;color:var(--text-muted);font-weight:600;margin-bottom:2px;display:block}
-.psc-grid input{width:100%;background:var(--bg-card);border:1.5px solid var(--border);color:var(--text);padding:8px 10px;border-radius:9px;font-size:.82rem;outline:none}
-.psc-result{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px}
-@media(max-width:480px){.psc-result{grid-template-columns:1fr 1fr}}
-.psc-item{background:var(--bg-card);border-radius:9px;padding:8px;text-align:center;border:1px solid var(--border)}
-.psc-item .psc-lbl{font-size:.65rem;color:var(--text-muted);font-weight:600}
-.psc-item .psc-val{font-size:.92rem;font-weight:800;margin-top:2px;color:var(--primary)}
 
 /* Symbol × Day heatmap */
 .symday-wrap{overflow-x:auto;margin-top:8px}
@@ -522,12 +512,35 @@ body.layout-edit .drag-handle{display:flex}
 .symday-table th.sym-col{text-align:right;padding-inline-end:10px;min-width:70px}
 
 /* Badge toast */
-.badge-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;padding:14px 22px;border-radius:16px;font-size:.9rem;z-index:3500;font-weight:700;box-shadow:0 20px 40px rgba(245,158,11,.4);transition:transform .5s cubic-bezier(.34,1.56,.64,1);max-width:calc(100% - 30px);text-align:center;display:flex;align-items:center;gap:12px}
+.badge-toast{position:fixed;top:calc(20px + env(safe-area-inset-top, 0px));left:50%;transform:translateX(-50%) translateY(-100px);background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;padding:14px 22px;border-radius:16px;font-size:.9rem;z-index:3500;font-weight:700;box-shadow:0 20px 40px rgba(245,158,11,.4);transition:transform .5s cubic-bezier(.34,1.56,.64,1);max-width:calc(100% - 30px);text-align:center;display:flex;align-items:center;gap:12px}
 .badge-toast.show{transform:translateX(-50%) translateY(0)}
 .badge-toast .bt-medal{font-size:1.8rem;flex-shrink:0}
 .badge-toast .bt-txt{text-align:right;line-height:1.4}
 .badge-toast .bt-title{font-weight:900;font-size:.95rem}
 .badge-toast .bt-desc{font-size:.75rem;opacity:.95;font-weight:500}
+
+.today-strip{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;box-shadow:var(--shadow-xs)}
+.today-strip .ts-label{font-size:.75rem;color:var(--text-muted);font-weight:700;margin-inline-end:4px}
+.today-strip .ts-item{font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--bg-subtle);padding:6px 12px;border-radius:20px}
+.today-strip .ts-empty{font-size:.8rem;color:var(--text-muted)}
+.underwater-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow-xs)}
+.underwater-card h4{font-size:.82rem;margin-bottom:8px;font-weight:700}
+.uw-row{display:flex;flex-wrap:wrap;gap:10px}
+.uw-item{flex:1;min-width:110px;background:var(--bg-subtle);border-radius:12px;padding:10px 12px}
+.uw-item .lab{font-size:.68rem;color:var(--text-muted);font-weight:600;margin-bottom:4px}
+.uw-item .val{font-size:1.05rem;font-weight:800}
+.skeleton-wrap{display:none;padding:8px 0 16px}
+.skeleton-wrap.show{display:block}
+.sk{background:linear-gradient(90deg,var(--bg-muted) 25%,var(--bg-hover) 37%,var(--bg-muted) 63%);background-size:400% 100%;animation:skShine 1.2s ease infinite;border-radius:12px}
+@keyframes skShine{0%{background-position:100% 0}100%{background-position:0 0}}
+.sk-row{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.sk-card{height:72px;flex:1;min-width:120px}
+.sk-line{height:16px;margin-bottom:8px}
+.sk-block{height:140px;margin-bottom:12px}
+body.booting #dashSections{opacity:.35;pointer-events:none}
+body.booting .skeleton-wrap{display:block}
+body.booting .today-strip{opacity:.4}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -592,6 +605,21 @@ body.layout-edit .drag-handle{display:flex}
     <div class="layout-editbar" id="layoutEditbar" style="display:none">
       <span>🖐 حالت چیدمان — دستگیره ⠿ برای جابه‌جایی · نوار آبی ↔ برای تغییر اندازه</span>
       <button class="btn btn-sm" onclick="toggleLayoutEdit(false)">تمام شد</button>
+    </div>
+    <div class="today-strip" id="todayStrip">
+      <span class="ts-label">امروز</span>
+      <span class="ts-empty" id="todayStripBody">—</span>
+    </div>
+    <div class="underwater-card" id="underwaterCard">
+      <h4>📉 Drawdown زیر آب</h4>
+      <div class="uw-row" id="underwaterBody">
+        <div class="uw-item"><div class="lab">وضعیت</div><div class="val">—</div></div>
+      </div>
+    </div>
+    <div class="skeleton-wrap" id="dashSkeleton">
+      <div class="sk-row"><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div></div>
+      <div class="sk sk-block"></div>
+      <div class="sk-row"><div class="sk sk-card"></div><div class="sk sk-card"></div></div>
     </div>
     <div id="dashSections">
       <div class="dash-section" data-key="balance" data-layout-group="dashboard" data-layout-key="balance" data-default-size="l">
@@ -1112,19 +1140,6 @@ body.layout-edit .drag-handle{display:flex}
             </div>
           </div>
 
-          <div class="psc-box">
-            <div class="psc-head">🧮 Position Size Calculator</div>
-            <div class="psc-grid">
-              <div><label>حساب ($)</label><input type="number" id="pscBalance" value="1000" step="any" oninput="updatePSC()"></div>
-              <div><label>ریسک (%)</label><input type="number" id="pscRiskPct" value="1" step="0.1" oninput="updatePSC()"></div>
-            </div>
-            <div class="psc-result">
-              <div class="psc-item"><div class="psc-lbl">ریسک $</div><div class="psc-val" id="pscRiskUSD">10$</div></div>
-              <div class="psc-item"><div class="psc-lbl">فاصله (پیپ)</div><div class="psc-val" id="pscPips">—</div></div>
-              <div class="psc-item"><div class="psc-lbl">حجم پیشنهادی</div><div class="psc-val" id="pscLot">—</div></div>
-            </div>
-          </div>
-
           <div class="form-group" style="margin-top:16px"><label>تیک‌های ریوارد</label>
             <div class="check-row">
               <label class="check-item"><input type="checkbox" id="tfR1" onchange="toggleChip(this)"> 1R</label>
@@ -1199,14 +1214,14 @@ body.layout-edit .drag-handle{display:flex}
             <div class="emo-block">
               <div class="emo-block-head"><span class="emo-num">04</span><div><div class="emo-block-title">انگیزه ورود</div></div></div>
               <div class="chip-group" id="motiveChecks">
-                <span class="chip check-item" data-val="طبق استراتژی" style="margin:0">طبق استراتژی</span>
-                <span class="chip check-item" data-val="FOMO" style="margin:0">FOMO</span>
-                <span class="chip check-item" data-val="انتقام از بازار" style="margin:0">انتقام</span>
-                <span class="chip check-item" data-val="شهود" style="margin:0">شهود</span>
-                <span class="chip check-item" data-val="توصیه دیگران" style="margin:0">توصیه دیگران</span>
-                <span class="chip check-item" data-val="اخبار" style="margin:0">اخبار</span>
-                <span class="chip check-item" data-val="سیگنال تکنیکال" style="margin:0">تکنیکال</span>
-                <span class="chip check-item" data-val="سیگنال فاندامنتال" style="margin:0">فاندامنتال</span>
+                <span class="chip check-item" data-val="طبق استراتژی" style="margin:0" onclick="toggleMultiChip(this)">طبق استراتژی</span>
+                <span class="chip check-item" data-val="FOMO" style="margin:0" onclick="toggleMultiChip(this)">FOMO</span>
+                <span class="chip check-item" data-val="انتقام از بازار" style="margin:0" onclick="toggleMultiChip(this)">انتقام</span>
+                <span class="chip check-item" data-val="شهود" style="margin:0" onclick="toggleMultiChip(this)">شهود</span>
+                <span class="chip check-item" data-val="توصیه دیگران" style="margin:0" onclick="toggleMultiChip(this)">توصیه دیگران</span>
+                <span class="chip check-item" data-val="اخبار" style="margin:0" onclick="toggleMultiChip(this)">اخبار</span>
+                <span class="chip check-item" data-val="سیگنال تکنیکال" style="margin:0" onclick="toggleMultiChip(this)">تکنیکال</span>
+                <span class="chip check-item" data-val="سیگنال فاندامنتال" style="margin:0" onclick="toggleMultiChip(this)">فاندامنتال</span>
               </div>
             </div>
           </div>
@@ -1224,15 +1239,15 @@ body.layout-edit .drag-handle{display:flex}
             <div class="emo-block">
               <div class="emo-block-head"><span class="emo-num">03</span><div><div class="emo-block-title">اشتباهات</div></div></div>
               <div class="chip-group" id="mistakeChecks">
-                <span class="chip check-item" data-val="جابجایی حد ضرر" style="margin:0">جابجایی SL</span>
-                <span class="chip check-item" data-val="خروج زودهنگام" style="margin:0">خروج زود</span>
-                <span class="chip check-item" data-val="ورود دیرهنگام" style="margin:0">ورود دیر</span>
-                <span class="chip check-item" data-val="عدم پایبندی به پلن" style="margin:0">عدم پایبندی</span>
-                <span class="chip check-item" data-val="معامله بیش از حد" style="margin:0">بیش از حد</span>
-                <span class="chip check-item" data-val="ریسک بالا" style="margin:0">ریسک بالا</span>
-                <span class="chip check-item" data-val="FOMO" style="margin:0">FOMO</span>
-                <span class="chip check-item" data-val="معامله انتقامی" style="margin:0">انتقامی</span>
-                <span class="chip check-item" data-val="عدم صبر" style="margin:0">عدم صبر</span>
+                <span class="chip check-item" data-val="جابجایی حد ضرر" style="margin:0" onclick="toggleMultiChip(this)">جابجایی SL</span>
+                <span class="chip check-item" data-val="خروج زودهنگام" style="margin:0" onclick="toggleMultiChip(this)">خروج زود</span>
+                <span class="chip check-item" data-val="ورود دیرهنگام" style="margin:0" onclick="toggleMultiChip(this)">ورود دیر</span>
+                <span class="chip check-item" data-val="عدم پایبندی به پلن" style="margin:0" onclick="toggleMultiChip(this)">عدم پایبندی</span>
+                <span class="chip check-item" data-val="معامله بیش از حد" style="margin:0" onclick="toggleMultiChip(this)">بیش از حد</span>
+                <span class="chip check-item" data-val="ریسک بالا" style="margin:0" onclick="toggleMultiChip(this)">ریسک بالا</span>
+                <span class="chip check-item" data-val="FOMO" style="margin:0" onclick="toggleMultiChip(this)">FOMO</span>
+                <span class="chip check-item" data-val="معامله انتقامی" style="margin:0" onclick="toggleMultiChip(this)">انتقامی</span>
+                <span class="chip check-item" data-val="عدم صبر" style="margin:0" onclick="toggleMultiChip(this)">عدم صبر</span>
               </div>
             </div>
             <div class="emo-block">
@@ -1305,6 +1320,7 @@ body.layout-edit .drag-handle{display:flex}
       <div class="settings-tabs">
         <button class="active" data-stab="lists" onclick="switchSettingsTab('lists')">لیست‌ها</button>
         <button data-stab="analytics" onclick="switchSettingsTab('analytics')">آنالیز</button>
+        <button data-stab="badges" onclick="switchSettingsTab('badges')">مدال‌ها</button>
         <button data-stab="sessions" onclick="switchSettingsTab('sessions')">سشن‌ها</button>
         <button data-stab="layout" onclick="switchSettingsTab('layout')">چیدمان</button>
         <button data-stab="menu" onclick="switchSettingsTab('menu')">منوها</button>
@@ -1345,6 +1361,26 @@ body.layout-edit .drag-handle{display:flex}
         </div>
         <button class="btn btn-sm" style="width:100%" onclick="saveAnalyticsThreshold()">💾 ذخیره تنظیمات</button>
         <div style="margin-top:12px;padding:10px;background:var(--info-soft);border-radius:10px;font-size:.75rem;color:var(--info-text);line-height:1.7" id="analyticsInfo"></div>
+      </div>
+
+      <div class="settings-pane" id="spane-badges">
+        <div class="section-title">تارگت سود مدال‌ها</div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px;line-height:1.7">
+          برای مدال‌هایی که بر اساس سود خالص باز می‌شن، تارگت دلاری دلخواهت رو بنویس.
+        </p>
+        <div class="form-group">
+          <label>💰 مدال برنزی — تارگت سود ($)</label>
+          <input type="number" id="badgeTargetProfit500" min="0" step="any" oninput="saveBadgeTargets()">
+        </div>
+        <div class="form-group">
+          <label>💎 مدال نقره‌ای — تارگت سود ($)</label>
+          <input type="number" id="badgeTargetProfit1000" min="0" step="any" oninput="saveBadgeTargets()">
+        </div>
+        <div class="form-group">
+          <label>🏅 مدال طلایی — تارگت سود ($)</label>
+          <input type="number" id="badgeTargetProfit5000" min="0" step="any" oninput="saveBadgeTargets()">
+        </div>
+        <div style="margin-top:8px;padding:10px;background:var(--info-soft);border-radius:10px;font-size:.75rem;color:var(--info-text);line-height:1.7">تغییرات خودکار ذخیره و در پایگاه‌داده سینک می‌شن.</div>
       </div>
 
       <div class="settings-pane" id="spane-sessions">
@@ -1408,11 +1444,11 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v17 (final: duration/hour/symday/gap/discipline/badges/PSC/analytics-threshold)';
+const APP_BUILD = 'BUILD-v19 (today-strip, skeleton, underwater-dd, voice-compress)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
-const DEFAULT_TRIGGERS = ['شکست ساختار','برگشت از زون','کراس مووینگ','الگوی شمعی','تایید حجم','دایورجنس','BOS','CHoCH','ورود پول'];
+const DEFAULT_TRIGGERS = [];
 const DEFAULT_EMOTIONS = ['آرام','مطمئن','مضطرب','ترسیده','طمع‌کار','هیجان‌زده','ناامید','خنثی','عصبان','خسته','راضی','پشیمان','خوشحال','ناراحت','بی‌تفاوت'];
 const DOW_FA = ['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'];
 const MONTH_FA = ['ژانویه','فوریه','مارس','آوریل','مه','ژوئن','ژوئیه','اوت','سپتامبر','اکتبر','نوامبر','دسامبر'];
@@ -1476,9 +1512,9 @@ const BADGES = [
   { id:'streak3', medal:'🔥', title:'گرم شدن', desc:'۳ برد پیوسته', color:'bronze', check:t=>calcStreaks(t).maxWin>=3, progress:t=>Math.min(1,calcStreaks(t).maxWin/3) },
   { id:'streak5', medal:'⚡', title:'استریک ۵', desc:'۵ برد پیوسته', color:'silver', check:t=>calcStreaks(t).maxWin>=5, progress:t=>Math.min(1,calcStreaks(t).maxWin/5) },
   { id:'streak10', medal:'💎', title:'الماس', desc:'۱۰ برد پیوسته', color:'gold', check:t=>calcStreaks(t).maxWin>=10, progress:t=>Math.min(1,calcStreaks(t).maxWin/10) },
-  { id:'profit500', medal:'💰', title:'سود ۵۰۰$', desc:'سود خالص ≥ ۵۰۰ دلار', color:'bronze', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=500, progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/500) },
-  { id:'profit1000', medal:'💎', title:'سود ۱۰۰۰$', desc:'سود خالص ≥ ۱۰۰۰ دلار', color:'silver', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=1000, progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/1000) },
-  { id:'profit5000', medal:'🏅', title:'سود ۵۰۰۰$', desc:'سود خالص ≥ ۵۰۰۰ دلار', color:'gold', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=5000, progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/5000) },
+  { id:'profit500', medal:'💰', title:()=>'سود '+getBadgeTarget('profit500',500)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit500',500)+' دلار', color:'bronze', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=getBadgeTarget('profit500',500), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/getBadgeTarget('profit500',500)) },
+  { id:'profit1000', medal:'💎', title:()=>'سود '+getBadgeTarget('profit1000',1000)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit1000',1000)+' دلار', color:'silver', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=getBadgeTarget('profit1000',1000), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/getBadgeTarget('profit1000',1000)) },
+  { id:'profit5000', medal:'🏅', title:()=>'سود '+getBadgeTarget('profit5000',5000)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit5000',5000)+' دلار', color:'gold', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=getBadgeTarget('profit5000',5000), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/getBadgeTarget('profit5000',5000)) },
   { id:'wr60', medal:'🎖️', title:'دقت بالا', desc:'وین ریت ≥ ۶۰٪ (حداقل ۲۰ معامله)', color:'gold', check:t=>t.length>=20&&(()=>{const w=t.filter(x=>x.Result==='Win').length,l=t.filter(x=>x.Result==='Loss').length;return w+l?((w/(w+l))*100)>=60:false;})(), progress:t=>t.length>=20?Math.min(1,1):t.length/20 },
   { id:'pf2', medal:'⚖️', title:'پروفیت فاکتور ۲', desc:'PF ≥ ۲ (سود÷ضرر)', color:'gold', check:t=>{const w=t.filter(x=>calcPnL(x)>0).reduce((s,x)=>s+calcPnL(x),0);const l=t.filter(x=>calcPnL(x)<0).reduce((s,x)=>s+Math.abs(calcPnL(x)),0);return l>0&&w/l>=2;}, progress:t=>{const w=t.filter(x=>calcPnL(x)>0).reduce((s,x)=>s+calcPnL(x),0);const l=t.filter(x=>calcPnL(x)<0).reduce((s,x)=>s+Math.abs(calcPnL(x)),0);return l>0?Math.min(1,(w/l)/2):0;} },
   { id:'r3ten', medal:'🌟', title:'۱۰ برد 3R', desc:'۱۰ معامله با +۳R', color:'gold', check:t=>t.filter(x=>x.r3&&calcPnL(x)>0).length>=10, progress:t=>Math.min(1,t.filter(x=>x.r3&&calcPnL(x)>0).length/10) },
@@ -1488,6 +1524,9 @@ const BADGES = [
   { id:'monthly', medal:'📅', title:'ماه کامل', desc:'۲۰ روز معاملاتی فعال', color:'silver', check:t=>new Set(t.map(x=>x['Entry Date']).filter(Boolean)).size>=20, progress:t=>Math.min(1,new Set(t.map(x=>x['Entry Date']).filter(Boolean)).size/20) },
   { id:'checklist_master', medal:'✅', title:'پایبند', desc:'۲۰ معامله با چک‌لیست کامل', color:'gold', check:t=>t.filter(x=>{const cl=Array.isArray(x.checklists)?x.checklists:(x.checklist?[x.checklist]:[]);return cl.some(c=>c.total&&c.done>=c.total);}).length>=20, progress:t=>Math.min(1,t.filter(x=>{const cl=Array.isArray(x.checklists)?x.checklists:(x.checklist?[x.checklist]:[]);return cl.some(c=>c.total&&c.done>=c.total);}).length/20) }
 ];
+function getBadgeTarget(key, fallback){ return (custom && custom.badgeTargets && custom.badgeTargets[key] != null && custom.badgeTargets[key] !== '') ? Number(custom.badgeTargets[key]) : fallback; }
+function bTitle(b){ return typeof b.title === 'function' ? b.title() : b.title; }
+function bDesc(b){ return typeof b.desc === 'function' ? b.desc() : b.desc; }
 
 /* ====== STATE ====== */
 let allTrades = [], filtered = [], filteredForAnalysis = [];
@@ -1496,7 +1535,7 @@ let equityChart = null, pieChart = null, sparkChart = null;
 let rDistChart = null, rDistChartDash = null;
 let hmYear = null, hmMonth = null, hmMode = 'pnl';
 let editingId = null, currentPeriod = 'all', currentTags = [];
-let custom = { setups: [], zones: [], triggers: [], emotions: [], tags: [], tagColors: {}, checklists: [], sessions: [], layout: {}, analyticsFromDate: '', analyticsFromTradeNum: null };
+let custom = { setups: [], zones: [], triggers: [], emotions: [], tags: [], tagColors: {}, checklists: [], sessions: [], layout: {}, analyticsFromDate: '', analyticsFromTradeNum: null, badgeTargets: { profit500: 500, profit1000: 1000, profit5000: 5000 } };
 let editingChecklistId = null;
 let clEditorItems = [];
 let activeFilterTags = [];
@@ -1664,6 +1703,8 @@ async function init(){
   document.getElementById('loginOverlay').style.display = 'flex';
 }
 async function bootApp(){
+  document.body.classList.add('booting');
+  const sk = document.getElementById('dashSkeleton'); if (sk) sk.classList.add('show');
   loadTheme(); loadCustom();
   await loadCustomFromSupabase();
   await loadTradesFromSupabase();
@@ -1685,6 +1726,8 @@ async function bootApp(){
   try { checkNewBadges(); } catch(e){}
   const bi = document.getElementById('buildInfo');
   if (bi) bi.textContent = '🔧 نسخه فایل: ' + APP_BUILD;
+  document.body.classList.remove('booting');
+  if (sk) sk.classList.remove('show');
 }
 async function loadCustomFromSupabase(){
   try {
@@ -1701,6 +1744,7 @@ async function loadCustomFromSupabase(){
       if (!custom.checklists) custom.checklists = [];
       if (!custom.sessions || !custom.sessions.length) custom.sessions = JSON.parse(JSON.stringify(DEFAULT_SESSIONS));
       if (!custom.layout) custom.layout = {};
+      if (!custom.badgeTargets) custom.badgeTargets = { profit500: 500, profit1000: 1000, profit5000: 5000 };
       localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
     } else await saveCustomToSupabase();
   } catch(e){ console.error(e); }
@@ -1779,6 +1823,24 @@ function switchSettingsTab(name){
   if (name === 'sessions') renderSessionsEditor();
   if (name === 'layout') renderLayoutManager();
   if (name === 'analytics') renderAnalyticsSettings();
+  if (name === 'badges') renderBadgeTargetsSettings();
+}
+function renderBadgeTargetsSettings(){
+  if (!custom.badgeTargets) custom.badgeTargets = { profit500: 500, profit1000: 1000, profit5000: 5000 };
+  const el500 = document.getElementById('badgeTargetProfit500'); if (el500) el500.value = custom.badgeTargets.profit500 != null ? custom.badgeTargets.profit500 : 500;
+  const el1000 = document.getElementById('badgeTargetProfit1000'); if (el1000) el1000.value = custom.badgeTargets.profit1000 != null ? custom.badgeTargets.profit1000 : 1000;
+  const el5000 = document.getElementById('badgeTargetProfit5000'); if (el5000) el5000.value = custom.badgeTargets.profit5000 != null ? custom.badgeTargets.profit5000 : 5000;
+}
+function saveBadgeTargets(){
+  if (!custom.badgeTargets) custom.badgeTargets = {};
+  const v500 = parseFloat(document.getElementById('badgeTargetProfit500').value);
+  const v1000 = parseFloat(document.getElementById('badgeTargetProfit1000').value);
+  const v5000 = parseFloat(document.getElementById('badgeTargetProfit5000').value);
+  custom.badgeTargets.profit500 = isNaN(v500) ? 500 : v500;
+  custom.badgeTargets.profit1000 = isNaN(v1000) ? 1000 : v1000;
+  custom.badgeTargets.profit5000 = isNaN(v5000) ? 5000 : v5000;
+  saveCustom();
+  try { renderBadges(); } catch(e){}
 }
 function loadDashOrder(){ try { return JSON.parse(localStorage.getItem('journal_dash_order') || 'null'); } catch(e){ return null; } }
 function saveDashOrder(){ const order = [...document.querySelectorAll('#dashSections .dash-section')].map(el => el.dataset.key); localStorage.setItem('journal_dash_order', JSON.stringify(order)); }
@@ -1901,6 +1963,7 @@ function loadCustom(){
   if (!custom.layout) custom.layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
   if (!custom.analyticsFromDate) custom.analyticsFromDate = '';
   if (custom.analyticsFromTradeNum == null) custom.analyticsFromTradeNum = null;
+  if (!custom.badgeTargets) custom.badgeTargets = { profit500: 500, profit1000: 1000, profit5000: 5000 };
   if (!custom.checklists.length) {
     custom.checklists = [{ id: 'cl_default', name: 'قبل ترید', advanced: true, items: [
       { id:'i1', text:'واگرایی داره؟', weight:50 }, { id:'i2', text:'با روند؟', weight:50 }
@@ -2988,8 +3051,8 @@ function renderBadges(){
     const prog = b.progress ? Math.min(1, Math.max(0, b.progress(trades))) : (ok?1:0);
     return `<div class="badge-card ${b.color}${ok?' unlocked':''}${ok?'':' locked'}">
       <span class="badge-medal">${b.medal}</span>
-      <div class="badge-title">${b.title}</div>
-      <div class="badge-desc">${b.desc}</div>
+      <div class="badge-title">${bTitle(b)}</div>
+      <div class="badge-desc">${bDesc(b)}</div>
       ${!ok ? `<div class="badge-progress"><div class="badge-progress-fill" style="width:${(prog*100).toFixed(0)}%"></div></div><div class="badge-progress-text">${(prog*100).toFixed(0)}%</div>` : ''}
     </div>`;
   }).join('');
@@ -3000,41 +3063,71 @@ function checkNewBadges(){
   let newOnes = [];
   unlockedNow.forEach(id => { if (!shownBadges.has(id)) { shownBadges.add(id); newOnes.push(BADGES.find(b => b.id === id)); } });
   if (shownBadges.size === 0) { shownBadges = unlockedNow; return; } // first load: don't toast
-  newOnes.forEach((b, i) => setTimeout(() => showBadgeToast(b.medal, b.title, b.desc), i*800));
+  newOnes.forEach((b, i) => setTimeout(() => showBadgeToast(b.medal, bTitle(b), bDesc(b)), i*800));
   localStorage.setItem('journal_shown_badges', JSON.stringify([...shownBadges]));
 }
 // load previously shown
 (function(){ try { const s = JSON.parse(localStorage.getItem('journal_shown_badges')||'null'); if (Array.isArray(s)) shownBadges = new Set(s); } catch(e){} })();
 
-/* ====== POSITION SIZE CALCULATOR ====== */
-function updatePSC(){
-  const balance = parseFloat(document.getElementById('pscBalance').value) || 0;
-  const riskPct = parseFloat(document.getElementById('pscRiskPct').value) || 0;
-  const riskUSD = balance * riskPct / 100;
-  document.getElementById('pscRiskUSD').textContent = riskUSD.toFixed(2) + '$';
-  const sym = document.getElementById('tfSymbol').value || '';
-  const entry = parseFloat(document.getElementById('tfEntry').value);
-  const sl = parseFloat(document.getElementById('tfSL').value);
-  if (!sym || !entry || !sl || isNaN(entry) || isNaN(sl)) {
-    document.getElementById('pscPips').textContent = '—';
-    document.getElementById('pscLot').textContent = '—';
+/* ====== DASHBOARD ====== */
+function renderTodayStrip(){
+  const el = document.getElementById('todayStripBody');
+  if (!el) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const dayTrades = allTrades.filter(t => (t['Entry Date'] || '') === today);
+  if (!dayTrades.length) {
+    el.className = 'ts-empty';
+    el.textContent = 'بدون معامله';
     return;
   }
-  const pipSize = getPipSize(sym);
-  const pips = Math.abs(entry - sl) / pipSize;
-  document.getElementById('pscPips').textContent = pips.toFixed(1);
-  // pip value per standard lot (approx): forex USD-quoted = $10, JPY = ~$9, gold = $10
-  let pipValuePerLot = 10;
-  const s = String(sym).toLowerCase();
-  if (s.includes('jpy')) pipValuePerLot = 9;
-  const lot = pips > 0 ? riskUSD / (pips * pipValuePerLot) : 0;
-  document.getElementById('pscLot').textContent = lot.toFixed(2) + ' lot';
-  // auto-fill stop_usd
-  const stopUsdInput = document.getElementById('tfStopUsd');
-  if (stopUsdInput && !stopUsdInput.dataset.manual) stopUsdInput.value = riskUSD.toFixed(2);
+  let pnl = 0, w = 0, l = 0;
+  dayTrades.forEach(t => {
+    const p = calcPnL(t); pnl += p;
+    if (t.Result === 'Win') w++; else if (t.Result === 'Loss') l++;
+  });
+  const wr = (w + l) ? Math.round(w / (w + l) * 100) : 0;
+  el.className = '';
+  el.innerHTML =
+    '<span class="ts-item">' + dayTrades.length + ' ترید</span>' +
+    '<span class="ts-item ' + (pnl >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (pnl >= 0 ? '+' : '') + pnl.toFixed(1) + '$</span>' +
+    '<span class="ts-item">WR ' + wr + '%</span>' +
+    '<span class="ts-item">' + w + 'W / ' + l + 'L</span>';
 }
-
-/* ====== DASHBOARD ====== */
+function renderUnderwater(equityPoints, totalPnL){
+  const body = document.getElementById('underwaterBody');
+  if (!body) return;
+  let peak = 0, maxDD = 0, curDD = 0, peakIdx = 0, maxDDIdx = 0, underwaterStart = -1;
+  equityPoints.forEach((pt, i) => {
+    if (pt.eq > peak) { peak = pt.eq; peakIdx = i; }
+    const dd = peak - pt.eq;
+    if (dd > maxDD) { maxDD = dd; maxDDIdx = i; }
+  });
+  if (equityPoints.length) {
+    const last = equityPoints[equityPoints.length - 1].eq;
+    // current peak up to end
+    let p2 = 0;
+    equityPoints.forEach(pt => { if (pt.eq > p2) p2 = pt.eq; });
+    curDD = Math.max(0, p2 - last);
+  }
+  // trades underwater = from last peak to end while below peak
+  let daysUnder = 0;
+  if (equityPoints.length && curDD > 0.01) {
+    let lastPeakDate = null; let p = -Infinity;
+    for (let i = 0; i < equityPoints.length; i++) {
+      if (equityPoints[i].eq >= p) { p = equityPoints[i].eq; lastPeakDate = equityPoints[i].date; }
+    }
+    const afterPeak = equityPoints.filter(pt => (pt.date || '') >= (lastPeakDate || ''));
+    const dates = [...new Set(afterPeak.map(pt => pt.date).filter(Boolean))];
+    daysUnder = dates.length;
+  }
+  const under = curDD > 0.01;
+  body.innerHTML =
+    '<div class="uw-item"><div class="lab">وضعیت</div><div class="val" style="color:' + (under ? 'var(--danger)' : 'var(--success)') + '">' + (under ? 'زیر آب' : 'در سقف') + '</div></div>' +
+    '<div class="uw-item"><div class="lab">DD فعلی</div><div class="val pnl-neg">' + (curDD > 0 ? ('-' + curDD.toFixed(1) + '$') : '0$') + '</div></div>' +
+    '<div class="uw-item"><div class="lab">Max DD</div><div class="val pnl-neg">' + (maxDD > 0 ? ('-' + maxDD.toFixed(1) + '$') : '0$') + '</div></div>' +
+    '<div class="uw-item"><div class="lab">روز زیر آب</div><div class="val">' + (under ? daysUnder : 0) + '</div></div>' +
+    '<div class="uw-item"><div class="lab">فاصله تا سقف</div><div class="val">' + (curDD > 0 ? (curDD.toFixed(1) + '$') : '—') + '</div></div>';
+}
 function renderDashboard(){
   const total = filtered.length;
   const wins = filtered.filter(t => t.Result === 'Win').length;
@@ -3105,6 +3198,8 @@ function renderDashboard(){
   let peak = 0, maxDD = 0, run = 0;
   equityPoints.forEach(pt => { run = pt.eq; if (run > peak) peak = run; const dd = peak - run; if (dd > maxDD) maxDD = dd; });
   const recovery = maxDD > 0 ? (totalPnL/maxDD).toFixed(2) : (totalPnL > 0 ? '∞' : '0');
+  try { renderTodayStrip(); } catch(e){}
+  try { renderUnderwater(equityPoints, totalPnL); } catch(e){}
   const psEl = document.getElementById('perfSummary');
   if (psEl) psEl.innerHTML = `
     <div class="stat-card"><div class="label">بهترین</div><div class="value pnl-pos">${best?'+'+best.p.toFixed(0)+'$':'—'}</div></div>
@@ -3416,8 +3511,22 @@ function setVoiceUI(state){
   const btn = document.getElementById('btnVoiceRec'), play = document.getElementById('btnVoicePlay'), del = document.getElementById('btnVoiceDel'), st = document.getElementById('voiceStatus'), audio = document.getElementById('voicePreview');
   if (!btn) return;
   if (state === 'recording') { btn.textContent = '⏹ توقف'; btn.classList.add('recording'); if (play) play.style.display = 'none'; if (del) del.style.display = 'none'; if (st) st.textContent = 'ضبط...'; }
-  else if (state === 'ready') { btn.textContent = '🎤 ضبط دوباره'; btn.classList.remove('recording'); if (play) play.style.display = ''; if (del) del.style.display = ''; if (st) st.textContent = 'آماده'; if (audio && pendingVoiceUrl) { audio.src = pendingVoiceUrl; audio.style.display = 'block'; } }
-  else { btn.textContent = '🎤 ضبط'; btn.classList.remove('recording'); if (play) play.style.display = 'none'; if (del) del.style.display = 'none'; if (st) st.textContent = 'HTTPS فقط'; if (audio) { audio.removeAttribute('src'); audio.style.display = 'none'; } }
+  else if (state === 'ready') {
+    btn.textContent = '🎤 ضبط دوباره'; btn.classList.remove('recording');
+    if (play) play.style.display = ''; if (del) del.style.display = '';
+    if (st) {
+      const sz = pendingVoiceBlob ? (pendingVoiceBlob.size / 1024) : 0;
+      const dur = pendingVoiceBlob && pendingVoiceBlob._durationSec ? pendingVoiceBlob._durationSec : 0;
+      st.textContent = 'آماده · ' + (dur ? formatVoiceDuration(dur) + ' · ' : '') + (sz ? sz.toFixed(0) + ' KB' : '');
+    }
+    if (audio && pendingVoiceUrl) { audio.src = pendingVoiceUrl; audio.style.display = 'block'; }
+  }
+  else { btn.textContent = '🎤 ضبط'; btn.classList.remove('recording'); if (play) play.style.display = 'none'; if (del) del.style.display = 'none'; if (st) st.textContent = 'HTTPS · فشرده ~24kbps · سقف ۲ دقیقه'; if (audio) { audio.removeAttribute('src'); audio.style.display = 'none'; } }
+}
+function formatVoiceDuration(sec){
+  sec = Math.max(0, Math.floor(Number(sec) || 0));
+  const m = Math.floor(sec / 60); const s = sec % 60;
+  return m + ':' + String(s).padStart(2, '0');
 }
 function clearPendingVoice(){
   if (pendingVoiceUrl) { try { URL.revokeObjectURL(pendingVoiceUrl); } catch(e){} }
@@ -3426,7 +3535,7 @@ function clearPendingVoice(){
   mediaRecorder = null; recChunks = []; setVoiceUI('idle');
 }
 function playPendingVoice(){ const a = document.getElementById('voicePreview'); if (a && pendingVoiceUrl) { a.style.display = 'block'; a.play(); } }
-function onVoiceFile(e){ const f = e.target.files && e.target.files[0]; if (!f) return; clearPendingVoice(); pendingVoiceBlob = f; pendingVoiceUrl = URL.createObjectURL(f); setVoiceUI('ready'); }
+function onVoiceFile(e){ const f = e.target.files && e.target.files[0]; if (!f) return; clearPendingVoice(); pendingVoiceBlob = f; try { pendingVoiceBlob._durationSec = 0; } catch(err){} pendingVoiceUrl = URL.createObjectURL(f); setVoiceUI('ready'); const a = document.getElementById('voicePreview'); if (a) { a.onloadedmetadata = () => { try { pendingVoiceBlob._durationSec = Math.round(a.duration||0); setVoiceUI('ready'); } catch(err){} }; } }
 async function toggleVoiceRec(){
   if (isRecording) { if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); return; }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast('میکروفون پشتیبانی نمیشود'); return; }
@@ -3435,17 +3544,31 @@ async function toggleVoiceRec(){
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     recChunks = [];
     const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : (MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '');
-    mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    const recOpts = mime ? { mimeType: mime, audioBitsPerSecond: 24000 } : { audioBitsPerSecond: 24000 };
+    try { mediaRecorder = new MediaRecorder(stream, recOpts); }
+    catch(e1) { try { mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); } catch(e2) { mediaRecorder = new MediaRecorder(stream); } }
+    window._voiceRecStartedAt = Date.now();
+    if (window._voiceRecTimer) clearInterval(window._voiceRecTimer);
+    window._voiceRecTimer = setInterval(() => {
+      const sec = Math.floor((Date.now() - window._voiceRecStartedAt) / 1000);
+      const st = document.getElementById('voiceStatus');
+      if (st && isRecording) st.textContent = 'ضبط... ' + formatVoiceDuration(sec);
+      if (sec >= 120 && mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch(e){} }
+    }, 250);
     mediaRecorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) recChunks.push(ev.data); };
     mediaRecorder.onstop = () => {
       stream.getTracks().forEach(t => t.stop());
       isRecording = false;
+      if (window._voiceRecTimer) { clearInterval(window._voiceRecTimer); window._voiceRecTimer = null; }
+      const durSec = Math.max(1, Math.round((Date.now() - (window._voiceRecStartedAt || Date.now())) / 1000));
       pendingVoiceBlob = new Blob(recChunks, { type: (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm' });
+      pendingVoiceBlob._durationSec = durSec;
       if (pendingVoiceUrl) try { URL.revokeObjectURL(pendingVoiceUrl); } catch(e){}
       pendingVoiceUrl = URL.createObjectURL(pendingVoiceBlob);
       setVoiceUI('ready');
     };
-    mediaRecorder.start(); isRecording = true; setVoiceUI('recording');
+    try { mediaRecorder.start(1000); } catch(e) { mediaRecorder.start(); }
+    isRecording = true; setVoiceUI('recording');
   } catch(e){ showToast('دسترسی میکروفون نیست'); }
 }
 async function playTradeVoice(tradeId){
@@ -3488,11 +3611,9 @@ function openAddModal(editTrade){
   document.getElementById('energyVal').textContent = '5';
   document.getElementById('confVal').textContent = '5';
   document.getElementById('execVal').textContent = '5';
-  document.getElementById('pscBalance').value = '1000';
-  document.getElementById('pscRiskPct').value = '1';
   document.getElementById('tfStopUsd').dataset.manual = '';
   refreshCustomUI();
-  updatePipPreview(); updatePSC(); updateDurationPreview();
+  updatePipPreview(); updateDurationPreview();
   if (editTrade) {
     document.getElementById('tfSymbol').value = editTrade.Symbol || '';
     setDir(editTrade.Direction || 'Buy');
@@ -3547,7 +3668,7 @@ function openAddModal(editTrade){
     const cls = Array.isArray(editTrade.checklists) ? editTrade.checklists : (editTrade.checklist ? [editTrade.checklist] : []);
     cls.forEach(cl => { if (cl.checked) { const clDef = (custom.checklists||[]).find(c => c.id === cl.checklistId); if (clDef) Object.entries(cl.checked).forEach(([k, v]) => { if (v) window._tradeClChecked[clDef.id + '__' + k] = true; }); } });
     renderTradeChecklistColumns();
-    updatePipPreview(); updatePSC(); updateDurationPreview();
+    updatePipPreview(); updateDurationPreview();
     if (editTrade.has_voice) { const st = document.getElementById('voiceStatus'); if (st) st.textContent = 'ویس ذخیره‌شده دارد'; }
   } else { addImageSlot(); }
   document.getElementById('addModal').classList.add('show'); lockScroll();
@@ -3557,6 +3678,7 @@ function setDir(dir){ document.getElementById('tfDirection').value = dir; const 
 function setDirection(dir){ setDir(dir); }
 function setResult(res){ document.getElementById('tfResult').value = res; const w = document.getElementById('btnWin'), l = document.getElementById('btnLoss'); if (w) w.classList.toggle('active-win', res === 'Win'); if (l) l.classList.toggle('active-loss', res === 'Loss'); }
 function toggleChip(cb){ const item = cb.closest('.check-item'); if (item) item.classList.toggle('selected', cb.checked); }
+function toggleMultiChip(el){ el.classList.toggle('selected'); }
 function selectChip(btn, hiddenId){
   const box = btn.parentElement;
   box.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
@@ -4106,6 +4228,7 @@ function openSettings(){
   renderManageList('listEmotions', custom.emotions, 'emotions');
   renderManageList('listZones', custom.zones, 'zones');
   renderManageList('listTags', custom.tags, 'tags');
+  renderBadgeTargetsSettings();
   document.getElementById('settingsModal').classList.add('show'); lockScroll();
 }
 function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); unlockScroll(); refreshCustomUI(); setupFilters(); }
@@ -4218,9 +4341,6 @@ function bindEvents(){
       if (pane) pane.classList.add('active');
     });
   });
-  document.querySelectorAll('#motiveChecks .chip, #mistakeChecks .chip').forEach(chip => {
-    chip.addEventListener('click', (e) => { e.preventDefault(); chip.classList.toggle('selected'); });
-  });
   document.querySelectorAll('#perfTabs button').forEach(btn => {
     btn.addEventListener('click', () => { document.querySelectorAll('#perfTabs button').forEach(b => b.classList.remove('active')); btn.classList.add('active'); perfTab = btn.dataset.perf; renderPerfTab(); });
   });
@@ -4243,7 +4363,7 @@ function bindEvents(){
     });
   }
   ['fSession','fDow','fMinPnL','fMaxLoss','fMinStop','fMaxStop','fMinR','fPreEmotion','fPostEmotion','fEnergyMin','fEnergyMax','fConfMin','fConfMax','fExecMin','fExecMax','fMotive','fMistake','fDivergence','fChecklist','fChecklistStatus'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', applyFilters); });
-  ['tfSymbol','tfEntry','tfSL'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', () => { updatePipPreview(); updatePSC(); }); });
+  ['tfSymbol','tfEntry','tfSL'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', updatePipPreview); });
   ['tfTime','tfExitTime'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', updateDurationPreview); });
   document.getElementById('tfStopUsd')?.addEventListener('input', function(){ this.dataset.manual = '1'; });
   document.getElementById('addModal').addEventListener('click', e => { if (e.target.id === 'addModal') closeAddModal(); });
