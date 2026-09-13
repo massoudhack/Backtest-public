@@ -1,8 +1,7 @@
-const CACHE = 'tj-cache-v7';
+const CACHE = 'tj-cache-v8';
 const ASSETS = [
   './',
   './index.html',
-  './trading-journal.html',
   './trades_data.js',
   './manifest.webmanifest',
   './icon-192.png',

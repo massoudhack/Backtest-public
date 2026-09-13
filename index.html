@@ -101,6 +101,7 @@
     .progress-bar{height:4px;background:var(--bg);border-radius:2px;overflow:hidden;margin-top:3px}
     .progress-fill{height:100%;border-radius:2px;background:var(--success)}
     .dir-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:480px){.dir-cards{grid-template-columns:1fr}}
     .dir-card{background:var(--bg);border-radius:10px;padding:12px;text-align:center}
     .dir-card .dir-label{font-size:.78rem;color:var(--text-muted)}
     .dir-card .dir-val{font-size:1.2rem;font-weight:700;margin:4px 0}
@@ -2502,11 +2503,11 @@ function openAddModal(editTrade) {
       window._tradeClChecked = Object.assign({}, editTrade.checklist.checked || {});
       renderTradeChecklist();
     }
-  }
     if (editTrade.has_voice) {
       const st = document.getElementById('voiceStatus');
       if (st) st.textContent = 'این معامله یه ویس ذخیره‌شده داره — برای گوش دادن یا حذفش از صفحه جزئیات معامله استفاده کن. ضبط/انتخاب فایل جدید اینجا جایگزینش می‌کنه.';
     }
+  }
   document.getElementById('addModal').classList.add('show');
 }
 
