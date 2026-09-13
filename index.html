@@ -45,7 +45,6 @@ html{scrollbar-gutter:stable}
 html,body{overscroll-behavior-y:none}
 body{font-family:'Vazirmatn',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.65;padding-bottom:110px;transition:background .25s,color .25s;-webkit-font-smoothing:antialiased}
 body.modal-open{overflow:hidden}
-body.modal-open .fab{opacity:0 !important;visibility:hidden !important;pointer-events:none !important}
 ::selection{background:var(--primary);color:#fff}
 button,input,select,textarea{color-scheme:inherit;font-family:inherit}
 input,select,textarea,button{-webkit-appearance:none;appearance:none;border-radius:var(--radius-sm)}
@@ -137,10 +136,6 @@ th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--border);w
 th{background:var(--bg-subtle);position:sticky;top:0;z-index:5;font-weight:700;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}
 tr:hover td{background:var(--bg-hover)}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600}
-.badge-win{background:var(--success-soft);color:var(--success)}
-.badge-loss{background:var(--danger-soft);color:var(--danger)}
-.badge-buy{background:var(--success-soft);color:var(--success)}
-.badge-sell{background:var(--danger-soft);color:var(--danger)}
 .pnl-pos{color:var(--success);font-weight:700}
 .pnl-neg{color:var(--danger);font-weight:700}
 .journal-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
@@ -157,7 +152,12 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .tg-name{font-weight:700;font-size:.88rem}
 .tg-count{font-size:.72rem;color:var(--text-muted);background:var(--bg-subtle);padding:3px 10px;border-radius:12px;font-weight:600}
 .tg-pnl{font-weight:800;font-size:.92rem;margin-inline-start:auto}
-.fab{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:100;padding:14px 26px !important;font-size:.94rem !important;border-radius:20px !important;box-shadow:0 12px 30px var(--primary-glow)}
+
+/* FAB WRAPPER — prevents jumping */
+.fab-wrap{position:fixed;bottom:24px;left:0;right:0;z-index:100;display:flex;justify-content:center;padding:0 16px;pointer-events:none}
+.fab{position:static !important;transform:none !important;padding:14px 26px !important;font-size:.94rem !important;border-radius:20px !important;box-shadow:0 12px 30px var(--primary-glow);pointer-events:auto}
+body.modal-open .fab-wrap{display:none !important}
+
 .modal-overlay{display:none;position:fixed;inset:0;background:var(--overlay);z-index:1000;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px);overscroll-behavior:contain}
 .modal-overlay.show{display:flex;animation:overlayIn .2s ease}
 @keyframes overlayIn{from{opacity:0}to{opacity:1}}
@@ -295,15 +295,10 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .color-swatch.selected{border-color:var(--text);box-shadow:0 0 0 2px var(--bg-card),0 0 0 5px var(--text)}
 .color-swatch.selected::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:1rem;text-shadow:0 1px 3px rgba(0,0,0,.4)}
 
-/* ========== IMAGE DROP ZONES (NEW) ========== */
+/* UNLIMITED IMAGE DROP ZONES */
 .img-drop-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
 @media(max-width:520px){.img-drop-grid{grid-template-columns:1fr}}
-.img-drop-zone{
-  position:relative;border:2px dashed var(--border-strong);border-radius:16px;
-  padding:20px 14px;text-align:center;cursor:pointer;background:var(--bg-subtle);
-  transition:all .2s;min-height:150px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:8px;
-}
+.img-drop-zone{position:relative;border:2px dashed var(--border-strong);border-radius:16px;padding:20px 14px;text-align:center;cursor:pointer;background:var(--bg-subtle);transition:all .2s;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
 .img-drop-zone:hover{border-color:var(--primary);background:var(--primary-soft)}
 .img-drop-zone.dragover{border-color:var(--primary);background:var(--primary-soft);transform:scale(1.02);box-shadow:0 8px 24px var(--primary-glow)}
 .img-drop-zone.has-image{padding:0;border-style:solid;border-color:var(--border);overflow:hidden;min-height:180px}
@@ -311,147 +306,60 @@ details.trade-group[open] .tg-chevron{transform:rotate(180deg)}
 .img-drop-zone .drop-text{font-size:.82rem;font-weight:600;color:var(--text)}
 .img-drop-zone .drop-hint{font-size:.7rem;color:var(--text-muted);line-height:1.6}
 .img-drop-zone .drop-preview-img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;min-height:180px}
-.img-drop-zone .drop-actions{
-  position:absolute;top:8px;left:8px;display:flex;gap:4px;z-index:2;
-}
-.img-drop-zone .drop-action-btn{
-  width:32px;height:32px;border-radius:9px;border:none;cursor:pointer;
-  background:rgba(15,23,42,.7);color:#fff;font-size:.85rem;
-  display:flex;align-items:center;justify-content:center;
-  backdrop-filter:blur(6px);transition:transform .12s;
-}
+.img-drop-zone .drop-actions{position:absolute;top:8px;left:8px;display:flex;gap:4px;z-index:2}
+.img-drop-zone .drop-action-btn{width:32px;height:32px;border-radius:9px;border:none;cursor:pointer;background:rgba(15,23,42,.7);color:#fff;font-size:.85rem;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);transition:transform .12s}
 .img-drop-zone .drop-action-btn:hover{transform:scale(1.1)}
 .img-drop-zone .drop-action-btn.del{background:rgba(239,68,68,.85)}
 .img-drop-zone input[type=file]{display:none}
-.img-drop-zone .loading-overlay{
-  position:absolute;inset:0;background:rgba(255,255,255,.85);
-  display:flex;align-items:center;justify-content:center;z-index:5;
-}
+.img-drop-zone .loading-overlay{position:absolute;inset:0;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;z-index:5}
 body.dark .img-drop-zone .loading-overlay{background:rgba(15,23,42,.85)}
 
-/* ========== UNDO TOAST (NEW) ========== */
-.undo-toast{
-  position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--bg-card);color:var(--text);padding:10px 12px 10px 18px;
-  border-radius:14px;font-size:.83rem;z-index:2500;
-  display:none;align-items:center;gap:12px;
-  box-shadow:var(--shadow-xl);border:1px solid var(--border);
-  backdrop-filter:blur(10px);max-width:calc(100% - 24px);
-  transition:transform .3s cubic-bezier(.2,.9,.3,1),opacity .3s;
-}
+/* UNDO TOAST */
+.undo-toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg-card);color:var(--text);padding:10px 12px 10px 18px;border-radius:14px;font-size:.83rem;z-index:2500;display:none;align-items:center;gap:12px;box-shadow:var(--shadow-xl);border:1px solid var(--border);backdrop-filter:blur(10px);max-width:calc(100% - 24px);transition:transform .3s cubic-bezier(.2,.9,.3,1),opacity .3s}
 .undo-toast.show{display:flex;transform:translateX(-50%) translateY(0)}
 .undo-toast.leaving{opacity:0;transform:translateX(-50%) translateY(20px)}
 .undo-toast .undo-msg{display:flex;align-items:center;gap:8px;font-weight:500}
-.undo-toast .undo-msg .undo-icon{font-size:1.1rem}
-.undo-toast .undo-btn{
-  background:var(--primary);color:#fff;border:none;padding:7px 14px;
-  border-radius:10px;font-family:inherit;font-size:.8rem;font-weight:700;
-  cursor:pointer;display:flex;align-items:center;gap:5px;
-}
-.undo-toast .undo-btn:hover{background:var(--primary-hover)}
-.undo-toast .undo-countdown{
-  font-size:.7rem;color:var(--text-muted);min-width:24px;text-align:center;
-  font-variant-numeric:tabular-nums;
-}
+.undo-toast .undo-btn{background:var(--primary);color:#fff;border:none;padding:7px 14px;border-radius:10px;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px}
+.undo-toast .undo-countdown{font-size:.7rem;color:var(--text-muted);min-width:24px;text-align:center;font-variant-numeric:tabular-nums}
 
-/* ========== GLOBAL SEARCH (NEW) ========== */
-.global-search-wrap{
-  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);
-  padding:14px;margin-bottom:14px;box-shadow:var(--shadow-sm);
-}
-.global-search-box{
-  display:flex;align-items:center;gap:10px;
-  background:var(--bg-subtle);border:1.5px solid var(--border);
-  border-radius:14px;padding:4px 6px 4px 14px;
-  transition:all .15s;
-}
-.global-search-box:focus-within{
-  border-color:var(--primary);background:var(--bg-card);
-  box-shadow:0 0 0 4px var(--primary-glow);
-}
+/* GLOBAL SEARCH */
+.global-search-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+.global-search-box{display:flex;align-items:center;gap:10px;background:var(--bg-subtle);border:1.5px solid var(--border);border-radius:14px;padding:4px 6px 4px 14px;transition:all .15s}
+.global-search-box:focus-within{border-color:var(--primary);background:var(--bg-card);box-shadow:0 0 0 4px var(--primary-glow)}
 .global-search-box .search-icon{font-size:1.1rem;flex-shrink:0;color:var(--text-muted)}
-.global-search-box input{
-  flex:1;background:transparent;border:none;outline:none;
-  font-size:.95rem;color:var(--text);padding:10px 0;
-}
-.global-search-box .search-clear{
-  width:34px;height:34px;border-radius:10px;border:none;background:transparent;
-  color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;
-  display:none;align-items:center;justify-content:center;
-}
+.global-search-box input{flex:1;background:transparent;border:none;outline:none;font-size:.95rem;color:var(--text);padding:10px 0}
+.global-search-box .search-clear{width:34px;height:34px;border-radius:10px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;font-size:1.1rem;flex-shrink:0;display:none;align-items:center;justify-content:center}
 .global-search-box .search-clear.show{display:flex}
 .global-search-box .search-clear:hover{background:var(--danger-soft);color:var(--danger)}
-.global-search-fields{
-  display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;
-}
-.search-field-chip{
-  padding:5px 11px;border-radius:16px;border:1px solid var(--border);
-  background:var(--bg-card);font-size:.72rem;cursor:pointer;
-  color:var(--text-muted);font-weight:500;transition:all .15s;
-  user-select:none;
-}
+.global-search-fields{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.search-field-chip{padding:5px 11px;border-radius:16px;border:1px solid var(--border);background:var(--bg-card);font-size:.72rem;cursor:pointer;color:var(--text-muted);font-weight:500;transition:all .15s;user-select:none}
 .search-field-chip:hover{border-color:var(--primary-soft);color:var(--primary)}
 .search-field-chip.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.global-search-results-info{
-  font-size:.78rem;color:var(--text-muted);margin-top:10px;
-  display:none;align-items:center;gap:6px;
-}
+.global-search-results-info{font-size:.78rem;color:var(--text-muted);margin-top:10px;display:none;align-items:center;gap:6px}
 .global-search-results-info.show{display:flex}
 .global-search-results-info strong{color:var(--primary);font-weight:800;font-size:.9rem}
-
-mark.search-hit{
-  background:linear-gradient(135deg,#fef08a,#fde047);
-  color:#78350f;padding:1px 4px;border-radius:4px;
-  font-weight:700;
-}
+mark.search-hit{background:linear-gradient(135deg,#fef08a,#fde047);color:#78350f;padding:1px 4px;border-radius:4px;font-weight:700}
 body.dark mark.search-hit{background:linear-gradient(135deg,#854d0e,#a16207);color:#fef3c7}
 
-/* ========== EXPORT MODAL (NEW) ========== */
-.export-opt{
-  display:flex;align-items:center;gap:12px;padding:14px;
-  background:var(--bg-subtle);border:1.5px solid var(--border);
-  border-radius:14px;margin-bottom:10px;cursor:pointer;transition:all .15s;
-}
+/* EXPORT MODAL */
+.export-opt{display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg-subtle);border:1.5px solid var(--border);border-radius:14px;margin-bottom:10px;cursor:pointer;transition:all .15s}
 .export-opt:hover{border-color:var(--primary-soft);background:var(--bg-card)}
 .export-opt.selected{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 4px 12px var(--primary-glow)}
-.export-opt .export-icon{
-  width:44px;height:44px;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.4rem;flex-shrink:0;
-}
+.export-opt .export-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
 .export-opt .export-info{flex:1;min-width:0}
 .export-opt .export-title{font-weight:700;font-size:.9rem;margin-bottom:2px}
 .export-opt .export-desc{font-size:.73rem;color:var(--text-muted);line-height:1.5}
-.export-opt .export-check{
-  width:22px;height:22px;border-radius:50%;border:2px solid var(--border-strong);
-  flex-shrink:0;display:flex;align-items:center;justify-content:center;
-}
+.export-opt .export-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .export-opt.selected .export-check{border-color:var(--primary);background:var(--primary)}
-.export-opt.selected .export-check::after{
-  content:'';display:block;width:5px;height:10px;
-  border:solid #fff;border-width:0 2.5px 2.5px 0;
-  transform:rotate(45deg) translate(-1px,-1px);
-}
+.export-opt.selected .export-check::after{content:'';display:block;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
 .range-selector{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
 @media(max-width:480px){.range-selector{grid-template-columns:repeat(2,1fr)}}
-.range-btn{
-  padding:10px 6px;border-radius:11px;border:1.5px solid var(--border);
-  background:var(--bg-subtle);font-size:.78rem;font-weight:600;
-  color:var(--text-muted);cursor:pointer;text-align:center;transition:all .15s;
-}
+.range-btn{padding:10px 6px;border-radius:11px;border:1.5px solid var(--border);background:var(--bg-subtle);font-size:.78rem;font-weight:600;color:var(--text-muted);cursor:pointer;text-align:center;transition:all .15s}
 .range-btn:hover{border-color:var(--primary-soft);color:var(--primary)}
 .range-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 
 .img-input-row{display:flex;gap:8px}
 .img-input-row input{flex:1;min-width:0}
-.img-upload-btn{white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
-.img-preview-wrap{margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.img-preview-wrap img{max-width:140px;max-height:110px;border-radius:10px;border:1px solid var(--border);display:block;cursor:zoom-in;object-fit:cover}
-.img-preview-remove{font-size:.72rem;color:var(--danger);background:var(--danger-soft);border:none;cursor:pointer;padding:6px 12px;border-radius:8px;font-weight:600}
-.img-loading{padding:14px;color:var(--text-muted);font-size:.78rem;background:var(--bg-subtle);border-radius:10px;display:inline-flex;align-items:center;gap:8px}
-.img-loading::before{content:'';width:14px;height:14px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--primary);animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
 .voice-box{border:1.5px solid var(--border);border-radius:14px;padding:16px;background:var(--bg-subtle)}
 .voice-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
 .voice-row:first-child{margin-top:0}
@@ -471,8 +379,8 @@ body.dark mark.search-hit{background:linear-gradient(135deg,#854d0e,#a16207);col
 @keyframes drawCheck{to{stroke-dashoffset:0}}
 .save-success-msg{font-size:.95rem;font-weight:700;margin-bottom:4px}
 .save-success-sub{font-size:.78rem;color:var(--text-muted)}
-
 .sync-spinner{width:42px;height:42px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--primary);margin:6px auto 14px;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 .detail-hero{background:linear-gradient(135deg,var(--primary-soft) 0%,var(--bg-card) 65%);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px}
 .detail-hero-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
@@ -599,10 +507,17 @@ body.dark mark.search-hit{background:linear-gradient(135deg,#854d0e,#a16207);col
   #analysisGrid > [data-layout-key][data-size="l"]{grid-column:span 6}
 }
 
+/* ADVANCED TAB grid */
+#advancedGrid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:900px){
+  #advancedGrid{grid-template-columns:repeat(6,1fr)}
+  #advancedGrid > [data-layout-key]{grid-column:span 3}
+}
+
 .resize-handle{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:64px;height:24px;background:var(--primary);color:#fff;border-radius:12px;align-items:center;justify-content:center;cursor:ew-resize;z-index:20;box-shadow:0 6px 16px var(--primary-glow);user-select:none;touch-action:none;transition:transform .12s}
 .resize-handle:hover{transform:translateX(-50%) scale(1.08)}
 body.layout-edit .resize-handle{display:flex}
-body.layout-edit .fab{display:none !important}
+body.layout-edit .fab-wrap{display:none !important}
 .rh-grip{width:22px;height:3px;background:#fff;border-radius:2px;position:relative}
 .rh-grip::before,.rh-grip::after{content:'';position:absolute;left:0;right:0;height:3px;background:#fff;border-radius:2px}
 .rh-grip::before{top:-5px}
@@ -682,6 +597,7 @@ body.layout-edit .drag-handle{display:flex}
     <button class="main-tab active" data-main="dashboard">میزکار</button>
     <button class="main-tab" data-main="journals">ژورنال‌ها</button>
     <button class="main-tab" data-main="analysis">تحلیل</button>
+    <button class="main-tab" data-main="advanced">تحلیل پیشرفته</button>
     <button class="main-tab" data-main="checklist">چک‌لیست</button>
   </div>
 
@@ -725,6 +641,21 @@ body.layout-edit .drag-handle{display:flex}
       <div class="dash-section" data-key="summary" data-layout-group="dashboard" data-layout-key="summary" data-default-size="l">
         <div class="drag-handle" draggable="true">⠿</div>
         <div class="summary-grid" id="summaryGrid"></div>
+      </div>
+      <div class="dash-section" data-key="advquick" data-layout-group="dashboard" data-layout-key="advquick" data-default-size="l">
+        <div class="drag-handle" draggable="true">⠿</div>
+        <div class="breakdown-card">
+          <h3>🧮 آمار پیشرفته (خلاصه)</h3>
+          <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">برای جزئیات کامل به تب <strong>تحلیل پیشرفته</strong> بروید</p>
+          <div class="summary-grid" id="advQuickStats"></div>
+        </div>
+      </div>
+      <div class="dash-section" data-key="rdistquick" data-layout-group="dashboard" data-layout-key="rdistquick" data-default-size="l">
+        <div class="drag-handle" draggable="true">⠿</div>
+        <div class="breakdown-card">
+          <h3>📊 توزیع R-Multiple</h3>
+          <div class="chart-container" style="height:200px"><canvas id="rDistChartDash"></canvas></div>
+        </div>
       </div>
       <div class="dash-section" data-key="perf" data-layout-group="dashboard" data-layout-key="perf" data-default-size="l">
         <div class="drag-handle" draggable="true">⠿</div>
@@ -783,7 +714,6 @@ body.layout-edit .drag-handle{display:flex}
         <div class="drag-handle" draggable="true">⠿</div>
         <div class="breakdown-card">
           <h3>توزیع ریسک</h3>
-          <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">بر اساس مبلغ دلاری ریسک هر معامله</p>
           <div id="riskDist"></div>
         </div>
       </div>
@@ -818,7 +748,7 @@ body.layout-edit .drag-handle{display:flex}
         <span class="search-field-chip" data-search-field="notes">یادداشت</span>
         <span class="search-field-chip" data-search-field="reasons">دلایل</span>
         <span class="search-field-chip" data-search-field="lessons">درس‌ها</span>
-        <span class="search-field-chip" data-search-field="setup">ستاپ/Zone</span>
+        <span class="search-field-chip" data-search-field="setup">ستاپ/Zone/تریگر</span>
         <span class="search-field-chip" data-search-field="tags">برچسب</span>
         <span class="search-field-chip" data-search-field="emotions">احساسات</span>
       </div>
@@ -855,6 +785,7 @@ body.layout-edit .drag-handle{display:flex}
         </div>
         <div class="filter-group"><label>ستاپ</label><select id="fSetup"><option value="">همه</option></select></div>
         <div class="filter-group"><label>Zone</label><select id="fZone"><option value="">همه</option></select></div>
+        <div class="filter-group"><label>تریگر</label><select id="fTrigger"><option value="">همه</option></select></div>
       </div>
       <div class="filter-group" style="margin-top:12px"><label>برچسب‌ها</label><div class="chip-group" id="fTagChips"></div></div>
       <div class="section-title" style="margin-top:16px">وضعیت</div>
@@ -972,6 +903,40 @@ body.layout-edit .drag-handle{display:flex}
     </div>
   </div>
 
+  <!-- ADVANCED ANALYSIS (NEW TAB) -->
+  <div class="main-panel" id="panel-advanced">
+    <div id="advancedGrid">
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advStats" data-default-size="m">
+        <h3>🧮 آمار پیشرفته</h3>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">متریک‌های کلیدی عملکرد</p>
+        <div class="summary-grid" id="advancedStats"></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRDist" data-default-size="m">
+        <h3>📊 توزیع R-Multiple</h3>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">چند معامله چقدر R گرفتند</p>
+        <div class="chart-container" style="height:200px"><canvas id="rDistChart"></canvas></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advStreak" data-default-size="m">
+        <h3>🔥 برد و باخت‌های پیوسته</h3>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">Win/Loss Streak</p>
+        <div id="streakInfo" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advPerf" data-default-size="m">
+        <h3>📈 تحلیل عملکرد پیشرفته</h3>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">بر اساس تریگر ورود</p>
+        <div id="advPerfTrigger"></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRbySymbol" data-default-size="m">
+        <h3>📏 میانگین R به تفکیک نماد</h3>
+        <div id="advRBySymbol"></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advQuality" data-default-size="m">
+        <h3>⚖️ رابطه اعتماد ↔ نتیجه</h3>
+        <div id="advConfidence"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- CHECKLIST -->
   <div class="main-panel" id="panel-checklist">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
@@ -988,18 +953,15 @@ body.layout-edit .drag-handle{display:flex}
   <p id="buildInfo" style="text-align:center;font-size:.72rem;padding:8px;margin-top:6px;background:var(--warning-soft);color:var(--warning);border-radius:10px;font-weight:600;"></p>
 </div>
 
-<button class="btn btn-lg fab" onclick="openAddModal()">+ معامله جدید</button>
+<div class="fab-wrap"><button class="btn btn-lg fab" onclick="openAddModal()">+ معامله جدید</button></div>
 
-<!-- UNDO TOAST (NEW) -->
 <div class="undo-toast" id="undoToast">
   <div class="undo-msg"><span class="undo-icon">🗑️</span><span id="undoText">معامله حذف شد</span></div>
   <button class="undo-btn" onclick="undoDelete()">↩ بازگردانی <span class="undo-countdown" id="undoCountdown">5</span></button>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- EXPORT MODAL (NEW) -->
 <div class="modal-overlay" id="exportModal">
   <div class="modal" style="max-width:520px">
     <div class="modal-header"><h2>📤 خروجی گزارش</h2><button class="modal-close" onclick="closeExportModal()">✕</button></div>
@@ -1015,13 +977,12 @@ body.layout-edit .drag-handle{display:flex}
         <input type="date" id="exportFrom" style="flex:1;min-width:130px;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;background:var(--bg-subtle);color:var(--text)">
         <input type="date" id="exportTo" style="flex:1;min-width:130px;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-size:.83rem;background:var(--bg-subtle);color:var(--text)">
       </div>
-
       <div class="section-title">۲. نوع خروجی</div>
       <div class="export-opt selected" data-export-type="excel">
         <div class="export-icon" style="background:#dcfce7;color:#16a34a">📊</div>
         <div class="export-info">
-          <div class="export-title">Excel (اکسل رنگی)</div>
-          <div class="export-desc">فایل .xlsx با شیت‌های جدا: معاملات، آمار، نمادها. رنگ‌بندی خودکار برد/باخت.</div>
+          <div class="export-title">Excel (اکسل)</div>
+          <div class="export-desc">فایل .xlsx با شیت‌های: معاملات، خلاصه آمار، تفکیک نماد</div>
         </div>
         <div class="export-check"></div>
       </div>
@@ -1029,11 +990,10 @@ body.layout-edit .drag-handle{display:flex}
         <div class="export-icon" style="background:#fee2e2;color:#dc2626">📄</div>
         <div class="export-info">
           <div class="export-title">PDF رنگی (گزارش کامل)</div>
-          <div class="export-desc">تمام میزکار به صورت PDF چندصفحه‌ای، شامل نمودارها و آمار.</div>
+          <div class="export-desc">تمام میزکار به صورت PDF چندصفحه‌ای، شامل نمودارها و آمار</div>
         </div>
         <div class="export-check"></div>
       </div>
-
       <div class="form-actions" style="margin-top:20px">
         <button type="button" class="btn btn-outline" onclick="closeExportModal()">انصراف</button>
         <button type="button" class="btn btn-success btn-lg" id="exportGoBtn" onclick="runExport()">📥 دریافت فایل</button>
@@ -1079,7 +1039,7 @@ body.layout-edit .drag-handle{display:flex}
     <div class="modal-body">
       <div class="form-tabs">
         <button class="form-tab active" data-ftab="essential">ضروری</button>
-        <button class="form-tab" data-ftab="reasons">دلایل</button>
+        <button class="form-tab" data-ftab="reasons">کیفیت ستاپ</button>
         <button class="form-tab" data-ftab="emotions">احساسات</button>
         <button class="form-tab" data-ftab="media">عکس و ویس</button>
         <button class="form-tab" data-ftab="tags">برچسب‌ها</button>
@@ -1157,6 +1117,9 @@ body.layout-edit .drag-handle{display:flex}
           <div class="form-group"><label>Zone</label>
             <div class="select-with-add"><select id="tfZone"><option value="">—</option></select><button type="button" class="select-add-btn" onclick="addCustomInline('zones','tfZone')">+</button></div>
           </div>
+          <div class="form-group"><label>تریگر ورود</label>
+            <div class="select-with-add"><select id="tfTrigger"><option value="">—</option></select><button type="button" class="select-add-btn" onclick="addCustomInline('triggers','tfTrigger')">+</button></div>
+          </div>
           <div class="form-group"><label>واگرایی</label>
             <div class="chip-group" id="divChips">
               <button type="button" class="chip" data-v="معمولی" onclick="selectChip(this,'tfDivergence')">معمولی</button>
@@ -1200,14 +1163,14 @@ body.layout-edit .drag-handle{display:flex}
             <div class="emo-block">
               <div class="emo-block-head"><span class="emo-num">04</span><div><div class="emo-block-title">انگیزه ورود</div></div></div>
               <div class="chip-group" id="motiveChecks">
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="طبق استراتژی" hidden> طبق استراتژی</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="FOMO" hidden> FOMO</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="انتقام از بازار" hidden> انتقام</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="شهود" hidden> شهود</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="توصیه دیگران" hidden> توصیه دیگران</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="اخبار" hidden> اخبار</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="سیگنال تکنیکال" hidden> تکنیکال</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="سیگنال فاندامنتال" hidden> فاندامنتال</label>
+                <span class="chip check-item" data-val="طبق استراتژی" style="margin:0">طبق استراتژی</span>
+                <span class="chip check-item" data-val="FOMO" style="margin:0">FOMO</span>
+                <span class="chip check-item" data-val="انتقام از بازار" style="margin:0">انتقام</span>
+                <span class="chip check-item" data-val="شهود" style="margin:0">شهود</span>
+                <span class="chip check-item" data-val="توصیه دیگران" style="margin:0">توصیه دیگران</span>
+                <span class="chip check-item" data-val="اخبار" style="margin:0">اخبار</span>
+                <span class="chip check-item" data-val="سیگنال تکنیکال" style="margin:0">تکنیکال</span>
+                <span class="chip check-item" data-val="سیگنال فاندامنتال" style="margin:0">فاندامنتال</span>
               </div>
             </div>
           </div>
@@ -1228,15 +1191,15 @@ body.layout-edit .drag-handle{display:flex}
             <div class="emo-block">
               <div class="emo-block-head"><span class="emo-num">03</span><div><div class="emo-block-title">اشتباهات</div></div></div>
               <div class="chip-group" id="mistakeChecks">
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="جابجایی حد ضرر" hidden> جابجایی SL</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="خروج زودهنگام" hidden> خروج زود</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="ورود دیرهنگام" hidden> ورود دیر</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="عدم پایبندی به پلن" hidden> عدم پایبندی</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="معامله بیش از حد" hidden> بیش از حد</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="ریسک بالا" hidden> ریسک بالا</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="FOMO" hidden> FOMO</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="معامله انتقامی" hidden> انتقامی</label>
-                <label class="chip check-item" style="margin:0"><input type="checkbox" value="عدم صبر" hidden> عدم صبر</label>
+                <span class="chip check-item" data-val="جابجایی حد ضرر" style="margin:0">جابجایی SL</span>
+                <span class="chip check-item" data-val="خروج زودهنگام" style="margin:0">خروج زود</span>
+                <span class="chip check-item" data-val="ورود دیرهنگام" style="margin:0">ورود دیر</span>
+                <span class="chip check-item" data-val="عدم پایبندی به پلن" style="margin:0">عدم پایبندی</span>
+                <span class="chip check-item" data-val="معامله بیش از حد" style="margin:0">بیش از حد</span>
+                <span class="chip check-item" data-val="ریسک بالا" style="margin:0">ریسک بالا</span>
+                <span class="chip check-item" data-val="FOMO" style="margin:0">FOMO</span>
+                <span class="chip check-item" data-val="معامله انتقامی" style="margin:0">انتقامی</span>
+                <span class="chip check-item" data-val="عدم صبر" style="margin:0">عدم صبر</span>
               </div>
             </div>
             <div class="emo-block">
@@ -1264,45 +1227,11 @@ body.layout-edit .drag-handle{display:flex}
           <div class="form-group"><label>لینک چارت تریگر</label><input type="url" id="tfTriggerImg"></div>
           <div class="form-group"><label>لینک چارت زون</label><input type="url" id="tfZoneImg"></div>
 
-          <div class="section-title">🖼️ تصاویر (کلیک یا Drag & Drop)</div>
-          <div class="img-drop-grid">
-            <div class="img-drop-zone" id="drop1" data-slot="1">
-              <input type="file" accept="image/*" id="file1">
-              <input type="hidden" id="tfImgExtra1" value="">
-              <div class="dz-empty">
-                <div class="drop-icon">📷</div>
-                <div class="drop-text">عکس ۱</div>
-                <div class="drop-hint">کلیک · درگ · Paste (Ctrl+V)</div>
-              </div>
-              <div class="dz-filled" style="display:none">
-                <img class="drop-preview-img" src="" alt="">
-                <div class="drop-actions">
-                  <button type="button" class="drop-action-btn" title="بزرگ‌نمایی" onclick="event.stopPropagation(); window.open(this.parentElement.parentElement.querySelector('img').src,'_blank')">🔍</button>
-                  <button type="button" class="drop-action-btn" title="تغییر" onclick="event.stopPropagation(); document.getElementById('file1').click()">🔄</button>
-                  <button type="button" class="drop-action-btn del" title="حذف" onclick="event.stopPropagation(); clearDropZone(1)">🗑️</button>
-                </div>
-              </div>
-            </div>
-            <div class="img-drop-zone" id="drop2" data-slot="2">
-              <input type="file" accept="image/*" id="file2">
-              <input type="hidden" id="tfImgExtra2" value="">
-              <div class="dz-empty">
-                <div class="drop-icon">📷</div>
-                <div class="drop-text">عکس ۲</div>
-                <div class="drop-hint">کلیک · درگ · Paste (Ctrl+V)</div>
-              </div>
-              <div class="dz-filled" style="display:none">
-                <img class="drop-preview-img" src="" alt="">
-                <div class="drop-actions">
-                  <button type="button" class="drop-action-btn" title="بزرگ‌نمایی" onclick="event.stopPropagation(); window.open(this.parentElement.parentElement.querySelector('img').src,'_blank')">🔍</button>
-                  <button type="button" class="drop-action-btn" title="تغییر" onclick="event.stopPropagation(); document.getElementById('file2').click()">🔄</button>
-                  <button type="button" class="drop-action-btn del" title="حذف" onclick="event.stopPropagation(); clearDropZone(2)">🗑️</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div class="section-title">🖼️ تصاویر (نامحدود)</div>
+          <div class="img-drop-grid" id="imgSlotsGrid"></div>
+          <button type="button" class="cl-add-btn" onclick="addImageSlot()" style="margin-top:10px">+ افزودن عکس</button>
           <div style="font-size:.72rem;color:var(--text-muted);margin-top:10px;line-height:1.7">
-            💡 می‌تونی از هر جای دیگه عکس رو Copy کنی و توی مودال <strong>Ctrl+V</strong> بزنی. یا از فایل‌منیجر درگ کنی روی باکس.
+            💡 می‌تونی از هر جای دیگه عکس رو Copy کنی و توی مودال <strong>Ctrl+V</strong> بزنی — هر چندتا که خواستی.
           </div>
         </div>
 
@@ -1344,17 +1273,17 @@ body.layout-edit .drag-handle{display:flex}
       <div class="settings-tabs">
         <button class="active" data-stab="lists" onclick="switchSettingsTab('lists')">لیست‌ها</button>
         <button data-stab="sessions" onclick="switchSettingsTab('sessions')">سشن‌ها</button>
-        <button data-stab="layout" onclick="switchSettingsTab('layout')">چیدمان و لایه‌ها</button>
+        <button data-stab="layout" onclick="switchSettingsTab('layout')">چیدمان</button>
         <button data-stab="menu" onclick="switchSettingsTab('menu')">منوها</button>
       </div>
 
       <div class="settings-pane active" id="spane-lists">
-        <div style="background:var(--primary-soft);border:1px solid var(--primary);border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:.78rem;color:var(--primary);font-weight:500">
-          ☁️ روی Supabase ذخیره می‌شوند
-        </div>
         <div class="section-title">ستاپ‌ها</div>
         <div class="manage-row"><input type="text" id="newSetup" placeholder="ستاپ جدید..."><button class="btn btn-sm" onclick="addCustom('setups','newSetup')">+</button></div>
         <div class="manage-list" id="listSetups"></div>
+        <div class="section-title">تریگرهای ورود</div>
+        <div class="manage-row"><input type="text" id="newTrigger" placeholder="تریگر جدید..."><button class="btn btn-sm" onclick="addCustom('triggers','newTrigger')">+</button></div>
+        <div class="manage-list" id="listTriggers"></div>
         <div class="section-title">Zoneها</div>
         <div class="manage-row"><input type="text" id="newZone" placeholder="Zone جدید..."><button class="btn btn-sm" onclick="addCustom('zones','newZone')">+</button></div>
         <div class="manage-list" id="listZones"></div>
@@ -1427,10 +1356,11 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v15 (drop-zone + export + undo + global search)';
+const APP_BUILD = 'BUILD-v16 (advanced tab + triggers + unlimited images + fab fix)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
+const DEFAULT_TRIGGERS = ['شکست ساختار','برگشت از زون','کراس مووینگ','الگوی شمعی','تایید حجم','دایورجنس','BOS','CHoCH','ورود پول'];
 const DEFAULT_EMOTIONS = ['آرام','مطمئن','مضطرب','ترسیده','طمع‌کار','هیجان‌زده','ناامید','خنثی','عصبان','خسته','راضی','پشیمان','خوشحال','ناراحت','بی‌تفاوت'];
 const DOW_FA = ['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'];
 const MONTH_FA = ['ژانویه','فوریه','مارس','آوریل','مه','ژوئن','ژوئیه','اوت','سپتامبر','اکتبر','نوامبر','دسامبر'];
@@ -1445,6 +1375,7 @@ const DEFAULT_MENU = [
   {key:'dashboard', label:'میزکار', icon:'🖥️'},
   {key:'journals',  label:'ژورنال‌ها', icon:'📓'},
   {key:'analysis',  label:'تحلیل', icon:'📊'},
+  {key:'advanced',  label:'تحلیل پیشرفته', icon:'🧮'},
   {key:'checklist', label:'چک‌لیست', icon:'✅'}
 ];
 const PIP_SIZE_MAP = {
@@ -1460,6 +1391,8 @@ const DEFAULT_LAYOUT = {
     stats:      { visible: true, size: 'l' },
     charts:     { visible: true, size: 'l' },
     summary:    { visible: true, size: 'l' },
+    advquick:   { visible: true, size: 'l' },
+    rdistquick: { visible: true, size: 'l' },
     perf:       { visible: true, size: 'l' },
     heatmap:    { visible: true, size: 'l' },
     direction:  { visible: true, size: 'm' },
@@ -1473,14 +1406,25 @@ const DEFAULT_LAYOUT = {
     anSetup:  { visible: true, size: 'm' },
     anTF:     { visible: true, size: 'm' },
     anZone:   { visible: true, size: 'm' }
+  },
+  advanced: {
+    advStats:     { visible: true, size: 'm' },
+    advRDist:     { visible: true, size: 'm' },
+    advStreak:    { visible: true, size: 'm' },
+    advPerf:      { visible: true, size: 'm' },
+    advRbySymbol: { visible: true, size: 'm' },
+    advQuality:   { visible: true, size: 'm' }
   }
 };
-const LAYOUT_LABELS = { dashboard: 'میزکار', analysis: 'تب تحلیل' };
+const LAYOUT_LABELS = { dashboard: 'میزکار', analysis: 'تب تحلیل', advanced: 'تحلیل پیشرفته' };
 const LAYOUT_KEY_LABELS = {
   balance:'کارت موجودی', stats:'آمار بالا', charts:'منحنی و پای', summary:'خلاصه P/L',
+  advquick:'آمار پیشرفته خلاصه', rdistquick:'R-Multiple خلاصه',
   perf:'تحلیل عملکرد', heatmap:'نقشه فعالیت', direction:'عملکرد جهت',
   perfsummary:'خلاصه عملکرد', risk:'توزیع ریسک', session:'عملکرد سشن', symbols:'برترین نمادها',
-  anSymbol:'تحلیل نمادها', anSetup:'تحلیل ستاپ', anTF:'تحلیل تایم‌فریم', anZone:'تحلیل Zone'
+  anSymbol:'تحلیل نمادها', anSetup:'تحلیل ستاپ', anTF:'تحلیل تایم‌فریم', anZone:'تحلیل Zone',
+  advStats:'آمار پیشرفته', advRDist:'توزیع R-Multiple', advStreak:'برد/باخت پیوسته',
+  advPerf:'عملکرد تریگر', advRbySymbol:'R به تفکیک نماد', advQuality:'اعتماد ↔ نتیجه'
 };
 
 /* ====== STATE ====== */
@@ -1488,9 +1432,10 @@ let allTrades = [];
 let filtered = [];
 let equityMode = 'manual';
 let equityChart = null, pieChart = null, sparkChart = null;
+let rDistChart = null, rDistChartDash = null;
 let hmYear = null, hmMonth = null, hmMode = 'pnl';
 let editingId = null, currentPeriod = 'all', currentTags = [];
-let custom = { setups: [], zones: [], emotions: [], tags: [], tagColors: {}, checklists: [], sessions: [], layout: {} };
+let custom = { setups: [], zones: [], triggers: [], emotions: [], tags: [], tagColors: {}, checklists: [], sessions: [], layout: {} };
 let editingChecklistId = null;
 let clEditorItems = [];
 let activeFilterTags = [];
@@ -1499,14 +1444,13 @@ let deferredPrompt = null;
 let customSaveTimer = null;
 let mediaRecorder = null, recChunks = [], pendingVoiceBlob = null, pendingVoiceUrl = null, isRecording = false;
 let resizeState = null;
-
-// New: global search + undo + export
 let globalSearchQuery = '';
 let globalSearchField = 'all';
 let lastDeletedTrade = null;
 let undoTimer = null, undoCountdownTimer = null;
 let pendingExportRange = 'month';
 let pendingExportType = 'excel';
+let imageSlots = [];
 
 /* ====== MODAL LOCK ====== */
 function lockScroll(){ modalCount++; document.body.classList.add('modal-open'); }
@@ -1556,7 +1500,9 @@ function rowToTrade(r){
     initial_stop: r.initial_stop, final_stop: r.final_stop,
     r1: r.r1 ? 1 : null, r15: r.r15 ? 1 : null, r2: r.r2 ? 1 : null, r3: r.r3 ? 1 : null,
     reward_from: r.reward_from, divergence_type: r.divergence_type, zone: r.zone,
+    entry_trigger: r.entry_trigger,
     trigger_img: r.trigger_img, zone_img: r.zone_img, img_extra1: r.img_extra1, img_extra2: r.img_extra2,
+    img_extras: Array.isArray(r.img_extras) ? r.img_extras : [],
     entry_reason: r.entry_reason, exit_reason: r.exit_reason, lessons: r.lessons, volume: r.volume,
     energy: r.energy, confidence: r.confidence, exec_quality: r.exec_quality,
     pre_emotions: r.pre_emotions || [], post_emotions: r.post_emotions || [],
@@ -1580,8 +1526,10 @@ function tradeToRow(t, fallbackYear = null){
     final_stop: t.final_stop != null ? t.final_stop : null,
     r1: !!t.r1, r15: !!t.r15, r2: !!t.r2, r3: !!t.r3,
     reward_from: t.reward_from || null, divergence_type: t.divergence_type || null,
-    zone: t.zone || null, trigger_img: t.trigger_img || null, zone_img: t.zone_img || null,
+    zone: t.zone || null, entry_trigger: t.entry_trigger || null,
+    trigger_img: t.trigger_img || null, zone_img: t.zone_img || null,
     img_extra1: t.img_extra1 || null, img_extra2: t.img_extra2 || null,
+    img_extras: Array.isArray(t.img_extras) ? t.img_extras : [],
     entry_reason: t.entry_reason || null, exit_reason: t.exit_reason || null,
     lessons: t.lessons || null, volume: t.volume || null,
     energy: t.energy != null ? t.energy : null, confidence: t.confidence != null ? t.confidence : null,
@@ -1687,7 +1635,6 @@ async function bootApp(){
   try { setupFilters(); } catch(e){ console.error(e); }
   try { applyFilters(); } catch(e){ console.error(e); }
   try { bindEvents(); } catch(e){ console.error(e); }
-  try { setupDropZones(); } catch(e){ console.error(e); }
   try { setupGlobalSearch(); } catch(e){ console.error(e); }
   try { renderMainTabsNav(); } catch(e){ console.error(e); }
   try { applyDashOrder(); initDashDragDrop(); } catch(e){ console.error(e); }
@@ -1704,6 +1651,7 @@ async function loadCustomFromSupabase(){
     if (data && data.data && Object.keys(data.data).length) {
       custom = Object.assign({ tagColors: {}, sessions: [], layout: {} }, custom, data.data);
       if (!custom.setups || !custom.setups.length) custom.setups = [...DEFAULT_SETUPS];
+      if (!custom.triggers || !custom.triggers.length) custom.triggers = [...DEFAULT_TRIGGERS];
       if (!custom.emotions || !custom.emotions.length) custom.emotions = [...DEFAULT_EMOTIONS];
       if (!custom.zones) custom.zones = [];
       if (!custom.tags) custom.tags = [];
@@ -1835,7 +1783,6 @@ function initResizeHandles(){
     if (sec.querySelector('.resize-handle')) return;
     const rh = document.createElement('div');
     rh.className = 'resize-handle';
-    rh.title = 'برای تغییر اندازه بکش';
     rh.innerHTML = '<span class="rh-grip"></span>';
     rh.addEventListener('mousedown', e => { e.preventDefault(); e.stopPropagation(); startResize(e.clientX, sec); });
     rh.addEventListener('touchstart', e => { e.preventDefault(); startResize(e.touches[0].clientX, sec); }, { passive: false });
@@ -1904,6 +1851,7 @@ function loadCustom(){
   const s = localStorage.getItem(CUSTOM_KEY);
   if (s) { try { custom = JSON.parse(s); } catch(e){} }
   if (!custom.setups || !custom.setups.length) custom.setups = [...DEFAULT_SETUPS];
+  if (!custom.triggers || !custom.triggers.length) custom.triggers = [...DEFAULT_TRIGGERS];
   if (!custom.emotions || !custom.emotions.length) custom.emotions = [...DEFAULT_EMOTIONS];
   if (!custom.zones) custom.zones = [];
   if (!custom.tags) custom.tags = [];
@@ -1929,7 +1877,7 @@ function showToast(msg){ const t = document.getElementById('toast'); t.textConte
 /* ====== LAYOUT MANAGER ====== */
 function renderLayoutManager(){
   const wrap = document.getElementById('layoutManager'); if (!wrap) return;
-  const groups = ['dashboard', 'analysis'];
+  const groups = ['dashboard', 'analysis', 'advanced'];
   wrap.innerHTML = groups.map(g => {
     const keys = Object.keys(DEFAULT_LAYOUT[g] || {});
     if (!keys.length) return '';
@@ -1978,81 +1926,83 @@ function applyLayoutConfig(){
   });
 }
 
-/* ====== DROP ZONES (NEW) ====== */
-let lastPastedImageSlot = 1;
-function setupDropZones(){
-  [1, 2].forEach(slot => {
-    const zone = document.getElementById('drop' + slot);
-    const fileInput = document.getElementById('file' + slot);
-    if (!zone || !fileInput) return;
-    // Click to open file picker
-    zone.addEventListener('click', (e) => {
-      if (e.target.closest('.drop-actions')) return;
-      if (zone.classList.contains('has-image')) return;
-      fileInput.click();
-      lastPastedImageSlot = slot;
-    });
-    // File picked
-    fileInput.addEventListener('change', async (e) => {
-      const f = e.target.files && e.target.files[0];
-      if (f) await handleImageFile(slot, f);
-      fileInput.value = '';
-    });
-    // Drag events
-    zone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover'); });
-    zone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover'); });
-    zone.addEventListener('drop', async (e) => {
-      e.preventDefault(); e.stopPropagation();
-      zone.classList.remove('dragover');
-      const f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (f && f.type.startsWith('image/')) await handleImageFile(slot, f);
-    });
+/* ====== UNLIMITED IMAGE SLOTS ====== */
+function addImageSlot(initialValue = ''){
+  const id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  imageSlots.push({ id, value: initialValue });
+  renderImageSlots();
+  if (initialValue) setTimeout(() => setSlotValue(id, initialValue), 50);
+}
+function removeImageSlot(id){
+  imageSlots = imageSlots.filter(s => s.id !== id);
+  renderImageSlots();
+}
+function resetImageSlots(){
+  imageSlots = [];
+  renderImageSlots();
+}
+function renderImageSlots(){
+  const grid = document.getElementById('imgSlotsGrid');
+  if (!grid) return;
+  if (!imageSlots.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text-muted);font-size:.85rem;background:var(--bg-subtle);border-radius:12px">هنوز عکسی اضافه نکردی — از دکمه پایین یا Ctrl+V استفاده کن</div>';
+    return;
+  }
+  grid.innerHTML = imageSlots.map(slot => `
+    <div class="img-drop-zone" id="slot_${slot.id}">
+      <input type="file" accept="image/*" id="file_${slot.id}" style="display:none">
+      <div class="dz-empty">
+        <div class="drop-icon">📷</div>
+        <div class="drop-text">کلیک یا درگ</div>
+        <div class="drop-hint">Ctrl+V هم کار می‌کنه</div>
+      </div>
+      <div class="dz-filled" style="display:none">
+        <img class="drop-preview-img" src="" alt="">
+        <div class="drop-actions">
+          <button type="button" class="drop-action-btn" onclick="event.stopPropagation();window.open(this.parentElement.parentElement.querySelector('img').src,'_blank')">🔍</button>
+          <button type="button" class="drop-action-btn" onclick="event.stopPropagation();document.getElementById('file_${slot.id}').click()">🔄</button>
+          <button type="button" class="drop-action-btn del" onclick="event.stopPropagation();removeImageSlot('${slot.id}')">🗑️</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  imageSlots.forEach(s => bindSlotEvents(s.id));
+}
+function bindSlotEvents(slotId){
+  const zone = document.getElementById('slot_' + slotId);
+  const fileInput = document.getElementById('file_' + slotId);
+  if (!zone || !fileInput) return;
+  zone.addEventListener('click', (e) => {
+    if (e.target.closest('.drop-actions')) return;
+    if (zone.classList.contains('has-image')) return;
+    fileInput.click();
   });
-  // Paste handler — only when add modal open
-  document.addEventListener('paste', async (e) => {
-    const modal = document.getElementById('addModal');
-    if (!modal || !modal.classList.contains('show')) return;
-    const items = e.clipboardData && e.clipboardData.items;
-    if (!items) return;
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        e.preventDefault();
-        const f = item.getAsFile();
-        if (!f) continue;
-        // find first empty slot, or use last remembered
-        const hidden1 = document.getElementById('tfImgExtra1').value;
-        const hidden2 = document.getElementById('tfImgExtra2').value;
-        let target = 1;
-        if (!hidden1) target = 1;
-        else if (!hidden2) target = 2;
-        else target = lastPastedImageSlot;
-        await handleImageFile(target, f);
-        lastPastedImageSlot = target;
-        break;
-      }
-    }
+  fileInput.addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) await handleSlotImage(slotId, f);
+    fileInput.value = '';
+  });
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('dragover'); });
+  zone.addEventListener('drop', async (e) => {
+    e.preventDefault(); e.stopPropagation();
+    zone.classList.remove('dragover');
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) await handleSlotImage(slotId, f);
   });
 }
-async function handleImageFile(slot, file){
-  const zone = document.getElementById('drop' + slot);
-  const hidden = document.getElementById('tfImgExtra' + slot);
-  if (!zone || !hidden) return;
-  // Show loading overlay
+async function handleSlotImage(slotId, file){
+  const zone = document.getElementById('slot_' + slotId);
+  if (!zone) return;
   const loading = document.createElement('div');
   loading.className = 'loading-overlay';
   loading.innerHTML = '<div class="img-loading">در حال پردازش...</div>';
   zone.appendChild(loading);
   try {
     const dataUrl = await resizeImageFile(file, 1400, 0.8);
-    hidden.value = dataUrl;
-    // Show preview
-    const empty = zone.querySelector('.dz-empty');
-    const filled = zone.querySelector('.dz-filled');
-    const img = zone.querySelector('.drop-preview-img');
-    if (img) img.src = dataUrl;
-    if (empty) empty.style.display = 'none';
-    if (filled) filled.style.display = 'block';
-    zone.classList.add('has-image');
+    const slot = imageSlots.find(s => s.id === slotId);
+    if (slot) slot.value = dataUrl;
+    await setSlotValue(slotId, dataUrl);
     showToast('✓ عکس اضافه شد');
   } catch(err) {
     console.error(err);
@@ -2061,12 +2011,10 @@ async function handleImageFile(slot, file){
     if (loading.parentElement) loading.remove();
   }
 }
-async function setDropZoneFromValue(slot, value){
-  const zone = document.getElementById('drop' + slot);
-  const hidden = document.getElementById('tfImgExtra' + slot);
-  if (!zone || !hidden) return;
+async function setSlotValue(slotId, value){
+  const zone = document.getElementById('slot_' + slotId);
+  if (!zone) return;
   if (!value) {
-    hidden.value = '';
     const empty = zone.querySelector('.dz-empty');
     const filled = zone.querySelector('.dz-filled');
     if (empty) empty.style.display = 'block';
@@ -2074,7 +2022,6 @@ async function setDropZoneFromValue(slot, value){
     zone.classList.remove('has-image');
     return;
   }
-  hidden.value = value;
   const info = getImgPreviewSource(value);
   let src = '';
   if (info.type === 'direct') src = info.src;
@@ -2096,20 +2043,36 @@ async function setDropZoneFromValue(slot, value){
   if (filled) filled.style.display = 'block';
   zone.classList.add('has-image');
 }
-function clearDropZone(slot){
-  setDropZoneFromValue(slot, '');
-  const fileInput = document.getElementById('file' + slot);
-  if (fileInput) fileInput.value = '';
-}
-function resetDropZones(){
-  setDropZoneFromValue(1, '');
-  setDropZoneFromValue(2, '');
-}
+document.addEventListener('paste', async (e) => {
+  const modal = document.getElementById('addModal');
+  if (!modal || !modal.classList.contains('show')) return;
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const f = item.getAsFile();
+      if (!f) continue;
+      const id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+      imageSlots.push({ id, value: '' });
+      renderImageSlots();
+      await handleSlotImage(id, f);
+      break;
+    }
+  }
+});
 
 /* ====== REFRESH UI ====== */
 function refreshCustomUI(){
   const sel = document.getElementById('tfSetup');
   if (sel) { const cur = sel.value; sel.innerHTML = '<option value="">—</option>' + custom.setups.map(s => '<option value="'+escapeHtml(s)+'">'+escapeHtml(s)+'</option>').join(''); if (cur) sel.value = cur; }
+  const tft = document.getElementById('tfTrigger');
+  if (tft) {
+    const cur = tft.value;
+    const triggers = [...new Set([...(custom.triggers||[]), ...allTrades.map(t => t.entry_trigger).filter(Boolean)])].sort();
+    tft.innerHTML = '<option value="">— انتخاب —</option>' + triggers.map(z => '<option value="'+escapeHtml(z)+'">'+escapeHtml(z)+'</option>').join('');
+    if (cur) tft.value = cur;
+  }
   const pre = document.getElementById('preEmotionChips');
   if (pre) pre.innerHTML = custom.emotions.map(e => `<label class="emo-item" onclick="onEmoCardClick(this,event,'tfPreEmotion')"><input type="checkbox" value="${escapeHtml(e)}"><span class="emo-label">${escapeHtml(e)}</span><span class="emo-radio"></span></label>`).join('');
   const post = document.getElementById('postEmotionChips');
@@ -2121,8 +2084,8 @@ function refreshCustomUI(){
     tfz.innerHTML = '<option value="">— انتخاب —</option>' + zones.map(z => '<option value="'+escapeHtml(z)+'">'+escapeHtml(z)+'</option>').join('');
     if (cur) tfz.value = cur;
   }
-  ['listSetups','listZones','listEmotions','listTags'].forEach((id, i) => {
-    const key = ['setups','zones','emotions','tags'][i];
+  ['listSetups','listZones','listTriggers','listEmotions','listTags'].forEach((id) => {
+    const key = id.replace('list','').toLowerCase();
     if (document.getElementById(id)) renderManageList(id, custom[key] || [], key);
   });
   renderFormTagChips(); renderTagManager(); renderFilterTagChips();
@@ -2209,7 +2172,7 @@ async function addCustom(key, inputId){
   const inp = document.getElementById(inputId);
   const v = (inp && inp.value || '').trim();
   const isTag = key === 'tags';
-  const labels = { setups:'ستاپ جدید', zones:'Zone جدید', emotions:'احساس جدید', tags:'برچسب جدید' };
+  const labels = { setups:'ستاپ جدید', triggers:'تریگر جدید', zones:'Zone جدید', emotions:'احساس جدید', tags:'برچسب جدید' };
   const result = await showInputModal({ title: labels[key] || 'افزودن', label: 'نام', defaultValue: v, showColor: isTag });
   if (!result) { if (inp) inp.value = ''; return; }
   const val = result.value;
@@ -2224,7 +2187,7 @@ async function addCustom(key, inputId){
 function removeCustom(key, idx){ custom[key].splice(idx, 1); saveCustom(); refreshCustomUI(); setupFilters(); }
 async function addCustomInline(key, selectId){
   const isTag = key === 'tags';
-  const labels = { setups:'افزودن ستاپ', zones:'افزودن Zone', emotions:'افزودن احساس', tags:'افزودن برچسب' };
+  const labels = { setups:'افزودن ستاپ', triggers:'افزودن تریگر', zones:'افزودن Zone', emotions:'افزودن احساس', tags:'افزودن برچسب' };
   const result = await showInputModal({ title: labels[key] || 'افزودن', label: 'نام', showColor: isTag });
   if (!result) return;
   const trimmed = result.value;
@@ -2301,7 +2264,7 @@ function confirmInputModal(){
   if (resolve) resolve(result);
 }
 
-/* ====== GLOBAL SEARCH (NEW) ====== */
+/* ====== GLOBAL SEARCH ====== */
 function setupGlobalSearch(){
   const chips = document.querySelectorAll('#globalSearchFields .search-field-chip');
   chips.forEach(chip => {
@@ -2333,16 +2296,13 @@ function matchesGlobalSearch(t){
     notes: [t.Notes].filter(Boolean).join(' '),
     reasons: [t.entry_reason, t.exit_reason, t.reward_from].filter(Boolean).join(' '),
     lessons: [t.lessons].filter(Boolean).join(' '),
-    setup: [t.Setup, t.zone, t.divergence_type].filter(Boolean).join(' '),
+    setup: [t.Setup, t.zone, t.entry_trigger, t.divergence_type].filter(Boolean).join(' '),
     tags: (t.tags || []).join(' '),
     emotions: [...(t.pre_emotions || []), ...(t.post_emotions || []), ...(t.motives || []), ...(t.mistakes || [])].join(' ')
   };
   let haystack;
-  if (globalSearchField === 'all') {
-    haystack = Object.values(fields).join(' ').toLowerCase();
-  } else {
-    haystack = (fields[globalSearchField] || '').toLowerCase();
-  }
+  if (globalSearchField === 'all') haystack = Object.values(fields).join(' ').toLowerCase();
+  else haystack = (fields[globalSearchField] || '').toLowerCase();
   return haystack.includes(q);
 }
 function highlightMatches(text){
@@ -2359,7 +2319,8 @@ function setupFilters(){
   const symbols = [...new Set(allTrades.map(t => t.Symbol).filter(Boolean))].sort();
   const tfs = [...new Set(allTrades.map(t => t.Timeframe).filter(Boolean))].sort();
   const zones = [...new Set([...(custom.zones||[]), ...allTrades.map(t => t.zone).filter(Boolean)])].sort();
-  fillSelect('fSymbol', symbols); fillSelect('fTimeframe', tfs); fillSelect('fSetup', custom.setups || []); fillSelect('fZone', zones);
+  const triggers = [...new Set([...(custom.triggers||[]), ...allTrades.map(t => t.entry_trigger).filter(Boolean)])].sort();
+  fillSelect('fSymbol', symbols); fillSelect('fTimeframe', tfs); fillSelect('fSetup', custom.setups || []); fillSelect('fZone', zones); fillSelect('fTrigger', triggers);
   const sessionNames = (custom.sessions || DEFAULT_SESSIONS).map(s => s.name);
   fillSelect('fSession', sessionNames);
   const emos = new Set(custom.emotions || []);
@@ -2404,6 +2365,7 @@ function getFiltered(){
   const tf = document.getElementById('fTimeframe')?.value || '';
   const setup = document.getElementById('fSetup')?.value || '';
   const zone = document.getElementById('fZone')?.value || '';
+  const trig = document.getElementById('fTrigger')?.value || '';
   const session = document.getElementById('fSession')?.value || '';
   const dow = document.getElementById('fDow')?.value || '';
   let { from, to } = getPeriodRange();
@@ -2425,6 +2387,7 @@ function getFiltered(){
     if (tf && t.Timeframe !== tf) return false;
     if (setup && t.Setup !== setup) return false;
     if (zone && t.zone !== zone) return false;
+    if (trig && t.entry_trigger !== trig) return false;
     if (from && (t['Entry Date']||'') < from) return false;
     if (to && (t['Entry Date']||'') > to) return false;
     if (session && getSession(t) !== session) return false;
@@ -2443,7 +2406,8 @@ function getFiltered(){
     const hasNote = document.querySelector('.chip-f.active[data-filter="hasNote"]');
     if (hasNote && !(t.Notes && String(t.Notes).trim())) return false;
     const hasImg = document.querySelector('.chip-f.active[data-filter="hasImg"]');
-    if (hasImg && !(t.img_extra1 || t.img_extra2)) return false;
+    const hasAnyImg = (Array.isArray(t.img_extras) && t.img_extras.length) || t.img_extra1 || t.img_extra2;
+    if (hasImg && !hasAnyImg) return false;
     const preE = document.getElementById('fPreEmotion')?.value || '';
     if (preE) { const arr = t.pre_emotions || []; const str = Array.isArray(arr) ? arr.join(',') : String(arr||''); if (!str.includes(preE)) return false; }
     const postE = document.getElementById('fPostEmotion')?.value || '';
@@ -2513,6 +2477,11 @@ function calcPnL(t){
   if (t.Result === 'Loss') return -stop;
   return 0;
 }
+function calcRMultiple(t){
+  const stop = Number(t.stop_usd) || 0;
+  if (stop <= 0) return 0;
+  return calcPnL(t) / stop;
+}
 function getEntryHour(t){
   const v = t['Entry Time']; if (v == null || v === '') return null;
   if (typeof v === 'number') return v;
@@ -2554,8 +2523,286 @@ function applyFilters(){
     }
   }
   renderDashboard();
+  renderAdvanced();
   renderTable();
   if (typeof renderAnalysis === 'function') renderAnalysis();
+}
+
+/* ====== ADVANCED ANALYTICS ====== */
+function calcExpectancy(trades){
+  const n = trades.length;
+  if (!n) return 0;
+  let wins = 0, losses = 0, winSum = 0, lossSum = 0;
+  trades.forEach(t => {
+    const p = calcPnL(t);
+    if (p > 0) { wins++; winSum += p; }
+    else if (p < 0) { losses++; lossSum += Math.abs(p); }
+  });
+  const W = wins / n, L = losses / n;
+  const avgW = wins ? winSum / wins : 0;
+  const avgL = losses ? lossSum / losses : 0;
+  return (W * avgW) - (L * avgL);
+}
+function calcKelly(trades){
+  let wins = 0, losses = 0, winSum = 0, lossSum = 0;
+  trades.forEach(t => {
+    const p = calcPnL(t);
+    if (p > 0) { wins++; winSum += p; }
+    else if (p < 0) { losses++; lossSum += Math.abs(p); }
+  });
+  const total = wins + losses;
+  if (!total || !winSum || !lossSum) return 0;
+  const W = wins / total;
+  const R = (winSum / wins) / (lossSum / losses);
+  if (R <= 0) return 0;
+  return (W - ((1 - W) / R)) * 100;
+}
+function calcMaxDD(trades){
+  const sorted = [...trades].sort((a, b) => (a['Entry Date']||'').localeCompare(b['Entry Date']||'') || (getEntryHour(a)||0)-(getEntryHour(b)||0));
+  let eq = 0, peak = 0, maxAbs = 0, maxPct = 0;
+  const INIT = 1000;
+  sorted.forEach(t => {
+    eq += calcPnL(t);
+    if (eq > peak) peak = eq;
+    const dd = peak - eq;
+    if (dd > maxAbs) maxAbs = dd;
+    const peakAccount = INIT + peak;
+    const pct = peakAccount > 0 ? (dd / peakAccount) * 100 : 0;
+    if (pct > maxPct) maxPct = pct;
+  });
+  return { abs: maxAbs, pct: maxPct };
+}
+function calcStreaks(trades){
+  const sorted = [...trades].sort((a, b) => (a['Entry Date']||'').localeCompare(b['Entry Date']||'') || (getEntryHour(a)||0)-(getEntryHour(b)||0));
+  let maxW = 0, maxL = 0, cW = 0, cL = 0;
+  sorted.forEach(t => {
+    const p = calcPnL(t);
+    if (p > 0) { cW++; cL = 0; if (cW > maxW) maxW = cW; }
+    else if (p < 0) { cL++; cW = 0; if (cL > maxL) maxL = cL; }
+  });
+  return { maxWin: maxW, maxLoss: maxL };
+}
+function calcRDistribution(trades){
+  const buckets = [
+    { label: '≤ -2R', min: -Infinity, max: -2, count: 0, color: '#dc2626' },
+    { label: '-2 تا -1', min: -2, max: -1, count: 0, color: '#ef4444' },
+    { label: '-1 تا 0', min: -1, max: 0, count: 0, color: '#f87171' },
+    { label: '0', min: 0, max: 0.0001, count: 0, color: '#94a3b8' },
+    { label: '0 تا +1', min: 0.0001, max: 1, count: 0, color: '#6ee7b7' },
+    { label: '+1 تا +2', min: 1, max: 2, count: 0, color: '#34d399' },
+    { label: '+2 تا +3', min: 2, max: 3, count: 0, color: '#10b981' },
+    { label: '≥ +3R', min: 3, max: Infinity, count: 0, color: '#059669' }
+  ];
+  trades.forEach(t => {
+    const r = calcRMultiple(t);
+    for (const b of buckets) {
+      if (b.min === 0 && b.max === 0.0001) { if (r === 0) { b.count++; break; } }
+      else if (r > b.min && r <= b.max) { b.count++; break; }
+    }
+  });
+  return buckets;
+}
+function calcSharpe(trades){
+  const byDay = {};
+  trades.forEach(t => {
+    const d = t['Entry Date'] || 'unknown';
+    if (!byDay[d]) byDay[d] = 0;
+    byDay[d] += calcPnL(t);
+  });
+  const rets = Object.values(byDay);
+  if (rets.length < 2) return 0;
+  const mean = rets.reduce((a,b) => a+b, 0) / rets.length;
+  const variance = rets.reduce((s, x) => s + Math.pow(x - mean, 2), 0) / rets.length;
+  const std = Math.sqrt(variance);
+  if (std === 0) return 0;
+  return (mean / std) * Math.sqrt(252);
+}
+function calcRiskOfRuin(trades){
+  let wins = 0, losses = 0, winSum = 0, lossSum = 0;
+  trades.forEach(t => {
+    const p = calcPnL(t);
+    if (p > 0) { wins++; winSum += p; }
+    else if (p < 0) { losses++; lossSum += Math.abs(p); }
+  });
+  const total = wins + losses;
+  if (!total || !winSum || !lossSum) return 0;
+  const W = wins / total;
+  const R = (winSum / wins) / (lossSum / losses);
+  if (R <= 0) return 100;
+  const A = W - ((1 - W) / R);
+  if (A <= 0) return 100;
+  const units = 50;
+  const ror = Math.pow((1 - A) / (1 + A), units) * 100;
+  return Math.max(0, Math.min(100, ror));
+}
+function calcProfitPerDay(trades){
+  const days = new Set(trades.map(t => t['Entry Date']).filter(Boolean));
+  const total = trades.reduce((s, t) => s + calcPnL(t), 0);
+  return days.size ? total / days.size : 0;
+}
+function calcProfitPerWeek(trades){
+  const weeks = new Set(trades.map(t => {
+    const d = parseTradeDate(t['Entry Date']);
+    if (!d) return null;
+    const mon = new Date(d);
+    mon.setDate(d.getDate() - ((d.getDay()+6)%7));
+    return mon.toISOString().slice(0,10);
+  }).filter(Boolean));
+  const total = trades.reduce((s, t) => s + calcPnL(t), 0);
+  return weeks.size ? total / weeks.size : 0;
+}
+function renderAdvanced(){
+  renderAdvancedQuick();
+  renderAdvancedStats();
+  renderRDist();
+  renderRDistDash();
+  renderAdvStreak();
+  renderAdvPerfTrigger();
+  renderAdvRBySymbol();
+  renderAdvConfidence();
+}
+function renderAdvancedQuick(){
+  const el = document.getElementById('advQuickStats');
+  if (!el) return;
+  const trades = filtered;
+  const expectancy = calcExpectancy(trades);
+  const kelly = calcKelly(trades);
+  const dd = calcMaxDD(trades);
+  const sharpe = calcSharpe(trades);
+  el.innerHTML = `
+    <div class="stat-card"><div class="label">Expectancy</div><div class="value ${expectancy>=0?'pnl-pos':'pnl-neg'}">${expectancy >= 0 ? '+' : ''}${expectancy.toFixed(2)}$</div></div>
+    <div class="stat-card"><div class="label">Kelly</div><div class="value ${kelly>0?'pnl-pos':'pnl-neg'}">${kelly.toFixed(1)}%</div></div>
+    <div class="stat-card"><div class="label">Max DD</div><div class="value pnl-neg">-${dd.pct.toFixed(1)}%</div></div>
+    <div class="stat-card"><div class="label">Sharpe</div><div class="value">${sharpe.toFixed(2)}</div></div>
+  `;
+}
+function renderAdvancedStats(){
+  const el = document.getElementById('advancedStats');
+  if (!el) return;
+  const trades = filtered;
+  const expectancy = calcExpectancy(trades);
+  const kelly = calcKelly(trades);
+  const dd = calcMaxDD(trades);
+  const sharpe = calcSharpe(trades);
+  const ror = calcRiskOfRuin(trades);
+  const pDay = calcProfitPerDay(trades);
+  const pWeek = calcProfitPerWeek(trades);
+  const kellyClass = kelly > 0 ? 'pnl-pos' : 'pnl-neg';
+  const expClass = expectancy > 0 ? 'pnl-pos' : 'pnl-neg';
+  const sharpeClass = sharpe > 0.5 ? 'pnl-pos' : (sharpe < 0 ? 'pnl-neg' : '');
+  const rorClass = ror < 5 ? 'pnl-pos' : (ror > 20 ? 'pnl-neg' : '');
+  el.innerHTML = `
+    <div class="stat-card"><div class="label">Expectancy</div><div class="value ${expClass}">${expectancy >= 0 ? '+' : ''}${expectancy.toFixed(2)}$</div><div class="sub">امید ریاضی هر معامله</div></div>
+    <div class="stat-card"><div class="label">Kelly Criterion</div><div class="value ${kellyClass}">${kelly.toFixed(1)}%</div><div class="sub">اندازه بهینه ریسک</div></div>
+    <div class="stat-card"><div class="label">Max Drawdown</div><div class="value pnl-neg">-${dd.pct.toFixed(1)}%</div><div class="sub">-${dd.abs.toFixed(0)}$</div></div>
+    <div class="stat-card"><div class="label">Sharpe Ratio</div><div class="value ${sharpeClass}">${sharpe.toFixed(2)}</div><div class="sub">کیفیت بازده</div></div>
+    <div class="stat-card"><div class="label">Risk of Ruin</div><div class="value ${rorClass}">${ror.toFixed(1)}%</div><div class="sub">با فرض ۲٪ ریسک</div></div>
+    <div class="stat-card"><div class="label">سود روزانه</div><div class="value ${pDay>=0?'pnl-pos':'pnl-neg'}">${pDay>=0?'+':''}${pDay.toFixed(1)}$</div><div class="sub">میانگین</div></div>
+    <div class="stat-card"><div class="label">سود هفتگی</div><div class="value ${pWeek>=0?'pnl-pos':'pnl-neg'}">${pWeek>=0?'+':''}${pWeek.toFixed(1)}$</div><div class="sub">میانگین</div></div>
+  `;
+}
+function buildRDistChart(canvas, existing){
+  if (!canvas || typeof Chart === 'undefined') return null;
+  if (existing) existing.destroy();
+  const buckets = calcRDistribution(filtered);
+  const C = chartColors();
+  return new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: buckets.map(b => b.label),
+      datasets: [{
+        data: buckets.map(b => b.count),
+        backgroundColor: buckets.map(b => b.color),
+        borderRadius: 8,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 9, family: 'Vazirmatn' }, color: C.text } },
+        y: { beginAtZero: true, grid: { color: C.grid }, ticks: { font: { size: 10 }, color: C.text, precision: 0 } }
+      }
+    }
+  });
+}
+function renderRDist(){
+  const el = document.getElementById('rDistChart');
+  if (!el) return;
+  rDistChart = buildRDistChart(el, rDistChart);
+}
+function renderRDistDash(){
+  const el = document.getElementById('rDistChartDash');
+  if (!el) return;
+  rDistChartDash = buildRDistChart(el, rDistChartDash);
+}
+function renderAdvStreak(){
+  const el = document.getElementById('streakInfo');
+  if (!el) return;
+  const s = calcStreaks(filtered);
+  el.innerHTML = `
+    <div class="stat-card" style="text-align:center"><div class="label">بیشترین برد پیوسته</div><div class="value pnl-pos">${s.maxWin}</div></div>
+    <div class="stat-card" style="text-align:center"><div class="label">بیشترین باخت پیوسته</div><div class="value pnl-neg">${s.maxLoss}</div></div>
+  `;
+}
+function renderAdvPerfTrigger(){
+  const el = document.getElementById('advPerfTrigger');
+  if (!el) return;
+  const map = {};
+  filtered.forEach(t => {
+    const k = t.entry_trigger || 'بدون تریگر';
+    if (!map[k]) map[k] = { w: 0, l: 0, pnl: 0, n: 0 };
+    map[k].n++;
+    if (t.Result === 'Win') map[k].w++;
+    else if (t.Result === 'Loss') map[k].l++;
+    map[k].pnl += calcPnL(t);
+  });
+  el.innerHTML = renderBarBreak(map, true);
+}
+function renderAdvRBySymbol(){
+  const el = document.getElementById('advRBySymbol');
+  if (!el) return;
+  const map = {};
+  filtered.forEach(t => {
+    const k = (t.Symbol || '—').toUpperCase();
+    if (!map[k]) map[k] = { sum: 0, n: 0 };
+    map[k].sum += calcRMultiple(t);
+    map[k].n++;
+  });
+  const entries = Object.entries(map).map(([k, v]) => ({ sym: k, avgR: v.sum / v.n, n: v.n })).sort((a,b) => b.avgR - a.avgR);
+  if (!entries.length) { el.innerHTML = '<div class="empty-state">داده‌ای نیست</div>'; return; }
+  const maxAbs = Math.max(1, ...entries.map(e => Math.abs(e.avgR)));
+  el.innerHTML = entries.slice(0, 12).map(e => {
+    const pct = Math.min(100, Math.abs(e.avgR) / maxAbs * 100);
+    const color = e.avgR >= 0 ? 'linear-gradient(90deg,#10b981,#34d399)' : 'linear-gradient(90deg,#ef4444,#f87171)';
+    return `<div class="perf-bar-row"><span class="perf-bar-label">${escapeHtml(e.sym)}</span><div class="perf-bar-track"><div class="perf-bar-fill" style="width:${pct}%;background:${color}">${e.avgR >= 0 ? '+' : ''}${e.avgR.toFixed(2)}R</div></div><span class="perf-bar-meta">${e.n} معامله</span></div>`;
+  }).join('');
+}
+function renderAdvConfidence(){
+  const el = document.getElementById('advConfidence');
+  if (!el) return;
+  const buckets = { '1-3': { w:0, l:0, pnl:0, n:0 }, '4-6': { w:0, l:0, pnl:0, n:0 }, '7-8': { w:0, l:0, pnl:0, n:0 }, '9-10': { w:0, l:0, pnl:0, n:0 } };
+  filtered.forEach(t => {
+    const c = Number(t.confidence);
+    if (isNaN(c)) return;
+    let key = null;
+    if (c <= 3) key = '1-3';
+    else if (c <= 6) key = '4-6';
+    else if (c <= 8) key = '7-8';
+    else key = '9-10';
+    buckets[key].n++;
+    if (t.Result === 'Win') buckets[key].w++;
+    else if (t.Result === 'Loss') buckets[key].l++;
+    buckets[key].pnl += calcPnL(t);
+  });
+  const labels = { '1-3': 'اعتماد کم (1-3)', '4-6': 'متوسط (4-6)', '7-8': 'بالا (7-8)', '9-10': 'خیلی بالا (9-10)' };
+  el.innerHTML = Object.entries(buckets).filter(([k,v]) => v.n > 0).map(([k, v]) => {
+    const tot = v.w + v.l;
+    const wr = tot ? ((v.w / tot) * 100).toFixed(0) : 0;
+    const pc = v.pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+    return `<div class="breakdown-row"><span>${labels[k]}</span><span>${v.n} معامله · WR ${wr}% · <span class="${pc}">${v.pnl >= 0 ? '+' : ''}${v.pnl.toFixed(0)}$</span></span></div><div class="progress-bar"><div class="progress-fill" style="width:${wr}%"></div></div>`;
+  }).join('') || '<div class="empty-state">داده‌ای نیست</div>';
 }
 
 /* ====== DASHBOARD ====== */
@@ -2836,7 +3083,7 @@ function renderHeatmap(){
 }
 
 /* ====== TABLE ====== */
-const JOURNAL_TABLE_HEAD = '<thead><tr><th>#</th><th>نماد</th><th>جهت</th><th>تاریخ</th><th>نتیجه</th><th>P/L</th><th>Stop$</th><th>1R</th><th>1.5R</th><th>2R</th><th>3R</th><th>TF</th><th>ستاپ</th><th>Zone</th><th>لینک</th></tr></thead>';
+const JOURNAL_TABLE_HEAD = '<thead><tr><th>#</th><th>نماد</th><th>جهت</th><th>تاریخ</th><th>نتیجه</th><th>P/L</th><th>Stop$</th><th>1R</th><th>1.5R</th><th>2R</th><th>3R</th><th>TF</th><th>ستاپ</th><th>Zone</th><th>تریگر</th><th>لینک</th></tr></thead>';
 function rRank(t){ return t.r3 ? 4 : (t.r2 ? 3 : (t.r15 ? 2 : (t.r1 ? 1 : 0))); }
 function sortJournalTrades(list, mode){
   const arr = [...list];
@@ -2878,8 +3125,7 @@ function journalRowHtml(t, i){
   const pc = pnl > 0 ? 'pnl-pos' : (pnl < 0 ? 'pnl-neg' : '');
   const r = (v) => v === 1 || v === true || v === '1' || Number(v) === 1 ? '✓' : '—';
   const img = t.trigger_img ? '<a href="'+t.trigger_img+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗</a>' : '';
-  const notesSnippet = globalSearchQuery && t.Notes ? ' <span style="font-size:.68rem;color:var(--text-muted)">· '+highlightMatches(String(t.Notes).slice(0,40))+'</span>' : '';
-  return '<tr onclick="showDetail(\''+String(t.id).replace(/'/g,'')+'\')" style="cursor:pointer"><td>'+(i+1)+'</td><td><strong>'+highlightMatches(t.Symbol||'')+'</strong>'+notesSnippet+'</td><td>'+escapeHtml(t.Direction||'')+'</td><td>'+escapeHtml(t['Entry Date']||'')+'</td><td>'+escapeHtml(t.Result||'')+'</td><td class="'+pc+'">'+(pnl>=0?'+':'')+pnl.toFixed(1)+'</td><td>'+(t.stop_usd!=null?t.stop_usd:'')+'</td><td>'+r(t.r1)+'</td><td>'+r(t.r15)+'</td><td>'+r(t.r2)+'</td><td>'+r(t.r3)+'</td><td>'+escapeHtml(t.Timeframe||'')+'</td><td>'+escapeHtml(t.Setup||'')+'</td><td>'+escapeHtml(t.zone||'')+'</td><td>'+img+'</td></tr>';
+  return '<tr onclick="showDetail(\''+String(t.id).replace(/'/g,'')+'\')" style="cursor:pointer"><td>'+(i+1)+'</td><td><strong>'+highlightMatches(t.Symbol||'')+'</strong></td><td>'+escapeHtml(t.Direction||'')+'</td><td>'+escapeHtml(t['Entry Date']||'')+'</td><td>'+escapeHtml(t.Result||'')+'</td><td class="'+pc+'">'+(pnl>=0?'+':'')+pnl.toFixed(1)+'</td><td>'+(t.stop_usd!=null?t.stop_usd:'')+'</td><td>'+r(t.r1)+'</td><td>'+r(t.r15)+'</td><td>'+r(t.r2)+'</td><td>'+r(t.r3)+'</td><td>'+escapeHtml(t.Timeframe||'')+'</td><td>'+escapeHtml(t.Setup||'')+'</td><td>'+escapeHtml(t.zone||'')+'</td><td>'+escapeHtml(t.entry_trigger||'')+'</td><td>'+img+'</td></tr>';
 }
 let journalGroupOpenState = {};
 function renderTable(){
@@ -2915,7 +3161,7 @@ function renderAnalysis(){
 }
 function toggleFilters(){ document.getElementById('filtersPanel').classList.toggle('show'); }
 function resetFilters(){
-  ['fSymbol','fDirection','fResult','fTimeframe','fSetup','fZone','fFrom','fTo','fSearch','fSession','fDow','fMinPnL','fMaxLoss','fMinStop','fMaxStop','fMinR','fPreEmotion','fPostEmotion','fEnergyMin','fEnergyMax','fConfMin','fConfMax','fExecMin','fExecMax','fMotive','fMistake','fDivergence','fChecklist','fChecklistStatus'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['fSymbol','fDirection','fResult','fTimeframe','fSetup','fZone','fTrigger','fFrom','fTo','fSearch','fSession','fDow','fMinPnL','fMaxLoss','fMinStop','fMaxStop','fMinR','fPreEmotion','fPostEmotion','fEnergyMin','fEnergyMax','fConfMin','fConfMax','fExecMin','fExecMax','fMotive','fMistake','fDivergence','fChecklist','fChecklistStatus'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.querySelectorAll('.chip-f').forEach(c => c.classList.remove('active'));
   activeFilterTags = []; renderFilterTagChips();
   clearGlobalSearch();
@@ -2998,11 +3244,11 @@ function openAddModal(editTrade){
   currentTags = [];
   window._tradeClChecked = {};
   clearPendingVoice();
-  resetDropZones();
+  resetImageSlots();
   document.querySelectorAll('.emo-tab').forEach(t => t.classList.toggle('active', t.dataset.etab === 'pre'));
   document.querySelectorAll('.emo-pane').forEach(p => p.classList.toggle('active', p.id === 'epane-pre'));
   renderTagManager(); renderFormTagChips(); renderTradeChecklistColumns();
-  document.querySelectorAll('#motiveChecks .check-item, #mistakeChecks .check-item').forEach(it => { it.classList.remove('selected'); const cb = it.querySelector('input'); if (cb) cb.checked = false; });
+  document.querySelectorAll('#motiveChecks .chip, #mistakeChecks .chip').forEach(it => it.classList.remove('selected'));
   document.querySelectorAll('.form-tab').forEach((t,i) => t.classList.toggle('active', i===0));
   document.querySelectorAll('.form-section').forEach((s,i) => s.classList.toggle('active', i===0));
   setDir('Buy'); setResult('Win');
@@ -3032,6 +3278,7 @@ function openAddModal(editTrade){
     document.getElementById('tfFinalStop').value = editTrade.final_stop != null ? editTrade.final_stop : '';
     document.getElementById('tfSetup').value = editTrade.Setup || '';
     document.getElementById('tfZone').value = editTrade.zone || '';
+    document.getElementById('tfTrigger').value = editTrade.entry_trigger || '';
     document.getElementById('tfDivergence').value = editTrade.divergence_type || '';
     const divBox = document.getElementById('divChips');
     if (divBox) { const val = editTrade.divergence_type || ''; divBox.querySelectorAll('.chip').forEach(c => c.classList.toggle('selected', (c.dataset.v || '') === val)); }
@@ -3046,8 +3293,13 @@ function openAddModal(editTrade){
     document.getElementById('tfLessons').value = editTrade.lessons || '';
     document.getElementById('tfTriggerImg').value = editTrade.trigger_img || '';
     document.getElementById('tfZoneImg').value = editTrade.zone_img || '';
-    setDropZoneFromValue(1, editTrade.img_extra1 || '');
-    setDropZoneFromValue(2, editTrade.img_extra2 || '');
+    const imgs = Array.isArray(editTrade.img_extras) ? [...editTrade.img_extras] : [];
+    if (!imgs.length) {
+      if (editTrade.img_extra1) imgs.push(editTrade.img_extra1);
+      if (editTrade.img_extra2) imgs.push(editTrade.img_extra2);
+    }
+    if (imgs.length) imgs.forEach(v => addImageSlot(v));
+    else addImageSlot();
     document.getElementById('tfVolume').value = editTrade.volume || '';
     const pre = Array.isArray(editTrade.pre_emotions) ? editTrade.pre_emotions : [];
     const post = Array.isArray(editTrade.post_emotions) ? editTrade.post_emotions : [];
@@ -3056,9 +3308,9 @@ function openAddModal(editTrade){
     document.querySelectorAll('#preEmotionChips .emo-item').forEach(el => { const cb = el.querySelector('input'); if (pre.includes(cb.value)) { cb.checked = true; el.classList.add('selected'); } });
     document.querySelectorAll('#postEmotionChips .emo-item').forEach(el => { const cb = el.querySelector('input'); if (post.includes(cb.value)) { cb.checked = true; el.classList.add('selected'); } });
     const motives = editTrade.motives || [];
-    document.querySelectorAll('#motiveChecks .check-item').forEach(it => { const cb = it.querySelector('input'); if (motives.includes(cb.value)) { cb.checked = true; it.classList.add('selected'); } });
+    document.querySelectorAll('#motiveChecks .chip').forEach(it => { if (motives.includes(it.dataset.val)) it.classList.add('selected'); });
     const mistakes = editTrade.mistakes || [];
-    document.querySelectorAll('#mistakeChecks .check-item').forEach(it => { const cb = it.querySelector('input'); if (mistakes.includes(cb.value)) { cb.checked = true; it.classList.add('selected'); } });
+    document.querySelectorAll('#mistakeChecks .chip').forEach(it => { if (mistakes.includes(it.dataset.val)) it.classList.add('selected'); });
     if (editTrade.energy != null) { document.getElementById('tfEnergy').value = editTrade.energy; document.getElementById('energyVal').textContent = editTrade.energy; }
     if (editTrade.confidence != null) { document.getElementById('tfConfidence').value = editTrade.confidence; document.getElementById('confVal').textContent = editTrade.confidence; }
     if (editTrade.exec_quality != null) { document.getElementById('tfExecQuality').value = editTrade.exec_quality; document.getElementById('execVal').textContent = editTrade.exec_quality; }
@@ -3069,6 +3321,8 @@ function openAddModal(editTrade){
     renderTradeChecklistColumns();
     updatePipPreview();
     if (editTrade.has_voice) { const st = document.getElementById('voiceStatus'); if (st) st.textContent = 'ویس ذخیره‌شده دارد'; }
+  } else {
+    addImageSlot();
   }
   document.getElementById('addModal').classList.add('show'); lockScroll();
 }
@@ -3166,17 +3420,26 @@ async function saveTrade(e){
   if (isRecording) { showToast('اول ضبط را متوقف کن'); return; }
   const newId = editingId != null ? editingId : Date.now();
   const prevTrade = editingId != null ? allTrades.find(t => String(t.id) === String(editingId)) : null;
-  const img1Val = document.getElementById('tfImgExtra1').value.trim();
-  const img2Val = document.getElementById('tfImgExtra2').value.trim();
+  const imgValues = imageSlots.map(s => (s.value || '').trim()).filter(Boolean);
   const btn = document.getElementById('saveBtn'); const prevTxt = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite"></span> ذخیره...';
-  let img1Final = img1Val || null, img2Final = img2Val || null;
-  try {
-    if (img1Val && !isStorageRef(img1Val) && img1Val.startsWith('data:')) img1Final = await persistImageField(img1Val, newId, 1);
-    if (img2Val && !isStorageRef(img2Val) && img2Val.startsWith('data:')) img2Final = await persistImageField(img2Val, newId, 2);
-  } catch(e){}
+  const imgFinals = [];
+  for (let i = 0; i < imgValues.length; i++) {
+    const v = imgValues[i];
+    if (isStorageRef(v)) { imgFinals.push(v); continue; }
+    if (v.startsWith('data:')) {
+      try {
+        const stored = await uploadImageToStorage(newId, i+1, v);
+        imgFinals.push(stored);
+      } catch(e) { console.error('upload img', i, e); }
+    } else {
+      imgFinals.push(v);
+    }
+  }
   const checklistsData = getTradeChecklistsData();
+  const motives = [...document.querySelectorAll('#motiveChecks .chip.selected')].map(el => el.dataset.val);
+  const mistakes = [...document.querySelectorAll('#mistakeChecks .chip.selected')].map(el => el.dataset.val);
   const trade = {
     Symbol: symbol.toLowerCase(), Direction: document.getElementById('tfDirection').value || 'Buy',
     'Entry Date': document.getElementById('tfDate').value,
@@ -3188,6 +3451,7 @@ async function saveTrade(e){
     Result: document.getElementById('tfResult').value || 'Win',
     Timeframe: document.getElementById('tfTimeframe').value,
     Setup: document.getElementById('tfSetup').value || null,
+    entry_trigger: document.getElementById('tfTrigger').value || null,
     Notes: document.getElementById('tfNotes').value || null,
     manual_pnl: Math.abs(manual),
     stop_usd: parseFloat(document.getElementById('tfStopUsd').value) || 10,
@@ -3200,7 +3464,9 @@ async function saveTrade(e){
     zone: document.getElementById('tfZone').value || null,
     trigger_img: document.getElementById('tfTriggerImg').value || null,
     zone_img: document.getElementById('tfZoneImg').value || null,
-    img_extra1: img1Final, img_extra2: img2Final,
+    img_extras: imgFinals,
+    img_extra1: imgFinals[0] || null,
+    img_extra2: imgFinals[1] || null,
     entry_reason: document.getElementById('tfEntryReason').value || null,
     exit_reason: document.getElementById('tfExitReason').value || null,
     lessons: document.getElementById('tfLessons').value || null,
@@ -3214,8 +3480,8 @@ async function saveTrade(e){
     checklists: checklistsData,
     checklist: checklistsData && checklistsData.length ? checklistsData[0] : null,
     has_voice: false,
-    motives: [...document.querySelectorAll('#motiveChecks input:checked')].map(c => c.value),
-    mistakes: [...document.querySelectorAll('#mistakeChecks input:checked')].map(c => c.value),
+    motives: motives,
+    mistakes: mistakes,
   };
   trade.id = newId;
   if (pendingVoiceBlob) {
@@ -3228,6 +3494,7 @@ async function saveTrade(e){
   else allTrades.push(trade);
   ensureUniqueIds();
   if (trade.Setup && !custom.setups.includes(trade.Setup)) { custom.setups.push(trade.Setup); saveCustom(); }
+  if (trade.entry_trigger && !custom.triggers.includes(trade.entry_trigger)) { custom.triggers.push(trade.entry_trigger); saveCustom(); }
   if (trade.zone && !custom.zones.includes(trade.zone)) { custom.zones.push(trade.zone); saveCustom(); }
   setupFilters(); applyFilters();
   btn.disabled = false; btn.innerHTML = prevTxt;
@@ -3246,8 +3513,8 @@ async function showDetail(id){
   if (!t) { showToast('پیدا نشد'); return; }
   document.getElementById('detailTitle').textContent = (t.Symbol || '') + ' · ' + (t['Entry Date'] || '');
   const pnl = calcPnL(t); const pc = pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
-  const resultBadge = t.Result === 'Win' ? '<span class="badge badge-win">سود</span>' : (t.Result === 'Loss' ? '<span class="badge badge-loss">ضرر</span>' : '<span class="badge" style="background:var(--bg-subtle);color:var(--text-muted)">BE</span>');
-  const dirBadge = t.Direction === 'Buy' ? '<span class="badge badge-buy">خرید</span>' : (t.Direction === 'Sell' ? '<span class="badge badge-sell">فروش</span>' : '');
+  const resultBadge = t.Result === 'Win' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">سود</span>' : (t.Result === 'Loss' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">ضرر</span>' : '<span class="badge" style="background:var(--bg-subtle);color:var(--text-muted)">BE</span>');
+  const dirBadge = t.Direction === 'Buy' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">خرید</span>' : (t.Direction === 'Sell' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">فروش</span>' : '');
   const rHits = [t.r1&&'1R',t.r15&&'1.5R',t.r2&&'2R',t.r3&&'3R'].filter(Boolean).join(' · ') || '—';
   let dowLabel = '';
   if (t['Entry Date']) { const d = new Date(t['Entry Date']+'T00:00:00'); if (!isNaN(d)) dowLabel = DOW_FA[d.getDay()]; }
@@ -3266,6 +3533,7 @@ async function showDetail(id){
   const setupItems = [];
   if (t.Setup) setupItems.push(['ستاپ', t.Setup]);
   if (t.zone) setupItems.push(['Zone', t.zone]);
+  if (t.entry_trigger) setupItems.push(['تریگر ورود', t.entry_trigger]);
   if (t.divergence_type) setupItems.push(['واگرایی', t.divergence_type]);
   const textBlocks = [];
   if (t.entry_reason) textBlocks.push(['دلیل ورود', t.entry_reason]);
@@ -3303,19 +3571,17 @@ async function showDetail(id){
   const chartLinks = [];
   if (t.trigger_img) chartLinks.push(['چارت تریگر', t.trigger_img]);
   if (t.zone_img) chartLinks.push(['چارت زون', t.zone_img]);
-  if (t.has_voice || chartLinks.length || t.img_extra1 || t.img_extra2) {
+  const extras = Array.isArray(t.img_extras) && t.img_extras.length ? t.img_extras : [t.img_extra1, t.img_extra2].filter(Boolean);
+  if (t.has_voice || chartLinks.length || extras.length) {
     html += '<div class="detail-section"><div class="section-title">🖼️ رسانه</div>';
     if (t.has_voice) html += '<div class="voice-box" style="margin-bottom:12px"><div class="voice-row"><button type="button" class="btn btn-sm" onclick="playTradeVoice(\''+String(t.id)+'\')">▶ پخش</button><button type="button" class="btn btn-icon-danger btn-sm" onclick="deleteTradeVoice(\''+String(t.id)+'\')">🗑️</button></div><audio id="detailAudio" controls style="width:100%;margin-top:10px;display:none"></audio></div>';
     if (chartLinks.length) html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' + chartLinks.map(([label,url]) => '<a class="btn btn-outline btn-sm" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">🔗 '+label+'</a>').join('') + '</div>';
-    const mediaSlots = [];
-    if (t.img_extra1) mediaSlots.push(['عکس ۱', t.img_extra1]);
-    if (t.img_extra2) mediaSlots.push(['عکس ۲', t.img_extra2]);
-    if (mediaSlots.length) {
+    if (extras.length) {
       html += '<div class="detail-media-grid" id="detailMediaGrid">';
-      mediaSlots.forEach(([label, val]) => {
+      extras.forEach((val, i) => {
         const info = getImgPreviewSource(val);
-        if (info.type === 'direct') html += `<div class="detail-media-item"><img class="detail-media-thumb" src="${escapeHtml(info.src)}" onclick="window.open(this.src,'_blank')" alt=""><span>${label}</span></div>`;
-        else if (info.type === 'storage') html += `<div class="detail-media-item" data-storage-path="${escapeHtml(info.path)}"><div class="img-loading">...</div><span>${label}</span></div>`;
+        if (info.type === 'direct') html += `<div class="detail-media-item"><img class="detail-media-thumb" src="${escapeHtml(info.src)}" onclick="window.open(this.src,'_blank')" alt=""><span>عکس ${i+1}</span></div>`;
+        else if (info.type === 'storage') html += `<div class="detail-media-item" data-storage-path="${escapeHtml(info.path)}"><div class="img-loading">...</div><span>عکس ${i+1}</span></div>`;
       });
       html += '</div>';
     }
@@ -3338,22 +3604,20 @@ async function showDetail(id){
 function closeDetailModal(){ document.getElementById('detailModal').classList.remove('show'); unlockScroll(); }
 function editTrade(id){ const t = allTrades.find(x => String(x.id) === String(id)); closeDetailModal(); if (t) setTimeout(() => openAddModal(t), 150); }
 
-/* ====== UNDO (NEW) ====== */
+/* ====== UNDO ====== */
 async function deleteTrade(id){
   if (!confirm('حذف شود؟')) return;
   const t = allTrades.find(x => String(x.id) === String(id));
   if (!t) return;
-  // Save for undo
   lastDeletedTrade = { trade: JSON.parse(JSON.stringify(t)), index: allTrades.indexOf(t) };
-  // Remove from memory
   allTrades = allTrades.filter(x => String(x.id) !== String(id));
   await deleteTradeRemote(id);
   closeDetailModal();
   setupFilters();
   applyFilters();
-  showUndoToast(t.Symbol || 'معامله', t.id);
+  showUndoToast(t.Symbol || 'معامله');
 }
-function showUndoToast(label, id){
+function showUndoToast(label){
   const toast = document.getElementById('undoToast');
   const text = document.getElementById('undoText');
   const countdown = document.getElementById('undoCountdown');
@@ -3367,10 +3631,7 @@ function showUndoToast(label, id){
   undoCountdownTimer = setInterval(() => {
     seconds--;
     if (countdown) countdown.textContent = Math.max(0, seconds);
-    if (seconds <= 0) {
-      clearInterval(undoCountdownTimer);
-      undoCountdownTimer = null;
-    }
+    if (seconds <= 0) { clearInterval(undoCountdownTimer); undoCountdownTimer = null; }
   }, 1000);
   undoTimer = setTimeout(() => {
     toast.classList.add('leaving');
@@ -3384,52 +3645,26 @@ async function undoDelete(){
   allTrades.push(trade);
   ensureUniqueIds();
   const ok = await upsertTradeRemote(trade);
-  // Hide toast
   const toast = document.getElementById('undoToast');
   toast.classList.add('leaving');
   setTimeout(() => toast.classList.remove('show'), 300);
   if (undoTimer) clearTimeout(undoTimer);
   if (undoCountdownTimer) clearInterval(undoCountdownTimer);
   lastDeletedTrade = null;
-  setupFilters();
-  applyFilters();
-  showToast(ok ? '✓ معامله بازگردانده شد' : 'بازگردانی محلی انجام شد ولی Supabase ناموفق بود');
+  setupFilters(); applyFilters();
+  showToast(ok ? '✓ معامله بازگردانده شد' : 'بازگردانی محلی موفق، Supabase ناموفق');
 }
 
-/* ====== EXPORT (NEW) ====== */
-function openExportModal(){
-  document.getElementById('exportModal').classList.add('show');
-  lockScroll();
-}
-function closeExportModal(){
-  document.getElementById('exportModal').classList.remove('show');
-  unlockScroll();
-}
+/* ====== EXPORT ====== */
+function openExportModal(){ document.getElementById('exportModal').classList.add('show'); lockScroll(); }
+function closeExportModal(){ document.getElementById('exportModal').classList.remove('show'); unlockScroll(); }
 function getExportRange(){
-  const now = new Date();
-  const todayStr = now.toISOString().slice(0,10);
-  if (pendingExportRange === 'week') {
-    const d = new Date(now); d.setDate(d.getDate() - 7);
-    return { from: d.toISOString().slice(0,10), to: todayStr, label: 'هفته اخیر' };
-  }
-  if (pendingExportRange === 'month') {
-    const d = new Date(now); d.setMonth(d.getMonth() - 1);
-    return { from: d.toISOString().slice(0,10), to: todayStr, label: 'ماه اخیر' };
-  }
-  if (pendingExportRange === 'year') {
-    const d = new Date(now); d.setFullYear(d.getFullYear() - 1);
-    return { from: d.toISOString().slice(0,10), to: todayStr, label: 'سال اخیر' };
-  }
-  if (pendingExportRange === 'all') {
-    return { from: null, to: null, label: 'همه' };
-  }
-  if (pendingExportRange === 'custom') {
-    return {
-      from: document.getElementById('exportFrom').value || null,
-      to: document.getElementById('exportTo').value || null,
-      label: 'بازه سفارشی'
-    };
-  }
+  const now = new Date(); const todayStr = now.toISOString().slice(0,10);
+  if (pendingExportRange === 'week') { const d = new Date(now); d.setDate(d.getDate() - 7); return { from: d.toISOString().slice(0,10), to: todayStr, label: 'هفته اخیر' }; }
+  if (pendingExportRange === 'month') { const d = new Date(now); d.setMonth(d.getMonth() - 1); return { from: d.toISOString().slice(0,10), to: todayStr, label: 'ماه اخیر' }; }
+  if (pendingExportRange === 'year') { const d = new Date(now); d.setFullYear(d.getFullYear() - 1); return { from: d.toISOString().slice(0,10), to: todayStr, label: 'سال اخیر' }; }
+  if (pendingExportRange === 'all') return { from: null, to: null, label: 'همه' };
+  if (pendingExportRange === 'custom') return { from: document.getElementById('exportFrom').value || null, to: document.getElementById('exportTo').value || null, label: 'بازه سفارشی' };
   return { from: null, to: null, label: 'همه' };
 }
 function getTradesInRange(range){
@@ -3442,277 +3677,125 @@ function getTradesInRange(range){
 }
 async function runExport(){
   const range = getExportRange();
-  if (!range.from && !range.to && pendingExportRange === 'custom') {
-    showToast('تاریخ‌ها را پر کن'); return;
-  }
-  const btn = document.getElementById('exportGoBtn');
-  const prevTxt = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '⏳ در حال آماده‌سازی...';
+  if (!range.from && !range.to && pendingExportRange === 'custom') { showToast('تاریخ‌ها را پر کن'); return; }
+  const btn = document.getElementById('exportGoBtn'); const prevTxt = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '⏳ در حال آماده‌سازی...';
   try {
-    if (pendingExportType === 'excel') {
-      await exportExcel(range);
-    } else {
-      await exportPDF(range);
-    }
-  } catch(e) {
-    console.error(e);
-    showToast('خطا در خروجی: ' + (e.message || ''));
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = prevTxt;
-    closeExportModal();
-  }
+    if (pendingExportType === 'excel') await exportExcel(range);
+    else await exportPDF(range);
+  } catch(e) { console.error(e); showToast('خطا در خروجی: ' + (e.message || '')); }
+  finally { btn.disabled = false; btn.innerHTML = prevTxt; closeExportModal(); }
 }
 async function exportExcel(range){
   const trades = getTradesInRange(range);
   if (!trades.length) { showToast('معامله‌ای در این بازه نیست'); return; }
-  // Summary calculations
   const wins = trades.filter(t => t.Result === 'Win').length;
   const losses = trades.filter(t => t.Result === 'Loss').length;
   const be = trades.length - wins - losses;
   const wr = (wins + losses) ? ((wins / (wins + losses)) * 100).toFixed(1) : '0';
   let totalPnL = 0, winSum = 0, lossSum = 0;
-  trades.forEach(t => {
-    const p = calcPnL(t);
-    totalPnL += p;
-    if (p > 0) winSum += p; else if (p < 0) lossSum += Math.abs(p);
-  });
+  trades.forEach(t => { const p = calcPnL(t); totalPnL += p; if (p > 0) winSum += p; else if (p < 0) lossSum += Math.abs(p); });
   const pf = lossSum > 0 ? (winSum / lossSum).toFixed(2) : '∞';
-
   const wb = XLSX.utils.book_new();
-
-  // Sheet 1: Trades
   const tradesData = trades.map(t => ({
-    'نماد': t.Symbol || '',
-    'جهت': t.Direction || '',
-    'تاریخ': t['Entry Date'] || '',
-    'ساعت': t['Entry Time'] || '',
-    'نتیجه': t.Result || '',
-    'P/L ($)': calcPnL(t).toFixed(2),
-    'ریسک ($)': t.stop_usd || '',
-    'قیمت ورود': t['Entry Price'] || '',
-    'استاپ': t['Stop Loss'] || '',
-    'استاپ اولیه': t.initial_stop || '',
-    'استاپ نهایی': t.final_stop || '',
-    '1R': t.r1 ? '✓' : '',
-    '1.5R': t.r15 ? '✓' : '',
-    '2R': t.r2 ? '✓' : '',
-    '3R': t.r3 ? '✓' : '',
-    'تایم‌فریم': t.Timeframe || '',
-    'ستاپ': t.Setup || '',
-    'Zone': t.zone || '',
-    'واگرایی': t.divergence_type || '',
-    'دلیل ورود': t.entry_reason || '',
-    'دلیل خروج': t.exit_reason || '',
-    'یادداشت': t.Notes || '',
-    'درس‌ها': t.lessons || '',
-    'برچسب‌ها': (t.tags || []).join(' · ')
+    'نماد': t.Symbol || '', 'جهت': t.Direction || '', 'تاریخ': t['Entry Date'] || '', 'ساعت': t['Entry Time'] || '',
+    'نتیجه': t.Result || '', 'P/L ($)': calcPnL(t).toFixed(2), 'ریسک ($)': t.stop_usd || '',
+    'قیمت ورود': t['Entry Price'] || '', 'استاپ': t['Stop Loss'] || '', 'استاپ اولیه': t.initial_stop || '', 'استاپ نهایی': t.final_stop || '',
+    '1R': t.r1 ? '✓' : '', '1.5R': t.r15 ? '✓' : '', '2R': t.r2 ? '✓' : '', '3R': t.r3 ? '✓' : '',
+    'تایم‌فریم': t.Timeframe || '', 'ستاپ': t.Setup || '', 'Zone': t.zone || '', 'تریگر': t.entry_trigger || '',
+    'واگرایی': t.divergence_type || '', 'دلیل ورود': t.entry_reason || '', 'دلیل خروج': t.exit_reason || '',
+    'یادداشت': t.Notes || '', 'درس‌ها': t.lessons || '', 'برچسب‌ها': (t.tags || []).join(' · ')
   }));
   const wsTrades = XLSX.utils.json_to_sheet(tradesData);
-  // Style header row (SheetJS CE supports limited styling — colors via column widths & bold only through xlsx pro. We'll rely on the row content being clear.)
-  wsTrades['!cols'] = [
-    {wch:10},{wch:8},{wch:12},{wch:8},{wch:8},{wch:10},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},
-    {wch:5},{wch:5},{wch:5},{wch:5},{wch:8},{wch:12},{wch:12},{wch:10},{wch:30},{wch:30},{wch:40},{wch:40},{wch:20}
-  ];
+  wsTrades['!cols'] = [{wch:10},{wch:8},{wch:12},{wch:8},{wch:8},{wch:10},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:5},{wch:5},{wch:5},{wch:5},{wch:8},{wch:12},{wch:12},{wch:14},{wch:10},{wch:30},{wch:30},{wch:40},{wch:40},{wch:20}];
   XLSX.utils.book_append_sheet(wb, wsTrades, 'معاملات');
-
-  // Sheet 2: Summary
   const summaryData = [
-    ['گزارش معاملات — ' + range.label, ''],
-    ['از تاریخ', range.from || '—'],
-    ['تا تاریخ', range.to || '—'],
-    ['', ''],
-    ['تعداد کل معاملات', trades.length],
-    ['برد', wins],
-    ['باخت', losses],
-    ['سر‌به‌سر', be],
-    ['وین ریت', wr + '%'],
-    ['', ''],
-    ['سود خالص ($)', totalPnL.toFixed(2)],
-    ['مجموع سودها ($)', winSum.toFixed(2)],
-    ['مجموع ضررها ($)', lossSum.toFixed(2)],
-    ['پروفیت فاکتور', pf],
-    ['', ''],
-    ['میانگین سود ($)', wins ? (winSum / wins).toFixed(2) : '0'],
-    ['میانگین ضرر ($)', losses ? (lossSum / losses).toFixed(2) : '0'],
-    ['', ''],
-    ['تاریخ تولید', new Date().toLocaleString('fa-IR')]
+    ['گزارش معاملات — ' + range.label, ''], ['از تاریخ', range.from || '—'], ['تا تاریخ', range.to || '—'], ['', ''],
+    ['تعداد کل معاملات', trades.length], ['برد', wins], ['باخت', losses], ['سر‌به‌سر', be],
+    ['وین ریت', wr + '%'], ['', ''], ['سود خالص ($)', totalPnL.toFixed(2)],
+    ['مجموع سودها ($)', winSum.toFixed(2)], ['مجموع ضررها ($)', lossSum.toFixed(2)], ['پروفیت فاکتور', pf], ['', ''],
+    ['Expectancy ($)', calcExpectancy(trades).toFixed(2)], ['Kelly %', calcKelly(trades).toFixed(1)],
+    ['Max DD %', calcMaxDD(trades).pct.toFixed(2)], ['Sharpe', calcSharpe(trades).toFixed(2)],
+    ['Risk of Ruin %', calcRiskOfRuin(trades).toFixed(2)],
+    ['سود روزانه میانگین', calcProfitPerDay(trades).toFixed(2)], ['سود هفتگی میانگین', calcProfitPerWeek(trades).toFixed(2)],
+    ['', ''], ['تاریخ تولید', new Date().toLocaleString('fa-IR')]
   ];
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
   wsSummary['!cols'] = [{wch:25},{wch:30}];
   XLSX.utils.book_append_sheet(wb, wsSummary, 'خلاصه آمار');
-
-  // Sheet 3: Symbols breakdown
   const bySymbol = {};
   trades.forEach(t => {
     const s = (t.Symbol || '—').toUpperCase();
-    if (!bySymbol[s]) bySymbol[s] = { n: 0, w: 0, l: 0, pnl: 0 };
+    if (!bySymbol[s]) bySymbol[s] = { n: 0, w: 0, l: 0, pnl: 0, rSum: 0 };
     bySymbol[s].n++;
-    if (t.Result === 'Win') bySymbol[s].w++;
-    else if (t.Result === 'Loss') bySymbol[s].l++;
+    if (t.Result === 'Win') bySymbol[s].w++; else if (t.Result === 'Loss') bySymbol[s].l++;
     bySymbol[s].pnl += calcPnL(t);
+    bySymbol[s].rSum += calcRMultiple(t);
   });
   const symbolData = Object.entries(bySymbol).map(([sym, v]) => ({
-    'نماد': sym,
-    'تعداد': v.n,
-    'برد': v.w,
-    'باخت': v.l,
+    'نماد': sym, 'تعداد': v.n, 'برد': v.w, 'باخت': v.l,
     'وین ریت': v.w + v.l ? ((v.w / (v.w + v.l)) * 100).toFixed(1) + '%' : '—',
-    'سود/ضرر ($)': v.pnl.toFixed(2)
+    'سود/ضرر ($)': v.pnl.toFixed(2),
+    'میانگین R': (v.rSum / v.n).toFixed(2)
   })).sort((a,b) => parseFloat(b['سود/ضرر ($)']) - parseFloat(a['سود/ضرر ($)']));
   const wsSymbols = XLSX.utils.json_to_sheet(symbolData);
-  wsSymbols['!cols'] = [{wch:12},{wch:8},{wch:8},{wch:8},{wch:10},{wch:14}];
+  wsSymbols['!cols'] = [{wch:12},{wch:8},{wch:8},{wch:8},{wch:10},{wch:14},{wch:10}];
   XLSX.utils.book_append_sheet(wb, wsSymbols, 'به تفکیک نماد');
-
-  // Write file
   const fname = `trading-journal-${range.label.replace(/\s+/g,'-')}-${new Date().toISOString().slice(0,10)}.xlsx`;
   XLSX.writeFile(wb, fname);
   showToast('✓ فایل اکسل آماده شد');
 }
-
 async function exportPDF(range){
   const trades = getTradesInRange(range);
   if (!trades.length) { showToast('معامله‌ای در این بازه نیست'); return; }
-
-  // Temporarily apply filter
-  const savedPeriod = currentPeriod;
-  const savedCustomFrom = customPeriodFrom;
-  const savedCustomTo = customPeriodTo;
-
-  // Set filter to custom range
-  currentPeriod = 'custom';
-  customPeriodFrom = range.from;
-  customPeriodTo = range.to;
+  const savedPeriod = currentPeriod, savedCustomFrom = customPeriodFrom, savedCustomTo = customPeriodTo;
+  currentPeriod = 'custom'; customPeriodFrom = range.from; customPeriodTo = range.to;
   applyFilters();
-
-  // Wait for charts to render
-  await new Promise(r => setTimeout(r, 400));
-
-  // Build an off-screen export container
-  const exportWrap = document.createElement('div');
-  exportWrap.style.cssText = 'position:fixed;left:-99999px;top:0;width:900px;background:#fff;color:#0f1729;padding:30px;font-family:Vazirmatn,sans-serif;direction:rtl;z-index:-1';
-  const dark = document.body.classList.contains('dark');
-  // Use the actual dashboard sections
-  const dashSections = document.getElementById('dashSections');
-  const clone = dashSections.cloneNode(true);
-  // Remove layout edit handles from clone
-  clone.querySelectorAll('.drag-handle,.resize-handle,.resize-preview').forEach(el => el.remove());
-  clone.querySelectorAll('canvas').forEach(c => c.remove());
-  // Add header
-  const header = document.createElement('div');
-  header.innerHTML = `
-    <div style="text-align:center;margin-bottom:24px;border-bottom:3px solid #4f46e5;padding-bottom:16px">
-      <h1 style="margin:0;color:#4f46e5;font-size:26px">📊 ژورنال ترید</h1>
-      <p style="margin:8px 0 0;color:#64748b;font-size:14px">گزارش ${range.label} · ${trades.length} معامله</p>
-      <p style="margin:4px 0 0;color:#94a3b8;font-size:12px">تولید: ${new Date().toLocaleString('fa-IR')}</p>
-    </div>`;
-  exportWrap.appendChild(header);
-
-  // Add clone
-  const styleOverride = document.createElement('style');
-  styleOverride.textContent = `
-    #pdf-target *{color:#0f1729 !important;background-color:transparent !important;background-image:none !important;box-shadow:none !important;border-color:#e8ecf3 !important}
-    #pdf-target .balance-card{background:#eef2ff !important;background-image:linear-gradient(135deg,#fff,#eef2ff) !important}
-    #pdf-target .stat-card,#pdf-target .breakdown-card,#pdf-target .chart-card,#pdf-target .heatmap-card{background:#fff !important;border:1px solid #e8ecf3 !important}
-    #pdf-target .pnl-pos{color:#10b981 !important}
-    #pdf-target .pnl-neg{color:#ef4444 !important}
-    #pdf-target .hm-cell{color:#fff !important}
-  `;
-  exportWrap.id = 'pdf-target';
-  exportWrap.appendChild(styleOverride);
-
-  // For canvases, we need to re-draw charts on white background. Simpler: capture the visible dashboard via html2canvas as-is.
-  // Actually simplest: capture visible panel-dashboard directly.
+  await new Promise(r => setTimeout(r, 500));
   const dash = document.getElementById('panel-dashboard');
-  const wasHidden = dash.style.display;
   const layoutEditWas = document.body.classList.contains('layout-edit');
   if (layoutEditWas) document.body.classList.remove('layout-edit');
-
-  // Show only dashboard
   document.querySelectorAll('.main-panel').forEach(p => p.style.display = 'none');
   dash.style.display = 'block';
   dash.style.background = '#f6f8fc';
   dash.style.padding = '20px';
-
   await new Promise(r => setTimeout(r, 500));
-
-  const canvas = await html2canvas(dash, {
-    scale: 2,
-    backgroundColor: '#f6f8fc',
-    logging: false,
-    useCORS: true
-  });
-
-  // Restore
+  const canvas = await html2canvas(dash, { scale: 2, backgroundColor: '#f6f8fc', logging: false, useCORS: true });
   document.querySelectorAll('.main-panel').forEach(p => p.style.display = '');
-  dash.style.background = '';
-  dash.style.padding = '';
+  dash.style.background = ''; dash.style.padding = '';
   if (layoutEditWas) document.body.classList.add('layout-edit');
-
-  // Restore filter
-  currentPeriod = savedPeriod;
-  customPeriodFrom = savedCustomFrom;
-  customPeriodTo = savedCustomTo;
+  currentPeriod = savedPeriod; customPeriodFrom = savedCustomFrom; customPeriodTo = savedCustomTo;
   applyFilters();
-
-  // Build PDF
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4'
-  });
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-  const margin = 8;
-  const contentW = pageW - margin * 2;
-  const imgRatio = canvas.width / canvas.height;
-  const contentH = contentW / imgRatio;
-
-  // Title page / header
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageW = pdf.internal.pageSize.getWidth(), pageH = pdf.internal.pageSize.getHeight();
+  const margin = 8, contentW = pageW - margin * 2;
   pdf.setFillColor(79, 70, 229);
   pdf.rect(0, 0, pageW, 22, 'F');
   pdf.setTextColor(255, 255, 255);
   pdf.setFontSize(16);
-  try { pdf.setFont(undefined, 'bold'); } catch(e){}
   pdf.text('Trading Journal Report', pageW/2, 14, { align: 'center' });
-
-  let yOffset = 28;
-  let remainingH = contentH;
-  let srcY = 0;
-  const srcPageH = canvas.height * (contentW / canvas.width) * (canvas.width / canvas.width); // = canvas.height * (contentW / canvas.width)
-  // Simpler: slice
   const mmPerPx = contentW / canvas.width;
   const totalMM = canvas.height * mmPerPx;
-  let yPrinted = 0;
-
-  // We'll add pages by cropping canvas segments
+  let yPrinted = 0, yOffset = 28;
   while (yPrinted < totalMM) {
     const availH = pageH - yOffset - margin;
     const segMM = Math.min(availH, totalMM - yPrinted);
-    const segPx = segMM / mmPerPx;
     const srcYPx = yPrinted / mmPerPx;
-    // Crop
     const tmpCanvas = document.createElement('canvas');
     tmpCanvas.width = canvas.width;
-    tmpCanvas.height = Math.min(canvas.height - srcYPx, segPx);
+    tmpCanvas.height = Math.min(canvas.height - srcYPx, segMM / mmPerPx);
     const ctx = tmpCanvas.getContext('2d');
     ctx.drawImage(canvas, 0, srcYPx, canvas.width, tmpCanvas.height, 0, 0, canvas.width, tmpCanvas.height);
     const imgData = tmpCanvas.toDataURL('image/jpeg', 0.85);
     pdf.addImage(imgData, 'JPEG', margin, yOffset, contentW, tmpCanvas.height * mmPerPx);
     yPrinted += tmpCanvas.height * mmPerPx;
-    if (yPrinted < totalMM) {
-      pdf.addPage();
-      yOffset = margin;
-    }
+    if (yPrinted < totalMM) { pdf.addPage(); yOffset = margin; }
   }
-
   const fname = `trading-journal-${range.label.replace(/\s+/g,'-')}-${new Date().toISOString().slice(0,10)}.pdf`;
   pdf.save(fname);
   showToast('✓ فایل PDF آماده شد');
 }
-
 async function addTag(){
   const inp = document.getElementById('tfTagInput'); const v = (inp && inp.value || '').trim();
   const result = await showInputModal({ title: 'افزودن برچسب', label: 'نام', defaultValue: v, showColor: true });
@@ -3730,9 +3813,9 @@ async function reloadSeed(){
   if (!confirm('داده اولیه اکسل (' + window.TRADES_DATA.length + ') بارگذاری شود؟')) return;
   allTrades = JSON.parse(JSON.stringify(window.TRADES_DATA));
   ensureUniqueIds();
-  const sSet = new Set(custom.setups); const sZone = new Set(custom.zones);
-  allTrades.forEach(t => { if (t.Setup) sSet.add(t.Setup); if (t.zone) sZone.add(t.zone); });
-  custom.setups = [...sSet]; custom.zones = [...sZone]; saveCustom();
+  const sSet = new Set(custom.setups); const sZone = new Set(custom.zones); const sTrig = new Set(custom.triggers || []);
+  allTrades.forEach(t => { if (t.Setup) sSet.add(t.Setup); if (t.zone) sZone.add(t.zone); if (t.entry_trigger) sTrig.add(t.entry_trigger); });
+  custom.setups = [...sSet]; custom.zones = [...sZone]; custom.triggers = [...sTrig]; saveCustom();
   openSyncModal('ارسال ' + allTrades.length + '...');
   const result = await bulkUpsertRemote(allTrades);
   await loadTradesFromSupabase();
@@ -3810,6 +3893,7 @@ function finishSyncModal(ok, msg){
 function closeSyncModal(){ document.getElementById('syncModal').classList.remove('show'); unlockScroll(); }
 function openSettings(){
   renderManageList('listSetups', custom.setups, 'setups');
+  renderManageList('listTriggers', custom.triggers, 'triggers');
   renderManageList('listEmotions', custom.emotions, 'emotions');
   renderManageList('listZones', custom.zones, 'zones');
   renderManageList('listTags', custom.tags, 'tags');
@@ -3890,7 +3974,7 @@ function fillChecklistSelects(){
 
 /* ====== EVENTS ====== */
 function bindEvents(){
-  ['fSymbol','fDirection','fResult','fTimeframe','fSetup','fZone','fFrom','fTo','fSession','fDow'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', applyFilters); });
+  ['fSymbol','fDirection','fResult','fTimeframe','fSetup','fZone','fTrigger','fFrom','fTo','fSession','fDow'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', applyFilters); });
   document.querySelectorAll('.equity-mode button').forEach(btn => {
     btn.addEventListener('click', () => { document.querySelectorAll('.equity-mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); equityMode = btn.dataset.mode; applyFilters(); });
   });
@@ -3925,11 +4009,11 @@ function bindEvents(){
       if (pane) pane.classList.add('active');
     });
   });
-  document.querySelectorAll('#motiveChecks .check-item, #mistakeChecks .check-item').forEach(it => {
-    it.addEventListener('click', (e) => {
-      const cb = it.querySelector('input');
-      if (e.target.tagName !== 'INPUT') cb.checked = !cb.checked;
-      it.classList.toggle('selected', cb.checked);
+  // MOTIVES & MISTAKES: toggle chip
+  document.querySelectorAll('#motiveChecks .chip, #mistakeChecks .chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      e.preventDefault();
+      chip.classList.toggle('selected');
     });
   });
   document.querySelectorAll('#perfTabs button').forEach(btn => {
@@ -3968,7 +4052,6 @@ function bindEvents(){
     if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); confirmInputModal(); } else if (e.key === 'Escape') { e.preventDefault(); closeInputModal(); } });
     const okBtn = document.getElementById('inputModalOk'); if (okBtn) okBtn.addEventListener('click', confirmInputModal);
   }
-  // Export modal options
   document.querySelectorAll('#exportRangeSelector .range-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#exportRangeSelector .range-btn').forEach(b => b.classList.remove('active'));
