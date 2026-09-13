@@ -938,12 +938,66 @@ async function handleLogin() {
 
 function voicePathFor(id) { return String(id) + '.webm'; }
 
-function tradeToRow(t) {
+function normalizeEntryDate(value, fallbackYear = null) {
+  if (value == null || value === '') return null;
+  let v = String(value).trim().replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  if (!v) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const d = new Date(v + 'T00:00:00');
+    return isNaN(d.getTime()) ? null : v;
+  }
+
+  let m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if (m) {
+    const a = +m[1], b = +m[2], y = +m[3];
+    const day = a <= 12 && b > 12 ? b : a;
+    const month = a <= 12 && b > 12 ? a : b;
+    const iso = `${y}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const d = new Date(iso + 'T00:00:00');
+    return isNaN(d.getTime()) ? null : iso;
+  }
+
+  const months = {jan:1,january:1,feb:2,february:2,mar:3,march:3,apr:4,april:4,may:5,
+    jun:6,june:6,jul:7,july:7,ul:7,aug:8,august:8,sep:9,sept:9,september:9,
+    oct:10,october:10,nov:11,november:11,dec:12,december:12};
+  m = v.toLowerCase().replace(/,/g,' ').match(/^(\d{1,2})\s*([a-z]+)\s*(\d{4})?$/);
+  if (m && months[m[2]]) {
+    const day = +m[1], month = months[m[2]], year = m[3] ? +m[3] : +fallbackYear;
+    if (year) {
+      const iso = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const d = new Date(iso + 'T00:00:00');
+      return isNaN(d.getTime()) ? null : iso;
+    }
+  }
+
+  if (/^\d+(?:\.\d+)?$/.test(v)) {
+    const n = Number(v);
+    if (n >= 1 && n < 100000) {
+      const d = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+      if (!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+    }
+  }
+
+  return null;
+}
+
+function inferImportYear(trades) {
+  const years = trades.map(t => {
+    const m = String(t?.['Entry Date'] ?? '').match(/(?:^|[\/.-])(20\d{2})(?:$|[\/.-])/);
+    return m ? +m[1] : null;
+  }).filter(Boolean);
+  if (!years.length) return new Date().getFullYear();
+  const counts = {}; years.forEach(y => counts[y] = (counts[y] || 0) + 1);
+  return Number(Object.keys(counts).sort((a,b) => counts[b] - counts[a])[0]);
+}
+
+function tradeToRow(t, fallbackYear = null) {
   return {
     id: t.id,
     symbol: t.Symbol || null,
     direction: t.Direction || null,
-    entry_date: t['Entry Date'] || null,
+    entry_date: normalizeEntryDate(t['Entry Date'], fallbackYear),
     entry_time: t['Entry Time'] != null ? String(t['Entry Time']) : null,
     entry_price: t['Entry Price'] != null ? t['Entry Price'] : null,
     stop_loss: t['Stop Loss'] != null ? t['Stop Loss'] : null,
@@ -1015,7 +1069,8 @@ async function deleteAllTradesRemote() {
   return true;
 }
 async function bulkUpsertRemote(trades) {
-  const rows = trades.map(tradeToRow);
+  const fallbackYear = inferImportYear(trades);
+  const rows = trades.map(t => tradeToRow(t, fallbackYear));
   let failCount = 0;
   const errorMsgs = [];
   for (let i = 0; i < rows.length; i += 50) {
@@ -1023,10 +1078,17 @@ async function bulkUpsertRemote(trades) {
     const { error } = await supabaseClient.from('journal_trades').upsert(chunk);
     if (error) {
       console.error('chunk', i / 50, 'failed:', error, 'ids in chunk:', chunk.map(r => r.id));
-      failCount += chunk.length;
-      // keep the exact server error text so it can be shown on screen (mobile has no console)
-      errorMsgs.push('دسته ' + (i / 50 + 1) + ' (' + chunk.length + ' معامله): ' + error.message);
-      // keep going instead of stopping, so one bad chunk doesn't wipe out the rest
+
+      // Retry failed chunks one row at a time so one bad row cannot reject all 50.
+      for (const row of chunk) {
+        const { error: rowError } = await supabaseClient.from('journal_trades').upsert(row);
+        if (rowError) {
+          failCount++;
+          const label = row.id != null ? 'ID ' + row.id : 'ردیف نامشخص';
+          errorMsgs.push(label + ': ' + rowError.message);
+          console.error('row failed:', row, rowError);
+        }
+      }
       continue;
     }
   }
