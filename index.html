@@ -905,7 +905,7 @@ let clEditorItems = [];
 let activeFilterTags = []; // tags selected in filter panel
 
 // ========== BUILD VERSION (visible at bottom of page — confirm this changes after every deploy) ==========
-const APP_BUILD = 'BUILD-2026-09-13-04 (sync-modal + network-first-sw)';
+const APP_BUILD = 'BUILD-2026-09-13-05 (import-loading-modal + onscreen-errors)';
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('buildInfo');
   if (el) el.textContent = '🔧 نسخه فایل: ' + APP_BUILD;
@@ -1017,23 +1017,20 @@ async function deleteAllTradesRemote() {
 async function bulkUpsertRemote(trades) {
   const rows = trades.map(tradeToRow);
   let failCount = 0;
-  let lastError = '';
+  const errorMsgs = [];
   for (let i = 0; i < rows.length; i += 50) {
     const chunk = rows.slice(i, i + 50);
     const { error } = await supabaseClient.from('journal_trades').upsert(chunk);
     if (error) {
       console.error('chunk', i / 50, 'failed:', error, 'ids in chunk:', chunk.map(r => r.id));
       failCount += chunk.length;
-      lastError = error.message;
+      // keep the exact server error text so it can be shown on screen (mobile has no console)
+      errorMsgs.push('دسته ' + (i / 50 + 1) + ' (' + chunk.length + ' معامله): ' + error.message);
       // keep going instead of stopping, so one bad chunk doesn't wipe out the rest
       continue;
     }
   }
-  if (failCount > 0) {
-    showToast('خطا: ' + failCount + ' معامله ذخیره نشد (' + lastError + ') — بقیه ذخیره شدن، کنسول رو چک کن');
-    return false;
-  }
-  return true;
+  return { ok: failCount === 0, failCount, successCount: rows.length - failCount, errorMsgs };
 }
 
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1113,8 +1110,12 @@ function openSyncModal(loadingMsg) {
   document.getElementById('syncMsg').textContent = loadingMsg || 'در حال ارسال به Supabase...';
   m.classList.add('show');
 }
+function updateSyncModal(msg) {
+  document.getElementById('syncMsg').textContent = msg;
+}
 function finishSyncModal(ok, msg) {
   lastSyncOk = ok;
+  document.getElementById('syncModal').classList.add('show'); // in case this is reached without openSyncModal ever running
   document.getElementById('syncSpinner').style.display = 'none';
   const icon = document.getElementById('syncIcon');
   icon.style.display = '';
@@ -2346,10 +2347,15 @@ async function reloadSeed() {
   allTrades.forEach(t => { if (t.Setup) sSet.add(t.Setup); if (t.zone) sZone.add(t.zone); });
   custom.setups = [...sSet]; custom.zones = [...sZone];
   saveCustom();
-  showToast('در حال ارسال ' + allTrades.length + ' معامله به Supabase...');
-  await bulkUpsertRemote(allTrades);
+  openSyncModal('در حال ارسال ' + allTrades.length + ' معامله به Supabase...');
+  const result = await bulkUpsertRemote(allTrades);
+  await loadTradesFromSupabase();
   hmYear = null; hmMonth = null; setupFilters(); applyFilters();
-  showToast(allTrades.length + ' معامله از اکسل روی Supabase ذخیره شد');
+  if (result.ok) {
+    finishSyncModal(true, '✓ ' + allTrades.length + ' معامله از اکسل روی Supabase ذخیره شد');
+  } else {
+    finishSyncModal(false, result.failCount + ' معامله ذخیره نشد، ' + result.successCount + ' تا موفق بود.\nمجموع الان روی Supabase: ' + allTrades.length + '\n\nخطاها:\n' + result.errorMsgs.join('\n'));
+  }
 }
 
 async function exportData() {
@@ -2413,7 +2419,7 @@ function importData(event) {
       } else if (data && Array.isArray(data.TRADES_DATA)) {
         trades = data.TRADES_DATA;
       } else {
-        showToast('فرمت فایل نامعتبر است');
+        finishSyncModal(false, 'فرمت فایل نامعتبر است');
         return;
       }
       // normalize ids
@@ -2466,9 +2472,13 @@ function importData(event) {
 
       let tradesToPush;
       if (doReplace) {
-        showToast('در حال پاک کردن ' + allTrades.length + ' معامله‌ی قبلی از Supabase...');
+        openSyncModal('در حال پاک کردن ' + allTrades.length + ' معامله‌ی قبلی از Supabase...');
         const ok = await deleteAllTradesRemote();
-        if (!ok) { event.target.value = ''; return; }
+        if (!ok) {
+          finishSyncModal(false, 'پاک کردن معاملات قبلی ناموفق بود، ایمپورت متوقف شد.');
+          event.target.value = '';
+          return;
+        }
         allTrades = trades;
         tradesToPush = allTrades;
       } else {
@@ -2484,13 +2494,10 @@ function importData(event) {
         tradesToPush = trades;
       }
       ensureUniqueIds();
-      showToast('در حال ارسال ' + tradesToPush.length + ' معامله به Supabase...');
-      const pushOk = await bulkUpsertRemote(tradesToPush);
+      updateSyncModal('در حال ارسال ' + tradesToPush.length + ' معامله به Supabase...');
+      const pushResult = await bulkUpsertRemote(tradesToPush);
       // trust the server, not our local guess: reload what's actually stored
       await loadTradesFromSupabase();
-      if (!pushOk) {
-        showToast('ارسال به Supabase با خطا مواجه شد — الان ' + allTrades.length + ' معامله واقعاً روی Supabase ذخیره‌ست، لطفاً کنسول رو چک کن');
-      }
       if (importedCustom) {
         custom = Object.assign(custom, importedCustom);
         saveCustom();
@@ -2528,10 +2535,21 @@ function importData(event) {
         }
         if (ok) voiceMsg = ' + ' + ok + ' ویس';
       }
-      showToast((doReplace ? 'جایگزین شد: ' : 'اضافه شد: ') + tradesToPush.length + ' معامله — مجموع فعلی ' + allTrades.length + ' معامله روی Supabase' + voiceMsg);
+      if (pushResult.ok) {
+        finishSyncModal(true,
+          '✓ ' + (doReplace ? 'جایگزین شد' : 'اضافه شد') + ': ' + tradesToPush.length + ' معامله\n' +
+          'مجموع الان روی Supabase: ' + allTrades.length + voiceMsg
+        );
+      } else {
+        finishSyncModal(false,
+          '⚠️ ' + pushResult.failCount + ' معامله ذخیره نشد، ' + pushResult.successCount + ' تا موفق بود.\n' +
+          'مجموع الان روی Supabase: ' + allTrades.length + voiceMsg + '\n\n' +
+          'جزئیات خطا:\n' + pushResult.errorMsgs.join('\n')
+        );
+      }
     } catch (err) {
       console.error(err);
-      showToast('خطا در خواندن فایل: ' + err.message);
+      finishSyncModal(false, 'خطا در خواندن فایل:\n' + err.message);
     }
     event.target.value = '';
   };
