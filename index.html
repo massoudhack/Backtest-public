@@ -505,6 +505,14 @@ body.layout-edit .drag-handle{display:flex}
 
 /* Symbol × Day heatmap */
 .symday-wrap{overflow-x:auto;margin-top:8px}
+.streak-glow-badge{border-radius:18px;padding:26px 16px;text-align:center;transition:background .4s,box-shadow .4s,border-color .4s}
+.streak-glow-badge.streak-win{background:linear-gradient(135deg, rgba(16,185,129,calc(.12 + var(--intensity,0)*.35)), rgba(52,211,153,calc(.05 + var(--intensity,0)*.25)));border:1.5px solid rgba(16,185,129,calc(.3 + var(--intensity,0)*.6));box-shadow:0 0 calc(10px + var(--intensity,0)*40px) rgba(16,185,129,calc(.15 + var(--intensity,0)*.4));animation:streakPulse 2.4s ease-in-out infinite}
+.streak-glow-badge.streak-loss{background:linear-gradient(135deg, rgba(239,68,68,calc(.12 + var(--intensity,0)*.35)), rgba(248,113,113,calc(.05 + var(--intensity,0)*.25)));border:1.5px solid rgba(239,68,68,calc(.3 + var(--intensity,0)*.6));box-shadow:0 0 calc(10px + var(--intensity,0)*40px) rgba(239,68,68,calc(.15 + var(--intensity,0)*.4));animation:streakPulse 2.4s ease-in-out infinite}
+.streak-glow-badge.streak-neutral{background:var(--bg-subtle);border:1.5px solid var(--border)}
+.streak-glow-emoji{font-size:2.4rem;margin-bottom:6px;line-height:1}
+.streak-glow-num{font-size:2rem;font-weight:900}
+.streak-glow-label{font-size:.8rem;color:var(--text-muted);font-weight:600;margin-top:2px}
+@keyframes streakPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
 .symday-table{border-collapse:separate;border-spacing:3px;font-size:.7rem;width:100%}
 .symday-table th{background:var(--bg-subtle);padding:6px 8px;border-radius:6px;font-weight:700;color:var(--text-muted);text-align:center;font-size:.68rem}
 .symday-table td{padding:8px 6px;border-radius:6px;text-align:center;font-weight:700;color:#fff;min-width:44px;font-size:.72rem}
@@ -982,6 +990,36 @@ body.booting .today-strip{opacity:.4}
         <h3>📏 میانگین R به تفکیک نماد</h3>
         <div id="advRBySymbol"></div>
       </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advExpectancy" data-default-size="m">
+        <h3>🧮 Expectancy per Trade</h3>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">امید ریاضی سود/ضرر به‌ازای هر معامله</p>
+        <div id="advExpectancy"></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRealVsPlanned" data-default-size="m">
+        <h3>🎯 R واقعی در برابر R برنامه‌ریزی‌شده</h3>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">چقدر سود روی میز جا گذاشتی</p>
+        <div id="advRealVsPlanned"></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advCorrelation" data-default-size="m">
+        <h3>🔗 همبستگی معاملات (نماد × نماد)</h3>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">کدوم نمادها با هم هم‌جهت حرکت می‌کنن</p>
+        <div id="advCorrelation"></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advNoTradeGap" data-default-size="m">
+        <h3>📆 روزهای پشت‌هم بدون معامله</h3>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">وقفه‌های معاملاتی و اثرشون روی نتیجه</p>
+        <div id="advNoTradeGap"></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advMonteCarlo" data-default-size="l">
+        <h3>🎲 شبیه‌سازی Monte Carlo</h3>
+        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">همین معاملات با ترتیب تصادفی — رنج احتمالی equity</p>
+        <div class="chart-container" style="height:200px"><canvas id="mcChart"></canvas></div>
+        <div id="advMonteCarloStats" style="margin-top:12px"></div>
+      </div>
+      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advStreakGlow" data-default-size="s">
+        <h3>🔥 وضعیت استریک فعلی</h3>
+        <div id="advStreakGlow"></div>
+      </div>
     </div>
   </div>
 
@@ -1134,10 +1172,14 @@ body.booting .today-strip{opacity:.4}
             <div class="form-group"><label>ساعت ورود</label><input type="text" id="tfTime" placeholder="14.30"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>ساعت خروج</label><input type="text" id="tfExitTime" placeholder="16.00"><div class="form-help" id="durationPreview">مدت: —</div></div>
+            <div class="form-group"><label>تاریخ خروج</label><input type="date" id="tfExitDate"><div class="form-help">پیش‌فرض همان تاریخ ورود — فقط اگر دستی عوض کنی جدا می‌ماند</div></div>
+            <div class="form-group"><label>ساعت خروج</label><input type="text" id="tfExitTime" placeholder="14.30"><div class="form-help" id="durationPreview">مدت: —</div></div>
+          </div>
+          <div class="form-row">
             <div class="form-group"><label>تایم‌فریم خروج</label>
               <select id="tfExitTimeframe"><option value="">—</option><option value="M5">M5</option><option value="M15">M15</option><option value="M30">M30</option><option value="1H">1H</option><option value="4H">4H</option></select>
             </div>
+            <div class="form-group"></div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -1454,7 +1496,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v20 (today+drawdown in layout)';
+const APP_BUILD = 'BUILD-v23 (advanced: expectancy, real-vs-planned-R, correlation, no-trade-gap, monte-carlo, streak-glow)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1499,7 +1541,9 @@ const DEFAULT_LAYOUT = {
     advStats:{visible:true,size:'m'}, advRDist:{visible:true,size:'m'}, advStreak:{visible:true,size:'m'},
     advDuration:{visible:true,size:'m'}, advHour:{visible:true,size:'m'}, advSymDay:{visible:true,size:'l'},
     advGap:{visible:true,size:'m'}, advConfidence:{visible:true,size:'m'}, advDiscipline:{visible:true,size:'m'},
-    advTrigger:{visible:true,size:'m'}, advRbySymbol:{visible:true,size:'m'}
+    advTrigger:{visible:true,size:'m'}, advRbySymbol:{visible:true,size:'m'},
+    advExpectancy:{visible:true,size:'m'}, advRealVsPlanned:{visible:true,size:'m'}, advCorrelation:{visible:true,size:'m'},
+    advNoTradeGap:{visible:true,size:'m'}, advMonteCarlo:{visible:true,size:'l'}, advStreakGlow:{visible:true,size:'s'}
   }
 };
 const LAYOUT_LABELS = { dashboard: 'میزکار', analysis: 'تب تحلیل', advanced: 'تحلیل پیشرفته' };
@@ -1513,7 +1557,9 @@ const LAYOUT_KEY_LABELS = {
   advStats:'آمار پیشرفته', advRDist:'توزیع R-Multiple', advStreak:'برد/باخت پیوسته',
   advDuration:'مدت معامله', advHour:'ساعت معامله', advSymDay:'هیت‌مپ نماد×روز',
   advGap:'فاصله بین معاملات', advConfidence:'اعتماد ↔ نتیجه', advDiscipline:'امتیاز انضباط',
-  advTrigger:'عملکرد تریگر', advRbySymbol:'R به تفکیک نماد'
+  advTrigger:'عملکرد تریگر', advRbySymbol:'R به تفکیک نماد',
+  advExpectancy:'Expectancy per Trade', advRealVsPlanned:'R واقعی/برنامه‌ریزی‌شده', advCorrelation:'همبستگی معاملات',
+  advNoTradeGap:'روزهای بدون معامله', advMonteCarlo:'شبیه‌سازی Monte Carlo', advStreakGlow:'وضعیت استریک فعلی'
 };
 const BADGES = [
   { id:'first', medal:'🥇', title:'اولین قدم', desc:'اولین معامله‌ی ژورنال‌شده', color:'bronze', check:t=>t.length>=1, progress:t=>Math.min(1,t.length) },
@@ -1600,7 +1646,7 @@ async function loadTradesFromSupabase(){
 }
 function rowToTrade(r){
   return {
-    id: r.id, Symbol: r.symbol, Direction: r.direction, 'Entry Date': r.entry_date, 'Entry Time': r.entry_time,
+    id: r.id, Symbol: r.symbol, Direction: r.direction, 'Entry Date': r.entry_date, 'Entry Time': r.entry_time, exit_date: r.exit_date || r.entry_date,
     'Entry Price': r.entry_price, 'Stop Loss': r.stop_loss, Result: r.result, Timeframe: r.timeframe,
     Setup: r.setup, Notes: r.notes, manual_pnl: r.manual_pnl, stop_usd: r.stop_usd,
     initial_stop: r.initial_stop, final_stop: r.final_stop,
@@ -1623,6 +1669,7 @@ function tradeToRow(t, fallbackYear = null){
     id: t.id, symbol: t.Symbol||null, direction: t.Direction||null,
     entry_date: normalizeEntryDate(t['Entry Date'], fallbackYear),
     entry_time: t['Entry Time']!=null?String(t['Entry Time']):null,
+    exit_date: t.exit_date||null,
     entry_price: t['Entry Price']!=null?t['Entry Price']:null,
     stop_loss: t['Stop Loss']!=null?t['Stop Loss']:null,
     result: t.Result||null, timeframe: t.Timeframe||null,
@@ -2622,6 +2669,14 @@ function calcRMultiple(t){
   if (stop <= 0) return 0;
   return calcPnL(t) / stop;
 }
+function calcPlannedR(t){
+  let mx = 0;
+  if (t.r1) mx = Math.max(mx, 1);
+  if (t.r15) mx = Math.max(mx, 1.5);
+  if (t.r2) mx = Math.max(mx, 2);
+  if (t.r3) mx = Math.max(mx, 3);
+  return mx;
+}
 function getEntryHour(t){
   const v = t['Entry Time']; if (v == null || v === '') return null;
   if (typeof v === 'number') return v;
@@ -2820,6 +2875,8 @@ function renderAdvanced(){
   renderAdvStreak(); renderAdvDuration(); renderAdvHour(); renderAdvSymDay();
   renderAdvGap(); renderAdvConfidence(); renderAdvDiscipline();
   renderAdvPerfTrigger(); renderAdvRBySymbol();
+  renderAdvExpectancy(); renderAdvRealVsPlanned(); renderAdvCorrelation();
+  renderAdvNoTradeGap(); renderAdvMonteCarlo(); renderAdvStreakGlow();
 }
 function renderAdvancedQuick(){
   const el = document.getElementById('advQuickStats'); if (!el) return;
@@ -3056,6 +3113,173 @@ function renderAdvRBySymbol(){
     const color = e.avgR >= 0 ? 'linear-gradient(90deg,#10b981,#34d399)' : 'linear-gradient(90deg,#ef4444,#f87171)';
     return `<div class="perf-bar-row"><span class="perf-bar-label">${escapeHtml(e.sym)}</span><div class="perf-bar-track"><div class="perf-bar-fill" style="width:${pct}%;background:${color}">${e.avgR>=0?'+':''}${e.avgR.toFixed(2)}R</div></div><span class="perf-bar-meta">${e.n} معامله</span></div>`;
   }).join('');
+}
+
+/* ====== NEW ADVANCED CARDS ====== */
+function renderAdvExpectancy(){
+  const el = document.getElementById('advExpectancy'); if (!el) return;
+  const trades = filteredForAnalysis;
+  if (!trades.length) { el.innerHTML = '<div class="empty-state">داده‌ای نیست</div>'; return; }
+  let wins = 0, losses = 0, winSum = 0, lossSum = 0;
+  trades.forEach(t => { const p = calcPnL(t); if (p > 0) { wins++; winSum += p; } else if (p < 0) { losses++; lossSum += Math.abs(p); } });
+  const n = trades.length;
+  const winRate = n ? (wins/n*100) : 0;
+  const avgWin = wins ? winSum/wins : 0;
+  const avgLoss = losses ? lossSum/losses : 0;
+  const expectancy = calcExpectancy(trades);
+  const rr = avgLoss ? (avgWin/avgLoss) : 0;
+  const expClass = expectancy >= 0 ? 'pnl-pos' : 'pnl-neg';
+  el.innerHTML = `
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:2.2rem;font-weight:800" class="${expClass}">${expectancy>=0?'+':''}${expectancy.toFixed(2)}$</div>
+      <div style="font-size:.78rem;color:var(--text-muted)">امید ریاضی به‌ازای هر معامله</div>
+    </div>
+    <div class="breakdown-row"><span>وین ریت</span><span><strong>${winRate.toFixed(1)}%</strong></span></div>
+    <div class="breakdown-row"><span>میانگین سود</span><span class="pnl-pos">+${avgWin.toFixed(1)}$</span></div>
+    <div class="breakdown-row"><span>میانگین ضرر</span><span class="pnl-neg">-${avgLoss.toFixed(1)}$</span></div>
+    <div class="breakdown-row"><span>نسبت ریوارد به ریسک</span><span><strong>${rr.toFixed(2)}</strong></span></div>
+    <div style="font-size:.72rem;color:var(--text-muted);margin-top:10px;line-height:1.7">💡 یعنی سر جمع، هر معامله به‌طور میانگین ${Math.abs(expectancy).toFixed(2)}$ ${expectancy>=0?'انتظار سود':'انتظار ضرر'} داره.</div>`;
+}
+function renderAdvRealVsPlanned(){
+  const el = document.getElementById('advRealVsPlanned'); if (!el) return;
+  const trades = filteredForAnalysis.filter(t => Number(t.stop_usd) > 0 && (t.r1 || t.r15 || t.r2 || t.r3));
+  if (!trades.length) { el.innerHTML = '<div class="empty-state">داده‌ای نیست — تیک‌های ریوارد و ریسک دلاری رو ثبت کن</div>'; return; }
+  const rows = trades.map(t => ({ real: calcRMultiple(t), planned: calcPlannedR(t) }));
+  const avgReal = rows.reduce((s,r) => s+r.real, 0) / rows.length;
+  const avgPlanned = rows.reduce((s,r) => s+r.planned, 0) / rows.length;
+  const gap = avgPlanned - avgReal;
+  const leftOnTable = rows.filter(r => r.planned > r.real);
+  const pctLeft = (leftOnTable.length/rows.length*100).toFixed(0);
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="stat-card" style="text-align:center"><div class="label">R واقعی (میانگین)</div><div class="value">${avgReal.toFixed(2)}R</div></div>
+      <div class="stat-card" style="text-align:center"><div class="label">R لمس‌شده (میانگین)</div><div class="value">${avgPlanned.toFixed(2)}R</div></div>
+    </div>
+    <div class="breakdown-row"><span>فاصله (R جامانده)</span><span class="${gap>0?'pnl-neg':'pnl-pos'}">${gap.toFixed(2)}R</span></div>
+    <div class="breakdown-row"><span>درصد معاملاتی که زودتر بسته شدن</span><span><strong>${pctLeft}%</strong></span></div>
+    <div style="font-size:.72rem;color:var(--text-muted);margin-top:10px;line-height:1.7">💡 «R لمس‌شده» یعنی قیمت تا کجا (بر اساس تیک‌های ریوارد) پیش رفته؛ اگه این عدد خیلی بیشتر از R واقعیه، یعنی زود می‌بندی.</div>`;
+}
+function renderAdvCorrelation(){
+  const el = document.getElementById('advCorrelation'); if (!el) return;
+  const trades = filteredForAnalysis.filter(t => t['Entry Date'] && t.Symbol);
+  const daily = {};
+  trades.forEach(t => {
+    const d = t['Entry Date']; const sym = String(t.Symbol).toUpperCase();
+    if (!daily[d]) daily[d] = {};
+    daily[d][sym] = (daily[d][sym]||0) + calcPnL(t);
+  });
+  const symbols = [...new Set(trades.map(t => String(t.Symbol).toUpperCase()))];
+  if (symbols.length < 2) { el.innerHTML = '<div class="empty-state">حداقل ۲ نماد لازمه</div>'; return; }
+  const pairs = [];
+  for (let i = 0; i < symbols.length; i++) {
+    for (let j = i+1; j < symbols.length; j++) {
+      const a = symbols[i], b = symbols[j];
+      let common = 0, agree = 0;
+      Object.values(daily).forEach(day => {
+        if (day[a] != null && day[b] != null) {
+          common++;
+          const sa = day[a] > 0 ? 1 : (day[a] < 0 ? -1 : 0);
+          const sb = day[b] > 0 ? 1 : (day[b] < 0 ? -1 : 0);
+          if (sa !== 0 && sa === sb) agree++;
+        }
+      });
+      if (common >= 3) pairs.push({ a, b, common, pct: agree/common*100 });
+    }
+  }
+  if (!pairs.length) { el.innerHTML = '<div class="empty-state">داده‌ی مشترک کافی نیست (حداقل ۳ روز مشترک لازمه)</div>'; return; }
+  pairs.sort((x,y) => y.pct - x.pct);
+  el.innerHTML = pairs.slice(0, 8).map(p => {
+    const color = p.pct >= 70 ? 'var(--danger)' : p.pct >= 50 ? 'var(--warning)' : 'var(--success)';
+    return `<div class="breakdown-row"><span>${escapeHtml(p.a)} ↔ ${escapeHtml(p.b)}</span><span style="color:${color};font-weight:700">${p.pct.toFixed(0)}% هم‌جهت</span></div><div class="progress-bar"><div class="progress-fill" style="width:${p.pct}%;background:${color}"></div></div>`;
+  }).join('') + '<div style="font-size:.72rem;color:var(--text-muted);margin-top:10px;line-height:1.7">💡 درصد بالا یعنی این دو نماد معمولاً توی یه روز هم‌جهت (هر دو سود یا هر دو ضرر) بودن — نشونه‌ی ریسک تمرکزه.</div>';
+}
+function renderAdvNoTradeGap(){
+  const el = document.getElementById('advNoTradeGap'); if (!el) return;
+  const dates = [...new Set(filteredForAnalysis.map(t => t['Entry Date']).filter(Boolean))].sort();
+  if (dates.length < 2) { el.innerHTML = '<div class="empty-state">حداقل ۲ روز معاملاتی لازمه</div>'; return; }
+  const dayGaps = [];
+  for (let i = 1; i < dates.length; i++) {
+    const d1 = new Date(dates[i-1]+'T00:00:00'), d2 = new Date(dates[i]+'T00:00:00');
+    const gap = Math.round((d2-d1)/86400000) - 1;
+    dayGaps.push({ date: dates[i], gap });
+  }
+  const maxGap = Math.max(0, ...dayGaps.map(g => g.gap));
+  const lastDate = new Date(dates[dates.length-1]+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const currentGap = Math.max(0, Math.round((today-lastDate)/86400000) - 1);
+  const afterBreakDates = new Set(dayGaps.filter(g => g.gap >= 3).map(g => g.date));
+  const afterBreakTrades = filteredForAnalysis.filter(t => afterBreakDates.has(t['Entry Date']));
+  const normalTrades = filteredForAnalysis.filter(t => t['Entry Date'] && !afterBreakDates.has(t['Entry Date']));
+  const wr = (arr) => { const w = arr.filter(t=>t.Result==='Win').length, l = arr.filter(t=>t.Result==='Loss').length; return (w+l) ? (w/(w+l)*100) : null; };
+  const wrAfterBreak = wr(afterBreakTrades);
+  const wrNormal = wr(normalTrades);
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="stat-card" style="text-align:center"><div class="label">بدون معامله (فعلی)</div><div class="value">${currentGap} روز</div></div>
+      <div class="stat-card" style="text-align:center"><div class="label">طولانی‌ترین وقفه</div><div class="value">${maxGap} روز</div></div>
+    </div>
+    <div class="breakdown-row"><span>وین ریت بعد از وقفه ۳+ روزه</span><span class="${wrAfterBreak!=null && wrAfterBreak>=50?'pnl-pos':'pnl-neg'}">${wrAfterBreak!=null?wrAfterBreak.toFixed(0)+'%':'—'}</span></div>
+    <div class="breakdown-row"><span>وین ریت روزهای عادی</span><span class="${wrNormal!=null && wrNormal>=50?'pnl-pos':'pnl-neg'}">${wrNormal!=null?wrNormal.toFixed(0)+'%':'—'}</span></div>
+    <div style="font-size:.72rem;color:var(--text-muted);margin-top:10px;line-height:1.7">💡 اگه وین ریت بعد از وقفه پایین‌تره، شاید نیاز به یه دوره «وارم‌آپ» قبل از برگشت جدی به بازار داری.</div>`;
+}
+let mcChart = null;
+function calcMonteCarlo(trades, sims){
+  const pnls = trades.map(t => calcPnL(t));
+  const paths = [];
+  for (let s = 0; s < sims; s++) {
+    const arr = [...pnls];
+    for (let i = arr.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]] = [arr[j],arr[i]]; }
+    let eq = 0; const path = [0];
+    arr.forEach(p => { eq += p; path.push(eq); });
+    paths.push(path);
+  }
+  return paths;
+}
+function renderAdvMonteCarlo(){
+  const canvas = document.getElementById('mcChart');
+  const el = document.getElementById('advMonteCarloStats');
+  const trades = filteredForAnalysis;
+  if (trades.length < 5) {
+    if (el) el.innerHTML = '<div class="empty-state">حداقل ۵ معامله لازمه</div>';
+    if (mcChart) { mcChart.destroy(); mcChart = null; }
+    return;
+  }
+  const paths = calcMonteCarlo(trades, 40);
+  const finals = paths.map(p => p[p.length-1]).sort((a,b) => a-b);
+  const dds = paths.map(p => { let peak = 0, mx = 0; p.forEach(v => { if (v > peak) peak = v; const dd = peak-v; if (dd > mx) mx = dd; }); return mx; }).sort((a,b) => a-b);
+  const pct = (arr,p) => arr[Math.min(arr.length-1, Math.floor(p*arr.length))];
+  const median = pct(finals,0.5), p5 = pct(finals,0.05), p95 = pct(finals,0.95);
+  const ddMedian = pct(dds,0.5), ddP95 = pct(dds,0.95);
+  let eq = 0; const realPath = [0]; trades.forEach(t => { eq += calcPnL(t); realPath.push(eq); });
+  if (canvas && typeof Chart !== 'undefined') {
+    if (mcChart) mcChart.destroy();
+    const C = chartColors();
+    const maxLen = Math.max(...paths.map(p => p.length), realPath.length);
+    const labels = Array.from({length:maxLen}, (_,i) => i);
+    const simDatasets = paths.slice(0,25).map(p => ({ data:p, borderColor:'rgba(148,163,184,.3)', borderWidth:1, pointRadius:0, fill:false, tension:0.1 }));
+    const realDataset = { data: realPath, borderColor:'#4f46e5', borderWidth:2.5, pointRadius:0, fill:false, tension:0.1 };
+    mcChart = new Chart(canvas, { type:'line', data:{ labels, datasets:[...simDatasets, realDataset] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ display:false }, y:{ grid:{ color:C.grid }, ticks:{ color:C.text, font:{ size:10 } } } } } });
+  }
+  if (el) el.innerHTML = `
+    <div class="breakdown-row"><span>Equity نهایی (میانه شبیه‌سازی)</span><span>${median>=0?'+':''}${median.toFixed(0)}$</span></div>
+    <div class="breakdown-row"><span>بدترین ۵٪ حالت</span><span class="pnl-neg">${p5>=0?'+':''}${p5.toFixed(0)}$</span></div>
+    <div class="breakdown-row"><span>بهترین ۵٪ حالت</span><span class="pnl-pos">${p95>=0?'+':''}${p95.toFixed(0)}$</span></div>
+    <div class="breakdown-row"><span>Drawdown میانه</span><span>-${ddMedian.toFixed(0)}$</span></div>
+    <div class="breakdown-row"><span>Drawdown بدترین ۵٪</span><span class="pnl-neg">-${ddP95.toFixed(0)}$</span></div>
+    <div style="font-size:.72rem;color:var(--text-muted);margin-top:10px;line-height:1.7">💡 خط بنفش مسیر واقعی توئه؛ خط‌های خاکستری همین معاملات با ترتیب رندومن — نشون می‌ده اگه شانس چیدمان فرق می‌کرد، رنج احتمالی نتیجه‌ت چقدر بود.</div>`;
+}
+function renderAdvStreakGlow(){
+  const el = document.getElementById('advStreakGlow'); if (!el) return;
+  const s = calcStreaks(filteredForAnalysis);
+  let cls = 'neutral', label = 'بدون استریک فعلی', emoji = '➖', n = 0;
+  if (s.currentWin > 0) { cls = 'win'; label = 'برد پیوسته'; emoji = '🔥'; n = s.currentWin; }
+  else if (s.currentLoss > 0) { cls = 'loss'; label = 'باخت پیوسته'; emoji = '⚠️'; n = s.currentLoss; }
+  const intensity = Math.min(1, n/8);
+  el.innerHTML = `<div class="streak-glow-badge streak-${cls}" style="--intensity:${intensity}">
+    <div class="streak-glow-emoji">${emoji}</div>
+    <div class="streak-glow-num">${n}</div>
+    <div class="streak-glow-label">${label}</div>
+  </div>`;
 }
 
 /* ====== BADGES ====== */
@@ -3627,7 +3851,9 @@ function openAddModal(editTrade){
   document.querySelectorAll('.form-tab').forEach((t,i) => t.classList.toggle('active', i===0));
   document.querySelectorAll('.form-section').forEach((s,i) => s.classList.toggle('active', i===0));
   setDir('Buy'); setResult('Win');
+  exitDateLocked = false;
   document.getElementById('tfDate').value = new Date().toISOString().slice(0,10);
+  const _exd = document.getElementById('tfExitDate'); if (_exd) _exd.value = document.getElementById('tfDate').value;
   document.getElementById('tfTimeframe').value = 'M15';
   document.getElementById('tfStopUsd').value = 10;
   document.getElementById('tfEnergy').value = 5;
@@ -3646,7 +3872,10 @@ function openAddModal(editTrade){
     document.getElementById('tfTimeframe').value = editTrade.Timeframe || 'M15';
     document.getElementById('tfDate').value = editTrade['Entry Date'] || '';
     document.getElementById('tfTime').value = editTrade['Entry Time'] != null ? editTrade['Entry Time'] : '';
-    document.getElementById('tfExitTime').value = editTrade.exit_time || '';
+    const exd = document.getElementById('tfExitDate');
+    if (exd) exd.value = editTrade.exit_date || editTrade['Entry Date'] || '';
+    document.getElementById('tfExitTime').value = editTrade.exit_time != null ? editTrade.exit_time : '';
+    exitDateLocked = !!(editTrade.exit_date && editTrade['Entry Date'] && editTrade.exit_date !== editTrade['Entry Date']);
     document.getElementById('tfManualPnL').value = editTrade.manual_pnl != null ? Math.abs(Number(editTrade.manual_pnl)) : '';
     document.getElementById('tfStopUsd').value = editTrade.stop_usd != null ? editTrade.stop_usd : 10;
     document.getElementById('tfStopUsd').dataset.manual = '1';
@@ -3720,18 +3949,53 @@ function updatePipPreview(){
   const pips = Math.abs(entry - sl) / getPipSize(sym);
   el.textContent = `فاصله استاپ: ${pips.toFixed(1)} پیپ (${sym.toUpperCase()})`;
 }
+let exitDateLocked = false; // user manually set exit date
+
+function onEntryDateChange(){
+  const entryDate = document.getElementById('tfDate');
+  const exitDate = document.getElementById('tfExitDate');
+  if (!entryDate || !exitDate) return;
+  if (!exitDateLocked) exitDate.value = entryDate.value || '';
+  updateDurationPreview();
+}
+function onExitDateChange(){
+  const entryDate = document.getElementById('tfDate');
+  const exitDate = document.getElementById('tfExitDate');
+  if (!entryDate || !exitDate) return;
+  // lock when user picks a date different from entry (or clears then sets)
+  exitDateLocked = !!(exitDate.value && entryDate.value && exitDate.value !== entryDate.value);
+  updateDurationPreview();
+}
 function updateDurationPreview(){
   const el = document.getElementById('durationPreview'); if (!el) return;
   const st = document.getElementById('tfTime').value;
   const et = document.getElementById('tfExitTime').value;
+  const d1 = document.getElementById('tfDate')?.value || '';
+  const d2 = (document.getElementById('tfExitDate')?.value || d1);
   if (!st || !et) { el.textContent = 'مدت: —'; return; }
-  const parseH = (v) => { if (!v) return null; if (String(v).includes(':')) { const [h,m] = String(v).split(':').map(Number); return h + (m||0)/60; } const n = Number(v); return isNaN(n)?null:n; };
+  const parseH = (v) => {
+    if (!v) return null;
+    if (String(v).includes(':')) { const [h,m] = String(v).split(':').map(Number); return h + (m||0)/60; }
+    if (String(v).includes('.')) { const [h,m] = String(v).split('.').map(Number); return h + (m||0)/60; }
+    const n = Number(v); return isNaN(n)?null:n;
+  };
   const h1 = parseH(st), h2 = parseH(et);
   if (h1 == null || h2 == null) { el.textContent = 'مدت: —'; return; }
-  let diff = h2 - h1; if (diff < 0) diff += 24;
-  const mins = Math.round(diff * 60);
-  if (mins < 60) el.textContent = `مدت: ${mins} دقیقه`;
-  else { const h = Math.floor(mins/60), m = mins % 60; el.textContent = `مدت: ${h} ساعت${m?' و '+m+' دقیقه':''}`; }
+  let dayDiff = 0;
+  if (d1 && d2) {
+    const a = new Date(d1 + 'T12:00:00');
+    const b = new Date(d2 + 'T12:00:00');
+    if (!isNaN(a) && !isNaN(b)) dayDiff = Math.round((b - a) / 86400000);
+  }
+  let hours = (dayDiff * 24) + (h2 - h1);
+  if (hours < 0 && dayDiff === 0) hours += 24;
+  if (hours < 0) { el.textContent = 'مدت: —'; return; }
+  const mins = Math.round(hours * 60);
+  if (mins < 60) el.textContent = 'مدت: ' + mins + ' دقیقه';
+  else {
+    const h = Math.floor(mins / 60), m = mins % 60;
+    el.textContent = 'مدت: ' + h + ' ساعت' + (m ? (' و ' + m + ' دقیقه') : '');
+  }
 }
 function renderTradeChecklistColumns(){
   const box = document.getElementById('tradeChecklistColumns'); if (!box) return;
@@ -3822,15 +4086,28 @@ async function saveTrade(e){
   const mistakes = [...document.querySelectorAll('#mistakeChecks .chip.selected')].map(el => el.dataset.val);
   const st = document.getElementById('tfTime').value;
   const et = document.getElementById('tfExitTime').value;
+  const entryDateVal = document.getElementById('tfDate').value;
+  const exitDateVal = (document.getElementById('tfExitDate')?.value || entryDateVal);
   let durationMin = null;
   if (st && et) {
-    const parseH = (v) => { if (!v) return null; if (String(v).includes(':')) { const [h,m] = String(v).split(':').map(Number); return h + (m||0)/60; } const n = Number(v); return isNaN(n)?null:n; };
+    const parseH = (v) => { if (!v) return null; if (String(v).includes(':')) { const [h,m] = String(v).split(':').map(Number); return h + (m||0)/60; } if (String(v).includes('.')) { const [h,m] = String(v).split('.').map(Number); return h + (m||0)/60; } const n = Number(v); return isNaN(n)?null:n; };
     const h1 = parseH(st), h2 = parseH(et);
-    if (h1 != null && h2 != null) { let diff = h2 - h1; if (diff < 0) diff += 24; durationMin = Math.round(diff * 60); }
+    if (h1 != null && h2 != null) {
+      let dayDiff = 0;
+      if (entryDateVal && exitDateVal) {
+        const a = new Date(entryDateVal + 'T12:00:00');
+        const b = new Date(exitDateVal + 'T12:00:00');
+        if (!isNaN(a) && !isNaN(b)) dayDiff = Math.round((b - a) / 86400000);
+      }
+      let diff = dayDiff * 24 + (h2 - h1);
+      if (diff < 0 && dayDiff === 0) diff += 24;
+      if (diff >= 0) durationMin = Math.round(diff * 60);
+    }
   }
   const trade = {
     Symbol: symbol.toLowerCase(), Direction: document.getElementById('tfDirection').value || 'Buy',
     'Entry Date': document.getElementById('tfDate').value,
+    exit_date: (document.getElementById('tfExitDate')?.value || document.getElementById('tfDate').value || null),
     'Entry Time': parseFloat(document.getElementById('tfTime').value) || document.getElementById('tfTime').value || null,
     exit_time: document.getElementById('tfExitTime').value || null,
     duration_minutes: durationMin,
@@ -4389,6 +4666,8 @@ function bindEvents(){
   }
   ['fSession','fDow','fMinPnL','fMaxLoss','fMinStop','fMaxStop','fMinR','fPreEmotion','fPostEmotion','fEnergyMin','fEnergyMax','fConfMin','fConfMax','fExecMin','fExecMax','fMotive','fMistake','fDivergence','fChecklist','fChecklistStatus'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', applyFilters); });
   ['tfSymbol','tfEntry','tfSL'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', updatePipPreview); });
+  const _tfDate = document.getElementById('tfDate'); if (_tfDate) _tfDate.addEventListener('change', onEntryDateChange);
+  const _tfExitDate = document.getElementById('tfExitDate'); if (_tfExitDate) _tfExitDate.addEventListener('change', onExitDateChange);
   ['tfTime','tfExitTime'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', updateDurationPreview); });
   document.getElementById('tfStopUsd')?.addEventListener('input', function(){ this.dataset.manual = '1'; });
   document.getElementById('addModal').addEventListener('click', e => { if (e.target.id === 'addModal') closeAddModal(); });
