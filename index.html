@@ -564,6 +564,49 @@ body.booting .today-strip{opacity:.4}
 #dashSections > .dash-section > .today-strip,
 #dashSections > .dash-section > .underwater-card{margin-bottom:0}
 
+
+.hub-home{display:flex;flex-direction:column;gap:10px;padding:4px 0 20px}
+.hub-card{display:flex;align-items:center;gap:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;cursor:pointer;box-shadow:var(--shadow-xs);transition:transform .12s,box-shadow .12s}
+.hub-card:active{transform:scale(.98)}
+.hub-card:hover{box-shadow:var(--shadow);border-color:var(--border-strong)}
+.hub-card-icon{width:44px;height:44px;border-radius:14px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+.hub-card-body{flex:1;min-width:0}
+.hub-card-title{font-weight:700;font-size:.95rem}
+.hub-card-desc{font-size:.75rem;color:var(--text-muted);margin-top:2px}
+.hub-card-arrow{color:var(--text-faint);font-size:1.1rem}
+.hub-view{display:none}
+.hub-view.active{display:block;animation:fadeUp .25s ease}
+.hub-back{display:inline-flex;align-items:center;gap:6px;border:none;background:var(--bg-subtle);color:var(--text);padding:8px 12px;border-radius:12px;font-weight:600;font-size:.82rem;cursor:pointer;margin-bottom:12px}
+.hub-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:10px 0}
+.hub-cal .hd{text-align:center;font-size:.68rem;color:var(--text-muted);font-weight:600;padding:4px}
+.hub-cal .cell{aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:600;background:var(--bg-subtle);color:var(--text-muted);position:relative}
+.hub-cal .cell.has{cursor:pointer}
+.hub-cal .cell.profit{background:var(--success-soft);color:var(--success)}
+.hub-cal .cell.loss{background:var(--danger-soft);color:var(--danger)}
+.hub-cal .cell.be{background:var(--warning-soft);color:var(--warning)}
+.hub-cal .cell.today{outline:2px solid var(--primary)}
+.hub-cal .cell.selected{box-shadow:0 0 0 2px var(--primary)}
+.hub-period{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
+.hub-period button{padding:7px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);font-size:.75rem;font-weight:600;color:var(--text-muted);cursor:pointer}
+.hub-period button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.hub-gauge{width:140px;height:80px;margin:0 auto 8px;position:relative}
+.hub-score-big{text-align:center;font-size:1.8rem;font-weight:800;line-height:1}
+.hub-score-label{text-align:center;font-size:.75rem;color:var(--text-muted);margin-top:4px}
+.hub-alert{border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:.8rem;line-height:1.6;border:1px solid var(--border)}
+.hub-alert.warn{background:var(--warning-soft);border-color:#fcd34d}
+.hub-alert.danger{background:var(--danger-soft)}
+.hub-alert.ok{background:var(--success-soft)}
+.hub-alert.info{background:var(--info-soft)}
+.hub-metric-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0}
+@media(min-width:560px){.hub-metric-row{grid-template-columns:repeat(4,1fr)}}
+.hub-bestworst{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hub-bw{border-radius:14px;padding:14px;border:1px solid var(--border)}
+.hub-bw.best{background:var(--success-soft)}
+.hub-bw.worst{background:var(--danger-soft)}
+.hub-bw .t{font-size:.72rem;font-weight:700;margin-bottom:6px}
+.hub-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.72rem;color:var(--text-muted);margin:6px 0 10px}
+.hub-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-left:4px;vertical-align:middle}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -938,6 +981,88 @@ body.booting .today-strip{opacity:.4}
   </div>
 
   <!-- ANALYSIS -->
+
+  <!-- HUB: تحلیل‌ها (شبیه my-journal) -->
+  <div class="main-panel" id="panel-hub">
+    <div class="hub-view active" id="hubHome">
+      <h2 style="font-size:1.05rem;font-weight:800;margin:4px 0 14px">تحلیل‌ها</h2>
+      <div class="hub-home">
+        <div class="hub-card" onclick="openHubView('daily')">
+          <div class="hub-card-icon">📈</div>
+          <div class="hub-card-body"><div class="hub-card-title">تحلیل روزانه</div><div class="hub-card-desc">تقویم، خلاصه بازه، بهترین و بدترین</div></div>
+          <div class="hub-card-arrow">‹</div>
+        </div>
+        <div class="hub-card" onclick="openHubView('psych')">
+          <div class="hub-card-icon">🧠</div>
+          <div class="hub-card-body"><div class="hub-card-title">تحلیل روانشناختی / رفتاری</div><div class="hub-card-desc">انتقام، نظم، احساس، رفتار ریسک</div></div>
+          <div class="hub-card-arrow">‹</div>
+        </div>
+        <div class="hub-card" onclick="openHubView('time')">
+          <div class="hub-card-icon">⏱️</div>
+          <div class="hub-card-body"><div class="hub-card-title">آنالیز زمان و کارایی</div><div class="hub-card-desc">سشن، ساعت، خستگی، سبک مدت</div></div>
+          <div class="hub-card-arrow">‹</div>
+        </div>
+        <div class="hub-card" onclick="openHubView('quality')">
+          <div class="hub-card-icon">✨</div>
+          <div class="hub-card-body"><div class="hub-card-title">آنالیز کیفیت و کارایی</div><div class="hub-card-desc">برنامه پیش از معامله، R، حساسیت</div></div>
+          <div class="hub-card-arrow">‹</div>
+        </div>
+        <div class="hub-card" onclick="openHubView('pro')">
+          <div class="hub-card-icon">🏅</div>
+          <div class="hub-card-body"><div class="hub-card-title">آنالیز حرفه‌ای</div><div class="hub-card-desc">Monte Carlo، همبستگی، وقفه، Expectancy</div></div>
+          <div class="hub-card-arrow">‹</div>
+        </div>
+      </div>
+      <div id="hubHomePersonal" style="margin-top:8px"></div>
+      <p style="font-size:.72rem;color:var(--text-muted);line-height:1.7;margin-top:10px">تب‌های «تحلیل» و «تحلیل پیشرفته» قبلی سر جایشان مانده‌اند. امتیازها فقط از فیلدهای فعلی ساخته می‌شوند.</p>
+    </div>
+
+    <div class="hub-view" id="hubDaily">
+      <button type="button" class="hub-back" onclick="openHubView('home')">› بازگشت به تحلیل‌ها</button>
+      <h2 style="font-size:1rem;font-weight:800;margin-bottom:8px">تحلیل روزانه</h2>
+      <div class="hub-period" id="hubDailyPeriod">
+        <button type="button" class="active" data-hp="month">ماهانه</button>
+        <button type="button" data-hp="year">سالانه</button>
+        <button type="button" data-hp="all">همه</button>
+        <button type="button" data-hp="filter">فیلتر فعلی</button>
+      </div>
+      <div class="breakdown-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <button type="button" class="btn btn-outline btn-sm" onclick="hubCalShift(-1)">‹</button>
+          <strong id="hubCalTitle">—</strong>
+          <button type="button" class="btn btn-outline btn-sm" onclick="hubCalShift(1)">›</button>
+        </div>
+        <div class="hub-cal" id="hubCal"></div>
+        <div class="hub-legend"><span><i style="background:var(--success)"></i>سود</span><span><i style="background:var(--danger)"></i>ضرر</span><span><i style="background:var(--warning)"></i>سربه‌سر</span><span><i style="outline:2px solid var(--primary)"></i>امروز</span></div>
+      </div>
+      <div id="hubDailyBody"></div>
+    </div>
+
+    <div class="hub-view" id="hubPsych">
+      <button type="button" class="hub-back" onclick="openHubView('home')">› بازگشت به تحلیل‌ها</button>
+      <h2 style="font-size:1rem;font-weight:800;margin-bottom:8px">تحلیل روانشناختی / رفتاری</h2>
+      <div id="hubPsychBody"></div>
+    </div>
+
+    <div class="hub-view" id="hubTime">
+      <button type="button" class="hub-back" onclick="openHubView('home')">› بازگشت به تحلیل‌ها</button>
+      <h2 style="font-size:1rem;font-weight:800;margin-bottom:8px">آنالیز زمان و کارایی</h2>
+      <div id="hubTimeBody"></div>
+    </div>
+
+    <div class="hub-view" id="hubQuality">
+      <button type="button" class="hub-back" onclick="openHubView('home')">› بازگشت به تحلیل‌ها</button>
+      <h2 style="font-size:1rem;font-weight:800;margin-bottom:8px">آنالیز کیفیت و کارایی</h2>
+      <div id="hubQualityBody"></div>
+    </div>
+
+    <div class="hub-view" id="hubPro">
+      <button type="button" class="hub-back" onclick="openHubView('home')">› بازگشت به تحلیل‌ها</button>
+      <h2 style="font-size:1rem;font-weight:800;margin-bottom:8px">آنالیز حرفه‌ای</h2>
+      <div id="hubProBody"></div>
+    </div>
+  </div>
+
   <div class="main-panel" id="panel-analysis">
     <div id="analysisGrid">
       <div class="breakdown-card" data-layout-group="analysis" data-layout-key="anSymbol" data-default-size="m"><h3>تحلیل نمادها</h3><div id="anSymbol"></div></div>
@@ -1559,7 +1684,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v24 (advanced tab grouped into collapsible categories, closed by default)';
+const APP_BUILD = 'BUILD-v26 (personal scores from existing fields only)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1577,6 +1702,7 @@ const DEFAULT_SESSIONS = [
 const DEFAULT_MENU = [
   {key:'dashboard', label:'میزکار', icon:'🖥️'},
   {key:'journals',  label:'ژورنال‌ها', icon:'📓'},
+  {key:'hub',       label:'تحلیل‌ها', icon:'🧭'},
   {key:'analysis',  label:'تحلیل', icon:'📊'},
   {key:'advanced',  label:'تحلیل پیشرفته', icon:'🧮'},
   {key:'badges',    label:'مدال‌ها', icon:'🏆'},
@@ -2788,6 +2914,717 @@ function calcDurationMinutes(t){
   return Math.round(diff * 60);
 }
 let perfTab = 'symbol';
+
+
+/* ====== PERSONAL SCORES (no new fields) ====== */
+function mean(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function stdev(arr){
+  if (arr.length < 2) return 0;
+  const m = mean(arr);
+  return Math.sqrt(arr.reduce((s,x)=>s+(x-m)*(x-m),0)/(arr.length-1));
+}
+function pctRank(score){ return Math.max(0, Math.min(100, Math.round(score))); }
+
+function calcRiskConsistency(trades){
+  const stops = trades.map(t => Number(t.stop_usd)).filter(x => x > 0);
+  if (stops.length < 3) return { score: null, avg: mean(stops), cv: null, n: stops.length };
+  const m = mean(stops), s = stdev(stops);
+  const cv = m ? s/m : 0; // coefficient of variation
+  // cv 0 → 100, cv 0.5 → ~50, cv >=1 → low
+  const score = pctRank(100 * Math.exp(-1.6 * cv));
+  return { score, avg: m, cv, n: stops.length, min: Math.min(...stops), max: Math.max(...stops) };
+}
+
+function calcRiskAfterOutcome(trades){
+  const sorted = [...trades].filter(t => t.Result==='Win'||t.Result==='Loss')
+    .sort((a,b)=>(a['Entry Date']||'').localeCompare(b['Entry Date']||'')||(getEntryHour(a)||0)-(getEntryHour(b)||0));
+  let afterLoss = [], afterWin = [];
+  for (let i = 1; i < sorted.length; i++) {
+    const stop = Number(sorted[i].stop_usd);
+    if (!(stop > 0)) continue;
+    if (sorted[i-1].Result === 'Loss') afterLoss.push(stop);
+    if (sorted[i-1].Result === 'Win') afterWin.push(stop);
+  }
+  return {
+    avgAfterLoss: afterLoss.length ? mean(afterLoss) : null,
+    avgAfterWin: afterWin.length ? mean(afterWin) : null,
+    nLoss: afterLoss.length, nWin: afterWin.length
+  };
+}
+
+function calcEmotionEdge(trades){
+  const buckets = {};
+  trades.forEach(t => {
+    const emos = [].concat(t.pre_emotions||[], t.post_emotions||[]).filter(Boolean);
+    const unique = [...new Set(emos.map(String))];
+    unique.forEach(e => {
+      if (!buckets[e]) buckets[e] = { n:0, w:0, pnl:0 };
+      buckets[e].n++;
+      if (t.Result === 'Win') buckets[e].w++;
+      buckets[e].pnl += calcPnL(t);
+    });
+  });
+  const rows = Object.entries(buckets).filter(([,v]) => v.n >= 3)
+    .map(([e,v]) => ({ e, n:v.n, wr: v.n?v.w/v.n*100:0, pnl:v.pnl }))
+    .sort((a,b)=>b.wr-a.wr);
+  return rows;
+}
+
+function calcConfidenceEdge(trades){
+  const hi = {n:0,w:0,pnl:0}, lo = {n:0,w:0,pnl:0};
+  trades.forEach(t => {
+    const c = Number(t.confidence);
+    if (isNaN(c)) return;
+    const b = c >= 7 ? hi : (c <= 4 ? lo : null);
+    if (!b) return;
+    b.n++; if (t.Result==='Win') b.w++; b.pnl += calcPnL(t);
+  });
+  return { hi, lo };
+}
+
+function calcExecEdge(trades){
+  const hi = {n:0,w:0,pnl:0}, lo = {n:0,w:0,pnl:0};
+  trades.forEach(t => {
+    const c = Number(t.exec_quality);
+    if (isNaN(c)) return;
+    const b = c >= 7 ? hi : (c <= 4 ? lo : null);
+    if (!b) return;
+    b.n++; if (t.Result==='Win') b.w++; b.pnl += calcPnL(t);
+  });
+  return { hi, lo };
+}
+
+function calcPersonalEdgeScore(trades){
+  if (!trades.length) return null;
+  let score = 50, notes = [];
+  // expectancy sign
+  const exp = typeof calcExpectancy === 'function' ? calcExpectancy(trades) : 0;
+  if (exp > 0) { score += 12; notes.push('Expectancy مثبت'); }
+  else if (exp < 0) { score -= 12; notes.push('Expectancy منفی'); }
+  // risk consistency
+  const rc = calcRiskConsistency(trades);
+  if (rc.score != null) {
+    score += (rc.score - 50) * 0.25;
+    if (rc.score >= 75) notes.push('ریسک دلاری پایدار');
+    else if (rc.score < 45) notes.push('نوسان زیاد در اندازه استاپ');
+  }
+  // discipline
+  const disc = typeof calcDisciplineAvg === 'function' ? calcDisciplineAvg(trades) : null;
+  if (disc != null) {
+    score += (disc - 50) * 0.2;
+    if (disc >= 70) notes.push('انضباط خوب');
+  }
+  // revenge pattern
+  const sorted = [...trades].filter(t => t.Result==='Win'||t.Result==='Loss')
+    .sort((a,b)=>(a['Entry Date']||'').localeCompare(b['Entry Date']||''));
+  let afterL = 0, afterLN = 0, afterW = 0, afterWN = 0;
+  for (let i=1;i<sorted.length;i++){
+    if (sorted[i-1].Result==='Loss'){ afterLN++; if(sorted[i].Result==='Win') afterL++; }
+    if (sorted[i-1].Result==='Win'){ afterWN++; if(sorted[i].Result==='Win') afterW++; }
+  }
+  const wrL = afterLN?afterL/afterLN:null, wrW = afterWN?afterW/afterWN:null;
+  if (wrL != null && wrW != null && wrL < wrW - 0.12) { score -= 10; notes.push('افت کیفیت بعد از باخت'); }
+  else if (wrL != null && wrW != null && Math.abs(wrL-wrW) < 0.08) { score += 6; notes.push('پایداری بعد از برد/باخت'); }
+  // risk inflation after loss
+  const ra = calcRiskAfterOutcome(trades);
+  if (ra.avgAfterLoss != null && ra.avgAfterWin != null && ra.avgAfterWin > 0) {
+    const ratio = ra.avgAfterLoss / ra.avgAfterWin;
+    if (ratio > 1.25) { score -= 8; notes.push('افزایش استاپ بعد از باخت'); }
+    else if (ratio < 1.05) { score += 5; notes.push('کنترل سایز بعد از باخت'); }
+  }
+  return { score: pctRank(score), notes: notes.slice(0,5), exp, rc, disc };
+}
+
+function buildPersonalInsights(trades){
+  const tips = [];
+  if (trades.length < 5) return ['هنوز نمونه کم است؛ بعد از چند معاملهٔ دیگر بینش دقیق‌تر می‌شود.'];
+  const rc = calcRiskConsistency(trades);
+  if (rc.score != null) {
+    if (rc.score >= 80) tips.push('استاپ دلاری‌ات نسبتاً یکنواخت است (میانگین ~'+rc.avg.toFixed(0)+'$) — برای مقایسه نتایج خوب است.');
+    else if (rc.cv != null && rc.cv > 0.45) tips.push('پراکندگی استاپ بالاست (از '+rc.min.toFixed(0)+'$ تا '+rc.max.toFixed(0)+'$). اگر عمدی نیست، یک ریسک ثابت انتخاب کن.');
+  }
+  const ra = calcRiskAfterOutcome(trades);
+  if (ra.avgAfterLoss != null && ra.avgAfterWin != null && ra.nLoss >= 3 && ra.nWin >= 3) {
+    const ratio = ra.avgAfterLoss / (ra.avgAfterWin || 1);
+    if (ratio > 1.2) tips.push('بعد از باخت، میانگین استاپ ~'+(ratio*100-100).toFixed(0)+'٪ بیشتر از بعد از برد است — نشانه رایج سایز انتقامی.');
+    else tips.push('اندازه استاپ بعد از برد و باخت تفاوت معناداری ندارد.');
+  }
+  const emos = calcEmotionEdge(trades);
+  if (emos.length) {
+    const best = emos[0], worst = emos[emos.length-1];
+    if (best.wr - worst.wr >= 15) tips.push('با احساس «'+best.e+'» WR ~'+best.wr.toFixed(0)+'٪ و با «'+worst.e+'» ~'+worst.wr.toFixed(0)+'٪ (حداقل ۳ نمونه).');
+  }
+  const conf = calcConfidenceEdge(trades);
+  if (conf.hi.n >= 3 && conf.lo.n >= 3) {
+    const wrH = conf.hi.w/conf.hi.n*100, wrL = conf.lo.w/conf.lo.n*100;
+    if (wrH - wrL >= 12) tips.push('اعتماد بالا (۷–۱۰) بهتر از اعتماد پایین جواب داده (WR '+wrH.toFixed(0)+'٪ در برابر '+wrL.toFixed(0)+'٪).');
+    else if (wrL - wrH >= 10) tips.push('وقتی اعتماد خیلی بالاست لزوماً نتیجه بهتر نشده — مواظب overconfidence باش.');
+  }
+  const ex = calcExecEdge(trades);
+  if (ex.hi.n >= 3 && ex.lo.n >= 3) {
+    const wrH = ex.hi.w/ex.hi.n*100, wrL = ex.lo.w/ex.lo.n*100;
+    if (wrH > wrL + 10) tips.push('کیفیت اجرای بالا با نتیجه بهتر هم‌خوانی دارد؛ روی فرآیند ورود/خروج تمرکز کن.');
+  }
+  // best hour with min 3
+  const byHour = {};
+  trades.forEach(t => {
+    const h = getEntryHour(t); if (h==null) return;
+    const k = Math.floor(h);
+    if (!byHour[k]) byHour[k]={n:0,w:0,pnl:0};
+    byHour[k].n++; if (t.Result==='Win') byHour[k].w++; byHour[k].pnl+=calcPnL(t);
+  });
+  const hours = Object.entries(byHour).filter(([,v])=>v.n>=3).sort((a,b)=>b[1].pnl-a[1].pnl);
+  if (hours.length) {
+    const [h,v] = hours[0];
+    tips.push('ساعت شخصی قوی‌تر: حدود '+h+':00 (n='+v.n+' · '+(v.pnl>=0?'+':'')+v.pnl.toFixed(0)+'$).');
+  }
+  // checklist presence
+  let withCl=0;
+  trades.forEach(t=>{ const cl=Array.isArray(t.checklists)?t.checklists:(t.checklist?[t.checklist]:[]); if(cl.length) withCl++; });
+  if (trades.length >= 8) {
+    const rate = withCl/trades.length;
+    if (rate < 0.3) tips.push('چک‌لیست کم استفاده شده؛ اگر پرش کنی، امتیاز نظم معنی‌دارتر می‌شود.');
+    else if (rate > 0.6) tips.push('چک‌لیست را خوب ثبت می‌کنی — ادامه بده.');
+  }
+  const mistakes = {};
+  trades.forEach(t => (t.mistakes||[]).forEach(m => { mistakes[m]=(mistakes[m]||0)+1; }));
+  const topM = Object.entries(mistakes).sort((a,b)=>b[1]-a[1])[0];
+  if (topM && topM[1] >= 3) tips.push('تکراری‌ترین اشتباه ثبت‌شده: «'+topM[0]+'» ('+topM[1]+' بار).');
+  if (!tips.length) tips.push('الگوی هشدار واضحی از روی داده‌های فعلی دیده نشد.');
+  return tips.slice(0,7);
+}
+
+function renderPersonalBlock(trades){
+  const edge = calcPersonalEdgeScore(trades);
+  const tips = buildPersonalInsights(trades);
+  const rc = calcRiskConsistency(trades);
+  const emos = calcEmotionEdge(trades).slice(0,6);
+  if (!edge) return '<div class="empty-state">داده کافی نیست</div>';
+  const sc = edge.score;
+  const col = sc>=70?'var(--success)':sc>=45?'var(--warning)':'var(--danger)';
+  return `
+    <div class="breakdown-card" style="text-align:center">
+      <div class="hub-score-big" style="color:${col}">${sc}</div>
+      <div class="hub-score-label">امتیاز شخصی عملکرد (از داده‌های خودت)</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:6px;line-height:1.6">${(edge.notes||[]).map(n=>'· '+n).join('<br>')||'—'}</div>
+    </div>
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">ثبات ریسک ($)</div><div class="value">${rc.score!=null?rc.score:'—'}</div><div class="sub">${rc.n?('میانگین '+rc.avg.toFixed(0)+'$ · n='+rc.n):'استاپ دلاری کم'}</div></div>
+      <div class="stat-card"><div class="label">Expectancy</div><div class="value ${edge.exp>=0?'pnl-pos':'pnl-neg'}">${edge.exp>=0?'+':''}${edge.exp.toFixed(2)}$</div></div>
+      <div class="stat-card"><div class="label">انضباط</div><div class="value">${edge.disc!=null?Math.round(edge.disc):'—'}</div></div>
+      <div class="stat-card"><div class="label">بینش‌ها</div><div class="value">${tips.length}</div></div>
+    </div>
+    <div class="breakdown-card"><h3>بینش‌های شخصی</h3>
+      ${tips.map(t=>'<div class="hub-alert info" style="margin-bottom:8px">'+t+'</div>').join('')}
+    </div>
+    ${emos.length?`<div class="breakdown-card"><h3>احساس × نتیجه (حداقل ۳ نمونه)</h3>
+      ${emos.map(r=>'<div class="breakdown-row"><span>'+escapeHtml(r.e)+'</span><span>n='+r.n+' · WR '+r.wr.toFixed(0)+'% · <span class="'+(r.pnl>=0?'pnl-pos':'pnl-neg')+'">'+(r.pnl>=0?'+':'')+r.pnl.toFixed(0)+'$</span></span></div>').join('')}
+    </div>`:''}`;
+}
+
+
+/* ====== ANALYSIS HUB ====== */
+let hubDailyMode = 'month';
+let hubCalYear = null, hubCalMonth = null;
+let hubSelectedDay = null;
+
+function openHubView(name){
+  document.querySelectorAll('#panel-hub .hub-view').forEach(v => v.classList.remove('active'));
+  const map = { home:'hubHome', daily:'hubDaily', psych:'hubPsych', time:'hubTime', quality:'hubQuality', pro:'hubPro' };
+  const id = map[name] || 'hubHome';
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  if (name === 'home' || !name) renderHubHomePersonal();
+  if (name === 'daily') renderHubDaily();
+  else if (name === 'psych') renderHubPsych();
+  else if (name === 'time') renderHubTime();
+  else if (name === 'quality') renderHubQuality();
+  else if (name === 'pro') renderHubPro();
+}
+function renderHubHomePersonal(){
+  const el = document.getElementById('hubHomePersonal'); if (!el) return;
+  const trades = (filteredForAnalysis && filteredForAnalysis.length) ? filteredForAnalysis : (allTrades||[]).filter(passesAnalyticsThreshold);
+  if (!trades.length) { el.innerHTML = ''; return; }
+  const edge = calcPersonalEdgeScore(trades);
+  if (!edge) { el.innerHTML = ''; return; }
+  const sc = edge.score;
+  const col = sc>=70?'var(--success)':sc>=45?'var(--warning)':'var(--danger)';
+  el.innerHTML = '<div class="breakdown-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">'
+    +'<div><div style="font-size:.72rem;color:var(--text-muted);font-weight:600">امتیاز شخصی (فیلتر فعلی)</div>'
+    +'<div style="font-size:1.6rem;font-weight:800;color:'+col+'">'+sc+'</div></div>'
+    +'<div style="font-size:.75rem;color:var(--text-muted);line-height:1.6;max-width:280px">'+(edge.notes||[]).slice(0,3).map(n=>'· '+n).join('<br>')+'</div></div>';
+}
+
+
+function hubTradesForMode(){
+  if (hubDailyMode === 'filter') return filtered.slice();
+  if (hubDailyMode === 'all') return allTrades.slice();
+  const now = new Date();
+  if (hubCalYear == null) hubCalYear = now.getFullYear();
+  if (hubCalMonth == null) hubCalMonth = now.getMonth();
+  return allTrades.filter(t => {
+    const d = parseTradeDate(t['Entry Date']);
+    if (!d) return false;
+    if (hubDailyMode === 'year') return d.getFullYear() === hubCalYear;
+    return d.getFullYear() === hubCalYear && d.getMonth() === hubCalMonth;
+  });
+}
+
+function hubCalShift(dir){
+  if (hubCalYear == null) { const n = new Date(); hubCalYear = n.getFullYear(); hubCalMonth = n.getMonth(); }
+  if (hubDailyMode === 'year') hubCalYear += dir;
+  else {
+    hubCalMonth += dir;
+    if (hubCalMonth > 11) { hubCalMonth = 0; hubCalYear++; }
+    if (hubCalMonth < 0) { hubCalMonth = 11; hubCalYear--; }
+  }
+  hubSelectedDay = null;
+  renderHubDaily();
+}
+
+function renderHubCal(dayMap){
+  const el = document.getElementById('hubCal');
+  const title = document.getElementById('hubCalTitle');
+  if (!el) return;
+  const now = new Date();
+  if (hubCalYear == null) hubCalYear = now.getFullYear();
+  if (hubCalMonth == null) hubCalMonth = now.getMonth();
+  const months = (typeof MONTH_FA !== 'undefined') ? MONTH_FA : ['ژانویه','فوریه','مارس','آوریل','مه','ژوئن','ژوئیه','اوت','سپتامبر','اکتبر','نوامبر','دسامبر'];
+  if (title) title.textContent = hubDailyMode === 'year' ? String(hubCalYear) : (months[hubCalMonth] + ' ' + hubCalYear);
+  const dow = ['ش','ی','د','س','چ','پ','ج'];
+  let html = dow.map(d => '<div class="hd">'+d+'</div>').join('');
+  if (hubDailyMode === 'year') {
+    // year overview: 12 mini months skip - show months as cells
+    for (let m = 0; m < 12; m++) {
+      let pnl = 0, n = 0;
+      Object.keys(dayMap).forEach(k => {
+        if (k.startsWith(hubCalYear + '-' + String(m+1).padStart(2,'0'))) { pnl += dayMap[k].pnl; n += dayMap[k].n; }
+      });
+      let cls = 'cell has';
+      if (n) { if (pnl > 0) cls += ' profit'; else if (pnl < 0) cls += ' loss'; else cls += ' be'; }
+      html += '<div class="'+cls+'" style="aspect-ratio:auto;min-height:42px;flex-direction:column;font-size:.7rem" data-m="'+m+'">'+(months[m].slice(0,3))+'<br><span style="font-size:.65rem">'+(n?((pnl>=0?'+':'')+pnl.toFixed(0)):'-')+'</span></div>';
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('[data-m]').forEach(c => c.addEventListener('click', () => {
+      hubCalMonth = +c.dataset.m; hubDailyMode = 'month';
+      document.querySelectorAll('#hubDailyPeriod button').forEach(b => b.classList.toggle('active', b.dataset.hp === 'month'));
+      renderHubDaily();
+    }));
+    return;
+  }
+  const first = new Date(hubCalYear, hubCalMonth, 1);
+  // JS Sunday=0 → shift so week starts Saturday (ش) like Persian UI often
+  let startPad = (first.getDay() + 1) % 7; // Saturday first
+  for (let i = 0; i < startPad; i++) html += '<div class="cell" style="visibility:hidden"></div>';
+  const daysInMonth = new Date(hubCalYear, hubCalMonth+1, 0).getDate();
+  const todayStr = now.toISOString().slice(0,10);
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = hubCalYear + '-' + String(hubCalMonth+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    const info = dayMap[ds];
+    let cls = 'cell';
+    if (info) {
+      cls += ' has';
+      if (info.pnl > 0) cls += ' profit';
+      else if (info.pnl < 0) cls += ' loss';
+      else cls += ' be';
+    }
+    if (ds === todayStr) cls += ' today';
+    if (hubSelectedDay === ds) cls += ' selected';
+    html += '<div class="'+cls+'" data-day="'+ds+'">'+day+'</div>';
+  }
+  el.innerHTML = html;
+  el.querySelectorAll('[data-day]').forEach(c => c.addEventListener('click', () => {
+    hubSelectedDay = c.dataset.day;
+    renderHubDaily();
+  }));
+}
+
+function renderHubDaily(){
+  const tradesAll = hubTradesForMode();
+  const dayMap = {};
+  tradesAll.forEach(t => {
+    const ds = t['Entry Date']; if (!ds) return;
+    if (!dayMap[ds]) dayMap[ds] = { pnl:0, n:0, w:0, l:0 };
+    dayMap[ds].pnl += calcPnL(t);
+    dayMap[ds].n++;
+    if (t.Result === 'Win') dayMap[ds].w++;
+    else if (t.Result === 'Loss') dayMap[ds].l++;
+  });
+  renderHubCal(dayMap);
+  let trades = tradesAll;
+  if (hubSelectedDay) trades = tradesAll.filter(t => t['Entry Date'] === hubSelectedDay);
+  const body = document.getElementById('hubDailyBody'); if (!body) return;
+  if (!trades.length) {
+    body.innerHTML = '<div class="empty-state">در این بازه معامله‌ای نیست</div>';
+    return;
+  }
+  let pnl = 0, w = 0, l = 0;
+  trades.forEach(t => {
+    const p = calcPnL(t); pnl += p;
+    if (t.Result === 'Win') w++; else if (t.Result === 'Loss') l++;
+  });
+  const decided = w + l;
+  const wr = decided ? (w/decided*100) : 0;
+  const days = new Set(trades.map(t => t['Entry Date']).filter(Boolean)).size;
+  let winSum = 0, lossSum = 0;
+  trades.forEach(t => { const p = calcPnL(t); if (p>0) winSum+=p; else if (p<0) lossSum+=Math.abs(p); });
+  const pf = lossSum > 0 ? (winSum/lossSum) : (winSum > 0 ? Infinity : 0);
+  const avgW = w ? winSum/w : 0, avgL = l ? lossSum/l : 0;
+  const rr = avgL > 0 ? avgW/avgL : 0;
+  const sorted = [...trades].sort((a,b) => calcPnL(b)-calcPnL(a));
+  const best = sorted[0], worst = sorted[sorted.length-1];
+  const buy = trades.filter(t => t.Direction === 'Buy');
+  const sell = trades.filter(t => t.Direction === 'Sell');
+  const buyP = buy.reduce((s,t)=>s+calcPnL(t),0);
+  const sellP = sell.reduce((s,t)=>s+calcPnL(t),0);
+  const bySym = {};
+  trades.forEach(t => {
+    const k = (t.Symbol||'—').toUpperCase();
+    if (!bySym[k]) bySym[k] = 0;
+    bySym[k] += calcPnL(t);
+  });
+  const topSym = Object.entries(bySym).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const s = typeof calcStreaks === 'function' ? calcStreaks(trades) : { maxWin:0, maxLoss:0 };
+  const dd = typeof calcMaxDD === 'function' ? calcMaxDD(trades) : { abs:0, pct:0 };
+  body.innerHTML = `
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">روز معاملاتی</div><div class="value">${days}</div></div>
+      <div class="stat-card"><div class="label">کل معاملات</div><div class="value">${trades.length}</div></div>
+      <div class="stat-card"><div class="label">وین‌ریت</div><div class="value">${wr.toFixed(0)}%</div></div>
+      <div class="stat-card"><div class="label">سود خالص</div><div class="value ${pnl>=0?'pnl-pos':'pnl-neg'}">${pnl>=0?'+':''}${pnl.toFixed(1)}$</div></div>
+    </div>
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">پروفیت فاکتور</div><div class="value">${pf===Infinity?'∞':pf.toFixed(2)}</div></div>
+      <div class="stat-card"><div class="label">R:R میانگین</div><div class="value">${rr?rr.toFixed(2):'—'}</div></div>
+      <div class="stat-card"><div class="label">Max DD</div><div class="value pnl-neg">-${(dd.abs||0).toFixed(0)}$</div></div>
+      <div class="stat-card"><div class="label">استریک</div><div class="value">${s.maxWin||0}W / ${s.maxLoss||0}L</div></div>
+    </div>
+    <div class="breakdown-card" style="margin-top:10px">
+      <h3>تحلیل جهت</h3>
+      <div class="dir-cards">
+        <div class="dir-card"><h4>خرید</h4><div class="big ${buyP>=0?'pnl-pos':'pnl-neg'}">${buyP>=0?'+':''}${buyP.toFixed(0)}$</div><div class="dir-mini"><span>تعداد<strong>${buy.length}</strong></span></div></div>
+        <div class="dir-card"><h4>فروش</h4><div class="big ${sellP>=0?'pnl-pos':'pnl-neg'}">${sellP>=0?'+':''}${sellP.toFixed(0)}$</div><div class="dir-mini"><span>تعداد<strong>${sell.length}</strong></span></div></div>
+      </div>
+      <div style="margin-top:10px;font-size:.8rem">${topSym.map(([k,v])=>'<span class="badge" style="margin:2px;background:var(--bg-subtle)">'+(k)+': '+(v>=0?'+':'')+v.toFixed(0)+'$</span>').join('')}</div>
+    </div>
+    <div class="hub-bestworst" style="margin-top:10px">
+      <div class="hub-bw best"><div class="t">بهترین</div><div style="font-weight:800">${best?((best.Symbol||'')+' · +'+calcPnL(best).toFixed(0)+'$'):'—'}</div><div style="font-size:.72rem;margin-top:4px">${best?((best['Entry Date']||'')+' · '+(best.Timeframe||'')) :''}</div></div>
+      <div class="hub-bw worst"><div class="t">بدترین</div><div style="font-weight:800">${worst?((worst.Symbol||'')+' · '+calcPnL(worst).toFixed(0)+'$'):'—'}</div><div style="font-size:.72rem;margin-top:4px">${worst?((worst['Entry Date']||'')+' · '+(worst.Timeframe||'')) :''}</div></div>
+    </div>
+    <div class="breakdown-card" style="margin-top:10px">
+      <h3>فهرست معاملات ${hubSelectedDay?('· '+hubSelectedDay):''}</h3>
+      <div style="font-size:.78rem">${trades.slice().sort((a,b)=>(b['Entry Date']||'').localeCompare(a['Entry Date']||'')).slice(0,30).map(t=>{
+        const p=calcPnL(t); const pc=p>=0?'pnl-pos':'pnl-neg';
+        return '<div class="breakdown-row"><span>'+(t['Entry Date']||'')+' · '+(t.Symbol||'')+' · '+(t.Direction||'')+'</span><span class="'+pc+'">'+(p>=0?'+':'')+p.toFixed(1)+'$</span></div>';
+      }).join('')}</div>
+    </div>`;
+}
+
+function renderHubPsych(){
+  const el = document.getElementById('hubPsychBody'); if (!el) return;
+  const trades = (filteredForAnalysis && filteredForAnalysis.length) ? filteredForAnalysis : allTrades.filter(passesAnalyticsThreshold);
+  if (trades.length < 3) { el.innerHTML = '<div class="empty-state">حداقل چند معامله با داده رفتاری لازم است</div>'; return; }
+  const personalTop = renderPersonalBlock(trades);
+  const sorted = [...trades].filter(t => t.Result==='Win'||t.Result==='Loss')
+    .sort((a,b)=>(a['Entry Date']||'').localeCompare(b['Entry Date']||'')||(getEntryHour(a)||0)-(getEntryHour(b)||0));
+  // revenge: loss then next trade same day or within 2h
+  let revengeN=0, revengeW=0, revengePnl=0;
+  for (let i=1;i<sorted.length;i++){
+    if (sorted[i-1].Result !== 'Loss') continue;
+    const d1 = sorted[i-1]['Entry Date'], d2 = sorted[i]['Entry Date'];
+    const h1 = getEntryHour(sorted[i-1]), h2 = getEntryHour(sorted[i]);
+    let close = d1 && d2 && d1===d2;
+    if (close && h1!=null && h2!=null && (h2-h1) > 3) close = false;
+    if (!close && d1 && d2) {
+      const a=new Date(d1+'T12:00:00'), b=new Date(d2+'T12:00:00');
+      if ((b-a)/86400000 <= 1) close = true;
+    }
+    if (close) {
+      revengeN++;
+      if (sorted[i].Result==='Win') revengeW++;
+      revengePnl += calcPnL(sorted[i]);
+    }
+  }
+  // plan completeness
+  let withReason=0, withSL=0, withCl=0, impulsive=0;
+  trades.forEach(t=>{
+    if (t.entry_reason || (t['Entry Reason'])) withReason++;
+    if (t['Stop Loss']!=null || t.initial_stop!=null) withSL++;
+    const cl = Array.isArray(t.checklists)?t.checklists:(t.checklist?[t.checklist]:[]);
+    if (cl.length) withCl++;
+    const mots = t.motives||[];
+    if (mots.some(m=>/FOMO|انتقام|revenge/i.test(String(m)))) impulsive++;
+  });
+  const n = trades.length;
+  const planScore = Math.round(((withReason/n)*40 + (withSL/n)*30 + (withCl/n)*30));
+  const disc = typeof calcDisciplineAvg==='function' ? calcDisciplineAvg(trades) : planScore;
+  const psychScore = Math.round(Math.min(100, Math.max(0, disc*0.5 + planScore*0.35 + (revengeN?Math.max(0,100-revengeN*8):100)*0.15)));
+  const s = calcStreaks(trades);
+  // after streak behavior
+  let afterWinW=0, afterWinN=0, afterLossW=0, afterLossN=0;
+  for (let i=1;i<sorted.length;i++){
+    if (sorted[i-1].Result==='Win'){ afterWinN++; if(sorted[i].Result==='Win') afterWinW++; }
+    if (sorted[i-1].Result==='Loss'){ afterLossN++; if(sorted[i].Result==='Win') afterLossW++; }
+  }
+  const wrAW = afterWinN?afterWinW/afterWinN*100:0;
+  const wrAL = afterLossN?afterLossW/afterLossN*100:0;
+  // emotion
+  const emoCount = {};
+  trades.forEach(t=>{
+    (t.pre_emotions||[]).concat(t.post_emotions||[]).forEach(e=>{ if(!e) return; emoCount[e]=(emoCount[e]||0)+1; });
+  });
+  const topEmo = Object.entries(emoCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const buyN = trades.filter(t=>t.Direction==='Buy').length;
+  const sellN = trades.filter(t=>t.Direction==='Sell').length;
+  const alerts = [];
+  if (revengeN >= 2 && wrAL < wrAW - 10) alerts.push({type:'warn', text:'بعد از باخت، وین‌ریت پایین‌تر است — مراقب معامله انتقامی باش.'});
+  if (impulsive) alerts.push({type:'warn', text: impulsive+' معامله با انگیزه FOMO/انتقام ثبت شده.'});
+  if (withReason/n < 0.5) alerts.push({type:'danger', text:'کمتر از نیمی از معاملات دلیل ورود دارند.'});
+  if (!alerts.length) alerts.push({type:'ok', text:'الگوی رفتاری بحرانی واضحی دیده نشد.'});
+
+  el.innerHTML = personalTop + `
+    <div class="breakdown-card" style="text-align:center">
+      <div class="hub-score-big" style="color:${psychScore>=70?'var(--success)':psychScore>=45?'var(--warning)':'var(--danger)'}">${psychScore}</div>
+      <div class="hub-score-label">امتیاز روانشناختی تقریبی</div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:6px">ترکیب انضباط · برنامه · کنترل انتقام</div>
+    </div>
+    ${alerts.map(a=>'<div class="hub-alert '+a.type+'">'+a.text+'</div>').join('')}
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">معاملات مشکوک به انتقام</div><div class="value">${revengeN}</div><div class="sub">WR ${revengeN?(revengeW/revengeN*100).toFixed(0):0}% · ${revengePnl>=0?'+':''}${revengePnl.toFixed(0)}$</div></div>
+      <div class="stat-card"><div class="label">کامل بودن برنامه</div><div class="value">${planScore}%</div><div class="sub">دلیل/SL/چک‌لیست</div></div>
+      <div class="stat-card"><div class="label">WR بعد از برد</div><div class="value">${wrAW.toFixed(0)}%</div></div>
+      <div class="stat-card"><div class="label">WR بعد از باخت</div><div class="value">${wrAL.toFixed(0)}%</div></div>
+    </div>
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">استریک برد</div><div class="value pnl-pos">${s.maxWin||0}</div></div>
+      <div class="stat-card"><div class="label">استریک باخت</div><div class="value pnl-neg">${s.maxLoss||0}</div></div>
+      <div class="stat-card"><div class="label">خرید / فروش</div><div class="value">${buyN}/${sellN}</div></div>
+      <div class="stat-card"><div class="label">FOMO/انتقام</div><div class="value">${impulsive}</div></div>
+    </div>
+    <div class="breakdown-card"><h3>الگوهای احساسی ثبت‌شده</h3>
+      ${topEmo.length? topEmo.map(([k,v])=>'<div class="breakdown-row"><span>'+escapeHtml(k)+'</span><span>'+v+'</span></div>').join('') : '<div class="empty-state">احساسی ثبت نشده</div>'}
+    </div>`;
+}
+
+function renderHubTime(){
+  const el = document.getElementById('hubTimeBody'); if (!el) return;
+  const trades = (filteredForAnalysis && filteredForAnalysis.length) ? filteredForAnalysis : allTrades.filter(passesAnalyticsThreshold);
+  if (!trades.length) { el.innerHTML = '<div class="empty-state">داده‌ای نیست</div>'; return; }
+  // best hour
+  const byHour = {};
+  trades.forEach(t => {
+    const h = getEntryHour(t); if (h==null) return;
+    const key = Math.floor(h);
+    if (!byHour[key]) byHour[key]={pnl:0,n:0,w:0};
+    byHour[key].pnl += calcPnL(t); byHour[key].n++;
+    if (t.Result==='Win') byHour[key].w++;
+  });
+  const hours = Object.entries(byHour).sort((a,b)=>b[1].pnl-a[1].pnl);
+  const bestH = hours[0];
+  // parts of day
+  const parts = { صبح:0, ظهر:0, عصر:0, شب:0 };
+  const partP = { صبح:0, ظهر:0, عصر:0, شب:0 };
+  trades.forEach(t=>{
+    const h = getEntryHour(t); if (h==null) return;
+    let p = 'شب';
+    if (h>=5 && h<12) p='صبح'; else if (h>=12 && h<17) p='ظهر'; else if (h>=17 && h<22) p='عصر';
+    parts[p]++; partP[p]+=calcPnL(t);
+  });
+  // duration style
+  const durs = trades.map(t => typeof calcDurationMinutes==='function'?calcDurationMinutes(t):t.duration_minutes).filter(m=>m!=null&&m>0);
+  let style = 'نامشخص';
+  if (durs.length) {
+    const avg = durs.reduce((a,b)=>a+b,0)/durs.length;
+    if (avg < 30) style = 'اسکالپر';
+    else if (avg < 180) style = 'دی‌تریدر';
+    else if (avg < 24*60) style = 'سویینگ کوتاه';
+    else style = 'پوزیشن تریدر';
+  }
+  // fatigue: first vs last trade of day
+  const byDay = {};
+  trades.forEach(t=>{
+    const d=t['Entry Date']; if(!d) return;
+    if(!byDay[d]) byDay[d]=[];
+    byDay[d].push(t);
+  });
+  let firstW=0,firstN=0,lastW=0,lastN=0;
+  Object.values(byDay).forEach(arr=>{
+    arr.sort((a,b)=>(getEntryHour(a)||0)-(getEntryHour(b)||0));
+    if (arr.length>=2){
+      firstN++; if(arr[0].Result==='Win') firstW++;
+      lastN++; if(arr[arr.length-1].Result==='Win') lastW++;
+    }
+  });
+  const wrF = firstN?firstW/firstN*100:0, wrL=lastN?lastW/lastN*100:0;
+  // sessions
+  const sessMap = {};
+  trades.forEach(t=>{
+    const s = typeof getSession==='function'?getSession(t):'نامشخص';
+    if(!sessMap[s]) sessMap[s]={pnl:0,n:0,w:0};
+    sessMap[s].pnl+=calcPnL(t); sessMap[s].n++; if(t.Result==='Win') sessMap[s].w++;
+  });
+  // DOW
+  const dowMap = {};
+  trades.forEach(t=>{
+    const d=parseTradeDate(t['Entry Date']); if(!d) return;
+    const k = (typeof DOW_FA!=='undefined'?DOW_FA[d.getDay()]:String(d.getDay()));
+    if(!dowMap[k]) dowMap[k]={pnl:0,n:0};
+    dowMap[k].pnl+=calcPnL(t); dowMap[k].n++;
+  });
+  el.innerHTML = `
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">سبک مدت</div><div class="value" style="font-size:1.1rem">${style}</div><div class="sub">${durs.length?('میانگین '+Math.round(durs.reduce((a,b)=>a+b,0)/durs.length)+' دقیقه'):'ساعت خروج کم است'}</div></div>
+      <div class="stat-card"><div class="label">بهترین ساعت</div><div class="value">${bestH?bestH[0]+':00':'—'}</div><div class="sub">${bestH?((bestH[1].pnl>=0?'+':'')+bestH[1].pnl.toFixed(0)+'$ · '+bestH[1].n+' ترید'):''}</div></div>
+      <div class="stat-card"><div class="label">WR اولین ترید روز</div><div class="value">${firstN?wrF.toFixed(0)+'%':'—'}</div></div>
+      <div class="stat-card"><div class="label">WR آخرین ترید روز</div><div class="value">${lastN?wrL.toFixed(0)+'%':'—'}</div></div>
+    </div>
+    ${lastN && firstN && wrL < wrF - 15 ? '<div class="hub-alert warn">خستگی احتمالی: وین‌ریت آخر روز مشخصاً پایین‌تر از اول روز است.</div>' : ''}
+    <div class="breakdown-card"><h3>توزیع زمانی</h3>
+      ${Object.keys(parts).map(k=>'<div class="breakdown-row"><span>'+k+'</span><span>'+parts[k]+' ترید · <span class="'+(partP[k]>=0?'pnl-pos':'pnl-neg')+'">'+(partP[k]>=0?'+':'')+partP[k].toFixed(0)+'$</span></span></div>').join('')}
+    </div>
+    <div class="breakdown-card"><h3>سشن‌ها</h3>
+      ${Object.entries(sessMap).sort((a,b)=>b[1].pnl-a[1].pnl).map(([k,v])=>{
+        const wr=v.n?(v.w/v.n*100).toFixed(0):0;
+        return '<div class="breakdown-row"><span>'+k+'</span><span>'+v.n+' · WR '+wr+'% · <span class="'+(v.pnl>=0?'pnl-pos':'pnl-neg')+'">'+(v.pnl>=0?'+':'')+v.pnl.toFixed(0)+'$</span></span></div>';
+      }).join('')}
+    </div>
+    <div class="breakdown-card"><h3>روزهای هفته</h3>
+      ${Object.entries(dowMap).sort((a,b)=>b[1].pnl-a[1].pnl).map(([k,v])=>'<div class="breakdown-row"><span>'+k+'</span><span>'+v.n+' · <span class="'+(v.pnl>=0?'pnl-pos':'pnl-neg')+'">'+(v.pnl>=0?'+':'')+v.pnl.toFixed(0)+'$</span></span></div>').join('')}
+    </div>`;
+}
+
+function renderHubQuality(){
+  const el = document.getElementById('hubQualityBody'); if (!el) return;
+  const trades = (filteredForAnalysis && filteredForAnalysis.length) ? filteredForAnalysis : allTrades.filter(passesAnalyticsThreshold);
+  if (!trades.length) { el.innerHTML = '<div class="empty-state">داده‌ای نیست</div>'; return; }
+  const rcQ = calcRiskConsistency(trades);
+  const raQ = calcRiskAfterOutcome(trades);
+  const n = trades.length;
+  let planned=0, withR=0, sumPlan=0, sumAct=0, actN=0;
+  trades.forEach(t=>{
+    const hasPlan = !!(t.entry_reason || t['Entry Reason'] || (t.checklists&&t.checklists.length) || t.checklist || t.r1||t.r15||t.r2||t.r3);
+    if (hasPlan) planned++;
+    const pr = typeof plannedR==='function'?plannedR(t):null;
+    const ar = typeof actualR==='function'?actualR(t):null;
+    if (pr!=null) { withR++; sumPlan+=pr; }
+    if (ar!=null) { actN++; sumAct+=ar; }
+  });
+  const exp = typeof calcExpectancy==='function'?calcExpectancy(trades):0;
+  const pnls = trades.map(t=>calcPnL(t)).sort((a,b)=>a-b);
+  const total = pnls.reduce((a,b)=>a+b,0);
+  // sensitivity remove worst 10%
+  const cut = Math.max(1, Math.floor(pnls.length*0.1));
+  const trimmed = pnls.slice(cut);
+  const trimmedTotal = trimmed.reduce((a,b)=>a+b,0);
+  const medianLoss = (()=>{ const losses=pnls.filter(p=>p<0); if(!losses.length) return 0; return losses[Math.floor(losses.length/2)]; })();
+  const capped = pnls.map(p => (p < medianLoss ? medianLoss : p));
+  const cappedTotal = capped.reduce((a,b)=>a+b,0);
+  // symbol / tf
+  const bySym={}, byTf={};
+  trades.forEach(t=>{
+    const s=(t.Symbol||'—').toUpperCase(), tf=t.Timeframe||'—';
+    if(!bySym[s]) bySym[s]={pnl:0,n:0}; bySym[s].pnl+=calcPnL(t); bySym[s].n++;
+    if(!byTf[tf]) byTf[tf]={pnl:0,n:0}; byTf[tf].pnl+=calcPnL(t); byTf[tf].n++;
+  });
+  el.innerHTML = `
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">ثبات استاپ دلاری</div><div class="value">${rcQ.score!=null?rcQ.score:'—'}</div><div class="sub">${rcQ.n?('μ '+rcQ.avg.toFixed(0)+'$ · σ-نسبی '+(rcQ.cv!=null?rcQ.cv.toFixed(2):'—')):'—'}</div></div>
+      <div class="stat-card"><div class="label">استاپ بعد باخت</div><div class="value">${raQ.avgAfterLoss!=null?raQ.avgAfterLoss.toFixed(0)+'$':'—'}</div><div class="sub">n=${raQ.nLoss}</div></div>
+      <div class="stat-card"><div class="label">استاپ بعد برد</div><div class="value">${raQ.avgAfterWin!=null?raQ.avgAfterWin.toFixed(0)+'$':'—'}</div><div class="sub">n=${raQ.nWin}</div></div>
+      <div class="stat-card"><div class="label">نسبت بعدباخت/بعدبرد</div><div class="value">${(raQ.avgAfterLoss!=null&&raQ.avgAfterWin)?(raQ.avgAfterLoss/raQ.avgAfterWin).toFixed(2):'—'}</div></div>
+    </div>` + `
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">کامل بودن برنامه</div><div class="value">${Math.round(planned/n*100)}%</div><div class="sub">${planned}/${n}</div></div>
+      <div class="stat-card"><div class="label">Expectancy</div><div class="value ${exp>=0?'pnl-pos':'pnl-neg'}">${exp>=0?'+':''}${exp.toFixed(2)}$</div></div>
+      <div class="stat-card"><div class="label">میانگین R برنامه</div><div class="value">${withR?(sumPlan/withR).toFixed(2):'—'}R</div></div>
+      <div class="stat-card"><div class="label">میانگین R واقعی</div><div class="value">${actN?(sumAct/actN).toFixed(2):'—'}R</div></div>
+    </div>
+    <div class="breakdown-card"><h3>آزمون حساسیت</h3>
+      <div class="breakdown-row"><span>P/L واقعی</span><span class="${total>=0?'pnl-pos':'pnl-neg'}">${total>=0?'+':''}${total.toFixed(0)}$</span></div>
+      <div class="breakdown-row"><span>بدون ۱۰٪ بدترین</span><span class="${trimmedTotal>=0?'pnl-pos':'pnl-neg'}">${trimmedTotal>=0?'+':''}${trimmedTotal.toFixed(0)}$</span></div>
+      <div class="breakdown-row"><span>با سقف زیان روی میانه ضررها</span><span class="${cappedTotal>=0?'pnl-pos':'pnl-neg'}">${cappedTotal>=0?'+':''}${cappedTotal.toFixed(0)}$</span></div>
+    </div>
+    <div class="breakdown-card"><h3>عملکرد نماد</h3>
+      ${Object.entries(bySym).sort((a,b)=>b[1].pnl-a[1].pnl).slice(0,8).map(([k,v])=>'<div class="breakdown-row"><span>'+k+'</span><span>'+v.n+' · <span class="'+(v.pnl>=0?'pnl-pos':'pnl-neg')+'">'+(v.pnl>=0?'+':'')+v.pnl.toFixed(0)+'$</span></span></div>').join('')}
+    </div>
+    <div class="breakdown-card"><h3>عملکرد تایم‌فریم</h3>
+      ${Object.entries(byTf).sort((a,b)=>b[1].pnl-a[1].pnl).map(([k,v])=>'<div class="breakdown-row"><span>'+k+'</span><span>'+v.n+' · <span class="'+(v.pnl>=0?'pnl-pos':'pnl-neg')+'">'+(v.pnl>=0?'+':'')+v.pnl.toFixed(0)+'$</span></span></div>').join('')}
+    </div>`;
+}
+
+function renderHubPro(){
+  const el = document.getElementById('hubProBody'); if (!el) return;
+  const trades = (filteredForAnalysis && filteredForAnalysis.length) ? filteredForAnalysis : allTrades.filter(passesAnalyticsThreshold);
+  if (trades.length < 5) {
+    el.innerHTML = '<div class="empty-state">برای آنالیز حرفه‌ای حداقل ۵ معامله کامل لازم است (الان '+trades.length+')</div>';
+    return;
+  }
+  const personalTop = renderPersonalBlock(trades);
+  // reuse existing if present
+  const exp = calcExpectancy(trades);
+  // monte carlo compact
+  const pnls = trades.map(t=>calcPnL(t));
+  const N=500; const finals=[];
+  for(let i=0;i<N;i++){
+    const arr=pnls.slice();
+    for(let j=arr.length-1;j>0;j--){ const k=Math.floor(Math.random()*(j+1)); const t=arr[j]; arr[j]=arr[k]; arr[k]=t; }
+    finals.push(arr.reduce((a,b)=>a+b,0));
+  }
+  finals.sort((a,b)=>a-b);
+  const p05=finals[Math.floor(N*0.05)], p50=finals[Math.floor(N*0.5)], p95=finals[Math.floor(N*0.95)];
+  const actual=pnls.reduce((a,b)=>a+b,0);
+  const probProfit=finals.filter(x=>x>0).length/N*100;
+  // correlation quick
+  const sorted=[...trades].filter(t=>t.Result==='Win'||t.Result==='Loss').sort((a,b)=>(a['Entry Date']||'').localeCompare(b['Entry Date']||''));
+  let ww=0,wl=0,lw=0,ll=0;
+  for(let i=1;i<sorted.length;i++){
+    const a=sorted[i-1].Result,b=sorted[i].Result;
+    if(a==='Win'&&b==='Win')ww++; else if(a==='Win'&&b==='Loss')wl++;
+    else if(a==='Loss'&&b==='Win')lw++; else if(a==='Loss'&&b==='Loss')ll++;
+  }
+  const dates=[...new Set(trades.map(t=>t['Entry Date']).filter(Boolean))].sort();
+  let maxIdle=0;
+  for(let i=1;i<dates.length;i++){
+    const a=new Date(dates[i-1]+'T12:00:00'), b=new Date(dates[i]+'T12:00:00');
+    const gap=Math.round((b-a)/86400000)-1;
+    if(gap>maxIdle) maxIdle=gap;
+  }
+  el.innerHTML = personalTop + `
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">Expectancy</div><div class="value ${exp>=0?'pnl-pos':'pnl-neg'}">${exp>=0?'+':''}${exp.toFixed(2)}$</div></div>
+      <div class="stat-card"><div class="label">P/L واقعی</div><div class="value ${actual>=0?'pnl-pos':'pnl-neg'}">${actual>=0?'+':''}${actual.toFixed(0)}$</div></div>
+      <div class="stat-card"><div class="label">Monte Carlo میانه</div><div class="value">${p50>=0?'+':''}${p50.toFixed(0)}$</div></div>
+      <div class="stat-card"><div class="label">احتمال سود</div><div class="value">${probProfit.toFixed(0)}%</div></div>
+    </div>
+    <div class="hub-metric-row">
+      <div class="stat-card"><div class="label">سناریو بد ۵٪</div><div class="value pnl-neg">${p05.toFixed(0)}$</div></div>
+      <div class="stat-card"><div class="label">سناریو خوب ۹۵٪</div><div class="value pnl-pos">${p95.toFixed(0)}$</div></div>
+      <div class="stat-card"><div class="label">WR بعد برد / باخت</div><div class="value" style="font-size:1rem">${(ww+wl)?(ww/(ww+wl)*100).toFixed(0):0}% / ${(lw+ll)?(lw/(lw+ll)*100).toFixed(0):0}%</div></div>
+      <div class="stat-card"><div class="label">بیشترین روز بدون ترید</div><div class="value">${maxIdle}</div></div>
+    </div>
+    <div class="hub-alert info">این بخش از همان دیتای ژورنال ساخته شده (بدون کمیسیون/سواپ). جزئیات بیشتر در تب «تحلیل پیشرفته» هم هست.</div>`;
+}
+
+function renderHub(){
+  const active = document.querySelector('#panel-hub .hub-view.active');
+  if (!active) return;
+  if (active.id==='hubHome') renderHubHomePersonal();
+  else if (active.id==='hubDaily') renderHubDaily();
+  else if (active.id==='hubPsych') renderHubPsych();
+  else if (active.id==='hubTime') renderHubTime();
+  else if (active.id==='hubQuality') renderHubQuality();
+  else if (active.id==='hubPro') renderHubPro();
+}
+
+
+
+function plannedR(t){
+  if (t.r3) return 3; if (t.r2) return 2; if (t.r15) return 1.5; if (t.r1) return 1; return null;
+}
+function actualR(t){
+  const risk = Number(t.stop_usd); if (!risk) return null; return calcPnL(t)/risk;
+}
+
 function applyFilters(){
   filtered = getFiltered();
   filteredForAnalysis = filtered.filter(passesAnalyticsThreshold);
@@ -2807,6 +3644,7 @@ function applyFilters(){
   renderBadges();
   renderTable();
   if (typeof renderAnalysis === 'function') renderAnalysis();
+  if (typeof renderHub === 'function') renderHub();
 }
 
 /* ====== ADVANCED ANALYTICS ====== */
@@ -4684,6 +5522,16 @@ function fillChecklistSelects(){
 
 /* ====== EVENTS ====== */
 function bindEvents(){
+  document.querySelectorAll('#hubDailyPeriod button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#hubDailyPeriod button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      hubDailyMode = btn.dataset.hp;
+      hubSelectedDay = null;
+      renderHubDaily();
+    });
+  });
+
   ['fSymbol','fDirection','fResult','fTimeframe','fSetup','fZone','fTrigger','fFrom','fTo','fSession','fDow'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', applyFilters); });
   document.querySelectorAll('.equity-mode button').forEach(btn => {
     btn.addEventListener('click', () => { document.querySelectorAll('.equity-mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); equityMode = btn.dataset.mode; applyFilters(); });
