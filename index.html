@@ -1684,7 +1684,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v26 (personal scores from existing fields only)';
+const APP_BUILD = 'BUILD-v26.2 (fix multi-save + dedupe ids)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1777,6 +1777,7 @@ function bDesc(b){ return typeof b.desc === 'function' ? b.desc() : b.desc; }
 
 /* ====== STATE ====== */
 let allTrades = [], filtered = [], filteredForAnalysis = [];
+let isSavingTrade = false;
 let equityMode = 'manual';
 let equityChart = null, pieChart = null, sparkChart = null;
 let rDistChart = null, rDistChartDash = null;
@@ -1824,8 +1825,25 @@ async function bulkUpsertRemote(trades){
 async function deleteAllTradesRemote(){ const { error } = await supabaseClient.from('journal_trades').delete().gt('id', -1); return !error; }
 async function deleteTradeRemote(id){ const { error } = await supabaseClient.from('journal_trades').delete().eq('id', id); if (error) console.error(error); }
 async function upsertTradeRemote(t){
-  const { error } = await supabaseClient.from('journal_trades').upsert(tradeToRow(t));
-  if (error) { console.error(error); showToast('خطا در ذخیره'); return false; }
+  const row = tradeToRow(t);
+  let { error } = await supabaseClient.from('journal_trades').upsert(row);
+  // اگر ستون exit_date در جدول نباشد، یک‌بار بدون آن دوباره تلاش کن
+  if (error && /exit_date/i.test(error.message||'') && Object.prototype.hasOwnProperty.call(row, 'exit_date')) {
+    const { exit_date, ...rest } = row;
+    const retry = await supabaseClient.from('journal_trades').upsert(rest);
+    error = retry.error;
+    if (!error) {
+      console.warn('exit_date column missing — saved without it. Run ALTER TABLE to add exit_date.');
+      showToast('ذخیره شد (بدون exit_date — SQL را ببین)');
+      return true;
+    }
+  }
+  if (error) {
+    console.error('upsertTradeRemote', error);
+    const msg = (error.message || error.details || 'خطا در ذخیره').toString();
+    showToast('ذخیره ناموفق: ' + (msg.length > 80 ? msg.slice(0,80)+'…' : msg));
+    return false;
+  }
   return true;
 }
 async function loadTradesFromSupabase(){
@@ -2847,9 +2865,15 @@ function getFiltered(){
 function ensureUniqueIds(){
   const seen = new Set(); let maxId = 0;
   allTrades.forEach(t => { const n = Number(t.id); if (!isNaN(n) && n > maxId) maxId = n; });
-  allTrades.forEach(t => { const id = t.id; const key = String(id);
-    if (id == null || id === '' || seen.has(key)) { maxId += 1; t.id = maxId; }
-    seen.add(String(t.id)); });
+  const out = [];
+  allTrades.forEach(t => {
+    let id = t.id; let key = String(id);
+    if (id == null || id === '') { maxId += 1; t.id = maxId; key = String(t.id); }
+    if (seen.has(key)) return; // تکراری با همان id حذف شود نه اینکه id جدید بگیرد
+    seen.add(key);
+    out.push(t);
+  });
+  allTrades = out;
 }
 function calcPnL(t){
   const stop = Number(t.stop_usd) || 10;
@@ -4976,13 +5000,16 @@ function getTradeChecklistsData(){
   return result.length ? result : null;
 }
 async function saveTrade(e){
-  e.preventDefault();
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  if (isSavingTrade) { showToast('در حال ذخیره...'); return; }
   const symbol = document.getElementById('tfSymbol').value.trim();
   if (!symbol) { showToast('نماد را وارد کن'); return; }
   const manual = Number(document.getElementById('tfManualPnL').value);
   if (isNaN(manual)) { showToast('P/L را وارد کن'); return; }
   if (isRecording) { showToast('اول ضبط را متوقف کن'); return; }
-  const newId = editingId != null ? editingId : Date.now();
+  isSavingTrade = true;
+  try {
+  const newId = editingId != null ? editingId : (Date.now() * 1000 + Math.floor(Math.random() * 1000));
   const prevTrade = editingId != null ? allTrades.find(t => String(t.id) === String(editingId)) : null;
   const imgValues = imageSlots.map(s => (s.value||'').trim()).filter(Boolean);
   const btn = document.getElementById('saveBtn'); const prevTxt = btn.innerHTML;
@@ -5078,12 +5105,24 @@ async function saveTrade(e){
   setupFilters(); applyFilters();
   btn.disabled = false; btn.innerHTML = prevTxt;
   if (savedOk) {
+    // جلوگیری از تکراری شدن در حافظه محلی
+    const byId = new Map();
+    allTrades.forEach(t => { if (t && t.id != null) byId.set(String(t.id), t); });
+    allTrades = [...byId.values()];
     closeAddModal();
     showSaveSuccess(editingId != null ? 'ویرایش شد' : 'ثبت شد', editingId != null ? 'ویرایش موفق' : 'ذخیره موفق');
     setTimeout(() => checkNewBadges(), 500);
   }
-  else showToast('ذخیره ناموفق');
+  else { /* toast already from upsertTradeRemote */ }
+  } catch (err) {
+    console.error(err);
+    showToast('خطا: ' + (err && err.message ? err.message : 'ذخیره'));
+  } finally {
+    isSavingTrade = false;
+    try { const b = document.getElementById('saveBtn'); if (b) b.disabled = false; } catch(e){}
+  }
 }
+
 function showSaveSuccess(title, sub){
   const el = document.getElementById('saveSuccess');
   document.getElementById('saveSuccessMsg').textContent = title || 'ذخیره';
