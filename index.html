@@ -2031,6 +2031,7 @@ async function bootApp(){
   try { refreshCustomUI(); } catch(e){}
   try { applyLayoutConfig(); initResizeHandles(); } catch(e){}
   try { setupFilters(); } catch(e){}
+  try { restorePeriodPref(); } catch(e){}
   try { applyFilters(); } catch(e){}
   try { bindEvents(); } catch(e){}
   try { setupGlobalSearch(); } catch(e){}
@@ -2810,6 +2811,24 @@ function getPeriodRange(){
   if (currentPeriod === 'custom') return { from: customPeriodFrom || null, to: customPeriodTo || null };
   return { from: null, to: null };
 }
+function savePeriodPref(){
+  try { localStorage.setItem('journal_period', JSON.stringify({ period: currentPeriod, from: customPeriodFrom, to: customPeriodTo })); } catch(e){}
+}
+function restorePeriodPref(){
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem('journal_period') || 'null'); } catch(e){}
+  if (!saved || !saved.period) return;
+  currentPeriod = saved.period;
+  customPeriodFrom = saved.from || null;
+  customPeriodTo = saved.to || null;
+  document.querySelectorAll('.period-tab').forEach(t => t.classList.toggle('active', t.dataset.period === currentPeriod));
+  const row = document.getElementById('customRangeRow');
+  if (currentPeriod === 'custom') {
+    if (row) row.style.display = 'flex';
+    const pf = document.getElementById('periodFrom'); if (pf) pf.value = customPeriodFrom || '';
+    const pt = document.getElementById('periodTo'); if (pt) pt.value = customPeriodTo || '';
+  } else if (row) row.style.display = 'none';
+}
 function applyCustomPeriod(){
   customPeriodFrom = document.getElementById('periodFrom').value || null;
   customPeriodTo = document.getElementById('periodTo').value || null;
@@ -2819,6 +2838,7 @@ function applyCustomPeriod(){
   const tab = document.querySelector('.period-tab[data-period="custom"]'); if (tab) tab.classList.add('active');
   const ff = document.getElementById('fFrom'); if (ff) ff.value = '';
   const ft = document.getElementById('fTo'); if (ft) ft.value = '';
+  savePeriodPref();
   applyFilters();
 }
 function getFiltered(){
@@ -5758,6 +5778,7 @@ function bindEvents(){
       const row = document.getElementById('customRangeRow');
       if (currentPeriod === 'custom') { if (row) row.style.display = 'flex'; if (!customPeriodFrom && !customPeriodTo) return; }
       else { if (row) row.style.display = 'none'; const ff = document.getElementById('fFrom'); if (ff) ff.value = ''; const ft = document.getElementById('fTo'); if (ft) ft.value = ''; }
+      savePeriodPref();
       applyFilters();
     });
   });
