@@ -47,8 +47,12 @@ body.modal-open{overflow:hidden}
 ::selection{background:var(--primary);color:#fff}
 button,input,select,textarea{color-scheme:inherit;font-family:inherit}
 input,select,textarea,button{-webkit-appearance:none;appearance:none;border-radius:var(--radius-sm)}
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:rgba(59,130,246,.08);border-radius:10px}
+::-webkit-scrollbar-thumb{background:rgba(96,165,250,.75);border-radius:10px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(59,130,246,.9);border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-corner{background:transparent}
+*{scrollbar-width:thin;scrollbar-color:rgba(96,165,250,.8) rgba(59,130,246,.08)}
 .container{max-width:1140px;margin:0 auto;padding:12px 14px}
 header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 16px;flex-wrap:wrap;gap:10px}
 header h1{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
@@ -193,11 +197,14 @@ body.modal-open .fab-wrap{display:none !important}
 .chip-group{display:flex;flex-wrap:wrap;gap:6px}
 .chip{padding:8px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg-subtle);font-size:.79rem;cursor:pointer;color:var(--text-muted);font-weight:500}
 .chip.selected{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 10px var(--primary-glow)}
-.slider-row{display:flex;align-items:center;gap:12px;margin-top:6px}
+.slider-row{display:flex;align-items:center;gap:12px;margin-top:6px;direction:ltr}
 .slider-row input[type=range]{flex:1;direction:ltr;-webkit-appearance:none;appearance:none;height:10px;border-radius:6px;outline:none;background:linear-gradient(90deg,#ef4444 0%,#f59e0b 50%,#10b981 100%);cursor:pointer}
 .slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--primary);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)}
-.slider-val{min-width:38px;text-align:center;font-weight:700;color:#fff;font-size:.85rem;background:var(--primary);padding:3px 9px;border-radius:9px}
-.slider-hint{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-muted);margin-top:2px}
+.slider-row input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--primary);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.slider-val{min-width:38px;text-align:center;font-weight:700;color:#fff;font-size:.85rem;background:var(--primary);padding:3px 9px;border-radius:9px;direction:ltr}
+.slider-hint{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-muted);margin-top:2px;direction:ltr;padding:0 2px}
+.slider-hint span:first-child{color:#ef4444}
+.slider-hint span:last-child{color:#10b981;font-weight:600}
 .section-title{font-size:.86rem;font-weight:700;margin:18px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
 .collapsible{border:1.5px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;background:var(--bg-subtle)}
 .collapsible-header{padding:12px 14px;background:transparent;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.83rem;font-weight:600}
@@ -623,6 +630,14 @@ body.booting .today-strip{opacity:.4}
 .form-group.is-open-mode #tfManualPnL{opacity:.55}
 .pnl-open-hint{font-size:.72rem;color:var(--info-text);margin-top:4px;display:none;line-height:1.5}
 .form-group.is-open-mode .pnl-open-hint{display:block}
+
+
+#tfFinalStop.is-synced-stop{border-color:var(--border);background:var(--bg-subtle);color:var(--text-muted)}
+#tfFinalStop.is-synced-stop:focus{color:var(--text);background:var(--bg-card)}
+#tfFinalStop.is-edited-stop{border-color:var(--warning);background:var(--warning-soft);color:var(--text);font-weight:600}
+.final-stop-hint{font-size:.72rem;color:var(--text-muted);margin-top:4px;line-height:1.5}
+.final-stop-hint.synced{color:var(--text-muted)}
+.final-stop-hint.edited{color:#b45309;font-weight:600}
 
 </style>
 <meta name="theme-color" content="#4f46e5">
@@ -1426,8 +1441,12 @@ body.booting .today-strip{opacity:.4}
               </div>
               <div style="font-size:.72rem;color:var(--primary);background:var(--primary-soft);padding:8px 12px;border-radius:8px;margin-bottom:12px" id="pipPreview">فاصله استاپ: —</div>
               <div class="form-row">
-                <div class="form-group"><label>استاپ اولیه</label><input type="number" id="tfInitialStop" step="any"></div>
-                <div class="form-group"><label>استاپ نهایی</label><input type="number" id="tfFinalStop" step="any"></div>
+                <div class="form-group">
+                  <label>استاپ موقع بسته شدن</label>
+                  <input type="number" id="tfFinalStop" step="any" class="is-synced-stop" data-manual="0" oninput="onFinalStopInput()">
+                  <div class="final-stop-hint synced" id="finalStopHint">پیش‌فرض = استاپ ورود (اگر جابه‌جا شد، همین‌جا عوض کن)</div>
+                </div>
+                <div class="form-group"></div>
               </div>
               <div class="form-row">
                 <div class="form-group"><label>برگشته از</label><input type="text" id="tfRewardFrom"></div>
@@ -1714,7 +1733,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.1 (BE free-risk + visible button)';
+const APP_BUILD = 'BUILD-v27.3 (slider LTR labels + blue scrollbars)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -4827,6 +4846,9 @@ function openAddModal(editTrade){
   document.querySelectorAll('.form-tab').forEach((t,i) => t.classList.toggle('active', i===0));
   document.querySelectorAll('.form-section').forEach((s,i) => s.classList.toggle('active', i===0));
   setDir('Buy'); setResult('Win');
+  const _finNew = document.getElementById('tfFinalStop');
+  if (_finNew) { _finNew.dataset.manual = '0'; _finNew.value = ''; _finNew.classList.add('is-synced-stop'); _finNew.classList.remove('is-edited-stop'); }
+  try { syncFinalStopFromSL(true); } catch(e){}
   exitDateLocked = false;
   document.getElementById('tfDate').value = new Date().toISOString().slice(0,10);
   const _exd = document.getElementById('tfExitDate'); if (_exd) _exd.value = document.getElementById('tfDate').value;
@@ -4857,8 +4879,21 @@ function openAddModal(editTrade){
     document.getElementById('tfStopUsd').dataset.manual = '1';
     document.getElementById('tfEntry').value = editTrade['Entry Price'] != null ? editTrade['Entry Price'] : '';
     document.getElementById('tfSL').value = editTrade['Stop Loss'] != null ? editTrade['Stop Loss'] : '';
-    document.getElementById('tfInitialStop').value = editTrade.initial_stop != null ? editTrade.initial_stop : '';
-    document.getElementById('tfFinalStop').value = editTrade.final_stop != null ? editTrade.final_stop : '';
+    const finEl = document.getElementById('tfFinalStop');
+    if (finEl) {
+      const entrySL = editTrade['Stop Loss'] != null ? editTrade['Stop Loss'] : null;
+      const finVal = editTrade.final_stop != null ? editTrade.final_stop : entrySL;
+      finEl.value = finVal != null ? finVal : '';
+      const same = (entrySL != null && finVal != null && Number(entrySL) === Number(finVal)) || (finVal == null && entrySL == null);
+      finEl.dataset.manual = same ? '0' : '1';
+      if (same) { finEl.classList.add('is-synced-stop'); finEl.classList.remove('is-edited-stop'); }
+      else { finEl.classList.remove('is-synced-stop'); finEl.classList.add('is-edited-stop'); }
+      const hint = document.getElementById('finalStopHint');
+      if (hint) {
+        if (same) { hint.className = 'final-stop-hint synced'; hint.textContent = finVal != null ? ('پیش‌فرض = استاپ ورود (' + finVal + ')') : 'پیش‌فرض = استاپ ورود'; }
+        else { hint.className = 'final-stop-hint edited'; hint.textContent = 'استاپ بستن تغییر کرده (با ورود فرق دارد)'; }
+      }
+    }
     document.getElementById('tfSetup').value = editTrade.Setup || '';
     document.getElementById('tfZone').value = editTrade.zone || '';
     document.getElementById('tfTrigger').value = editTrade.entry_trigger || '';
@@ -4970,6 +5005,52 @@ function selectChip(btn, hiddenId){
   const hid = document.getElementById(hiddenId);
   if (hid) hid.value = btn.dataset.v || '';
 }
+
+function syncFinalStopFromSL(force){
+  const sl = document.getElementById('tfSL');
+  const fin = document.getElementById('tfFinalStop');
+  const hint = document.getElementById('finalStopHint');
+  if (!sl || !fin) return;
+  const manual = fin.dataset.manual === '1';
+  if (!force && manual) return;
+  const v = sl.value;
+  fin.value = v;
+  fin.dataset.manual = '0';
+  fin.classList.add('is-synced-stop');
+  fin.classList.remove('is-edited-stop');
+  if (hint) {
+    hint.className = 'final-stop-hint synced';
+    hint.textContent = v !== '' && v != null
+      ? 'پیش‌فرض = استاپ ورود (' + v + ') — اگر موقع بستن فرق داشت، ادیت کن'
+      : 'پیش‌فرض = استاپ ورود (اگر جابه‌جا شد، همین‌جا عوض کن)';
+  }
+}
+function onFinalStopInput(){
+  const fin = document.getElementById('tfFinalStop');
+  const sl = document.getElementById('tfSL');
+  const hint = document.getElementById('finalStopHint');
+  if (!fin) return;
+  const slv = sl ? String(sl.value || '') : '';
+  const fv = String(fin.value || '');
+  if (fv !== '' && fv === slv) {
+    fin.dataset.manual = '0';
+    fin.classList.add('is-synced-stop');
+    fin.classList.remove('is-edited-stop');
+    if (hint) { hint.className = 'final-stop-hint synced'; hint.textContent = 'همان استاپ ورود (' + fv + ')'; }
+  } else {
+    fin.dataset.manual = '1';
+    fin.classList.remove('is-synced-stop');
+    fin.classList.add('is-edited-stop');
+    if (hint) { hint.className = 'final-stop-hint edited'; hint.textContent = 'استاپ بستن تغییر کرده (با ورود فرق دارد)'; }
+  }
+}
+function markFinalStopState(){
+  const fin = document.getElementById('tfFinalStop');
+  if (!fin) return;
+  if (fin.dataset.manual === '1') onFinalStopInput();
+  else syncFinalStopFromSL(true);
+}
+
 function updatePipPreview(){
   const el = document.getElementById('pipPreview'); if (!el) return;
   const sym = document.getElementById('tfSymbol').value;
@@ -5149,8 +5230,8 @@ async function saveTrade(e){
     duration_minutes: durationMin,
     'Entry Price': parseFloat(document.getElementById('tfEntry').value) || null,
     'Stop Loss': parseFloat(document.getElementById('tfSL').value) || null,
-    initial_stop: parseFloat(document.getElementById('tfInitialStop').value) || null,
-    final_stop: parseFloat(document.getElementById('tfFinalStop').value) || null,
+    initial_stop: parseFloat(document.getElementById('tfSL').value) || null,
+    final_stop: (function(){ const f = parseFloat(document.getElementById('tfFinalStop')?.value); const s = parseFloat(document.getElementById('tfSL')?.value); if (!isNaN(f)) return f; if (!isNaN(s)) return s; return null; })(),
     Result: (document.getElementById('tfResult').value || 'Win'),
     Timeframe: document.getElementById('tfTimeframe').value,
     Setup: document.getElementById('tfSetup').value || null,
@@ -5243,8 +5324,7 @@ async function showDetail(id){
   if (t.stop_usd != null) infoItems.push(['ریسک دلاری', t.stop_usd + '$']);
   if (t['Entry Price'] != null && t['Entry Price'] !== '') infoItems.push(['قیمت ورود', t['Entry Price']]);
   if (t['Stop Loss'] != null && t['Stop Loss'] !== '') infoItems.push(['استاپ لحظه ورود', t['Stop Loss']]);
-  if (t.initial_stop != null) infoItems.push(['استاپ اولیه', t.initial_stop]);
-  if (t.final_stop != null) infoItems.push(['استاپ نهایی', t.final_stop]);
+  if (t.final_stop != null) infoItems.push(['استاپ موقع بسته شدن', t.final_stop]);
   infoItems.push(['ریوارد', rHits]);
   if (t.reward_from) infoItems.push(['برگشته از', t.reward_from]);
   if (t.volume) infoItems.push(['حجم', t.volume]);
@@ -5395,7 +5475,7 @@ async function exportExcel(range){
   const tradesData = trades.map(t => ({
     'نماد':t.Symbol||'', 'جهت':t.Direction||'', 'تاریخ':t['Entry Date']||'', 'ساعت ورود':t['Entry Time']||'', 'ساعت خروج':t.exit_time||'',
     'مدت (دقیقه)':calcDurationMinutes(t)||'', 'نتیجه':t.Result||'', 'P/L ($)':calcPnL(t).toFixed(2), 'ریسک ($)':t.stop_usd||'',
-    'قیمت ورود':t['Entry Price']||'', 'استاپ':t['Stop Loss']||'', 'استاپ اولیه':t.initial_stop||'', 'استاپ نهایی':t.final_stop||'',
+    'قیمت ورود':t['Entry Price']||'', 'استاپ':t['Stop Loss']||'', 'استاپ بسته شدن':t.final_stop||'',
     '1R':t.r1?'✓':'', '1.5R':t.r15?'✓':'', '2R':t.r2?'✓':'', '3R':t.r3?'✓':'',
     'تایم‌فریم':t.Timeframe||'', 'کیفیت ستاپ':t.Setup||'', 'Zone':t.zone||'', 'تریگر':t.entry_trigger||'',
     'واگرایی':t.divergence_type||'', 'دلیل ورود':t.entry_reason||'', 'دلیل خروج':t.exit_reason||'',
@@ -5724,6 +5804,9 @@ function bindEvents(){
   }
   ['fSession','fDow','fMinPnL','fMaxLoss','fMinStop','fMaxStop','fMinR','fPreEmotion','fPostEmotion','fEnergyMin','fEnergyMax','fConfMin','fConfMax','fExecMin','fExecMax','fMotive','fMistake','fDivergence','fChecklist','fChecklistStatus'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', applyFilters); });
   ['tfSymbol','tfEntry','tfSL'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', updatePipPreview); });
+  const _tfSL = document.getElementById('tfSL');
+  if (_tfSL) _tfSL.addEventListener('input', () => syncFinalStopFromSL(false));
+
   const _tfDate = document.getElementById('tfDate'); if (_tfDate) _tfDate.addEventListener('change', onEntryDateChange);
   const _tfExitDate = document.getElementById('tfExitDate'); if (_tfExitDate) _tfExitDate.addEventListener('change', onExitDateChange);
   ['tfTime','tfExitTime'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', updateDurationPreview); });
