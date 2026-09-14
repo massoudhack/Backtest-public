@@ -607,6 +607,23 @@ body.booting .today-strip{opacity:.4}
 .hub-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.72rem;color:var(--text-muted);margin:6px 0 10px}
 .hub-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-left:4px;vertical-align:middle}
 
+
+.toggle-btn.active-open{background:var(--info-soft);color:var(--info-text);border-color:var(--info-text)}
+.toggle-btn.active-be{background:var(--bg-muted);color:var(--text-muted);border-color:var(--border-strong)}
+.open-banner{background:linear-gradient(135deg,var(--info-soft),var(--bg-card));border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-xs)}
+.open-banner h4{font-size:.88rem;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.open-banner .ob-sub{font-size:.75rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6}
+.open-banner .ob-list{display:flex;flex-direction:column;gap:8px}
+.open-banner .ob-item{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;transition:border-color .15s}
+.open-banner .ob-item:hover{border-color:var(--primary)}
+.open-banner .ob-sym{font-weight:800;font-size:.9rem}
+.open-banner .ob-meta{font-size:.72rem;color:var(--text-muted);flex:1}
+.open-banner .ob-risk{font-size:.78rem;font-weight:700;color:var(--info-text)}
+.badge-open{background:var(--info-soft);color:var(--info-text)}
+.form-group.is-open-mode #tfManualPnL{opacity:.55}
+.pnl-open-hint{font-size:.72rem;color:var(--info-text);margin-top:4px;display:none;line-height:1.5}
+.form-group.is-open-mode .pnl-open-hint{display:block}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -683,6 +700,14 @@ body.booting .today-strip{opacity:.4}
         <div class="today-strip" id="todayStrip">
           <span class="ts-label">امروز</span>
           <span class="ts-empty" id="todayStripBody">—</span>
+        </div>
+      </div>
+      <div class="dash-section" data-key="openTrades" data-layout-group="dashboard" data-layout-key="openTrades" data-default-size="l">
+        <div class="drag-handle" draggable="true">⠿</div>
+        <div class="open-banner" id="openTradesBanner" style="display:none">
+          <h4>🔓 معاملات باز</h4>
+          <div class="ob-sub" id="openTradesSub">هنوز نتیجه نهایی ثبت نشده — در آمار و منحنی حساب نمی‌شوند.</div>
+          <div class="ob-list" id="openTradesList"></div>
         </div>
       </div>
       <div class="dash-section" data-key="drawdown" data-layout-group="dashboard" data-layout-key="drawdown" data-default-size="l">
@@ -880,6 +905,7 @@ body.booting .today-strip{opacity:.4}
         <button type="button" class="chip-f" data-filter="result" data-val="Win">برد</button>
         <button type="button" class="chip-f" data-filter="result" data-val="Loss">ضرر</button>
         <button type="button" class="chip-f" data-filter="result" data-val="BE">سر‌به‌سر</button>
+        <button type="button" class="chip-f" data-filter="result" data-val="Open">🔓 باز</button>
         <button type="button" class="chip-f" data-filter="dir" data-val="Buy">خرید</button>
         <button type="button" class="chip-f" data-filter="dir" data-val="Sell">فروش</button>
         <button type="button" class="chip-f" data-filter="hasNote" data-val="1">یادداشت</button>
@@ -1345,11 +1371,14 @@ body.booting .today-strip{opacity:.4}
           </div>
           <div class="form-row">
             <div class="form-group"><label>نتیجه *</label>
-              <div class="toggle-group">
+              <div class="toggle-group" style="flex-wrap:wrap">
                 <button type="button" class="toggle-btn active-win" id="btnWin" onclick="setResult('Win')">سود</button>
                 <button type="button" class="toggle-btn" id="btnLoss" onclick="setResult('Loss')">ضرر</button>
+                <button type="button" class="toggle-btn" id="btnBE" onclick="setResult('BE')">سر‌به‌سر</button>
+                <button type="button" class="toggle-btn" id="btnOpen" onclick="setResult('Open')">🔓 باز</button>
               </div>
               <input type="hidden" id="tfResult" value="Win">
+              <div class="form-help">اگر معامله هنوز بسته نشده «باز» را بزن — بعداً تکمیل می‌کنی</div>
             </div>
             <div class="form-group"><label>تایم‌فریم</label>
               <select id="tfTimeframe"><option value="M5">M5</option><option value="M15" selected>M15</option><option value="M30">M30</option><option value="1H">1H</option><option value="4H">4H</option><option value="D1">D1</option></select>
@@ -1371,8 +1400,9 @@ body.booting .today-strip{opacity:.4}
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>💰 سود/ضرر نهایی ($) *</label>
+              <label id="tfManualPnLLabel">💰 سود/ضرر نهایی ($) *</label>
               <input type="number" id="tfManualPnL" step="any" required>
+              <div class="pnl-open-hint" id="pnlOpenHint">معامله باز است — سود/ضرر نهایی لازم نیست. فقط ریسک دلاری را بزن.</div>
             </div>
             <div class="form-group">
               <label>🛡️ ریسک دلاری ($)</label>
@@ -1684,7 +1714,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v26.2 (fix multi-save + dedupe ids)';
+const APP_BUILD = 'BUILD-v27 (open trades: pending P/L, dashboard banner)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1717,7 +1747,7 @@ const PIP_SIZE_MAP = {
 };
 const DEFAULT_LAYOUT = {
   dashboard: {
-    today:{visible:true,size:'l'}, drawdown:{visible:true,size:'l'},
+    today:{visible:true,size:'l'}, openTrades:{visible:true,size:'l'}, drawdown:{visible:true,size:'l'},
     balance:{visible:true,size:'l'}, stats:{visible:true,size:'l'}, charts:{visible:true,size:'l'},
     summary:{visible:true,size:'l'}, advquick:{visible:true,size:'l'}, rdistquick:{visible:true,size:'l'},
     perf:{visible:true,size:'l'}, heatmap:{visible:true,size:'l'}, direction:{visible:true,size:'m'},
@@ -1737,7 +1767,7 @@ const DEFAULT_LAYOUT = {
 };
 const LAYOUT_LABELS = { dashboard: 'میزکار', analysis: 'تب تحلیل', advanced: 'تحلیل پیشرفته' };
 const LAYOUT_KEY_LABELS = {
-  today:'خلاصه امروز', drawdown:'Drawdown',
+  today:'خلاصه امروز', openTrades:'معاملات باز', drawdown:'Drawdown',
   balance:'کارت موجودی', stats:'آمار بالا', charts:'منحنی و پای', summary:'خلاصه P/L',
   advquick:'آمار پیشرفته خلاصه', rdistquick:'R-Multiple خلاصه',
   perf:'تحلیل عملکرد', heatmap:'نقشه فعالیت', direction:'عملکرد جهت',
@@ -2267,6 +2297,7 @@ function showBadgeToast(medal, title, desc){
 
 /* ====== ANALYTICS THRESHOLD ====== */
 function passesAnalyticsThreshold(t){
+  if (isOpenTrade(t)) return false;
   if (custom.analyticsFromTradeNum != null && custom.analyticsFromTradeNum > 0) {
     // trades are loaded desc by id — the "number" is index from oldest
     const sorted = [...allTrades].sort((a,b) => Number(a.id)-Number(b.id));
@@ -2795,7 +2826,8 @@ function getFiltered(){
     if (dir && t.Direction !== dir) return false;
     if (result === 'Win' && t.Result !== 'Win') return false;
     if (result === 'Loss' && t.Result !== 'Loss') return false;
-    if (result === 'BE' && (t.Result === 'Win' || t.Result === 'Loss')) return false;
+    if (result === 'Open' && !isOpenTrade(t)) return false;
+    if (result === 'BE' && t.Result !== 'BE') return false;
     if (tf && t.Timeframe !== tf) return false;
     if (setup && t.Setup !== setup) return false;
     if (zone && t.zone !== zone) return false;
@@ -2876,12 +2908,14 @@ function ensureUniqueIds(){
   allTrades = out;
 }
 function calcPnL(t){
+  if (isOpenTrade(t)) return 0;
   const stop = Number(t.stop_usd) || 10;
   if (equityMode === 'manual') {
     const m = Number(t.manual_pnl);
     if (isNaN(m)) return 0;
     if (t.Result === 'Win') return Math.abs(m);
     if (t.Result === 'Loss') return -Math.abs(m);
+    if (t.Result === 'BE') return 0;
     return 0;
   }
   const map = { '1R':[t.r1,1], '1.5R':[t.r15,1.5], '2R':[t.r2,2], '3R':[t.r3,3] };
@@ -4386,6 +4420,7 @@ function renderDashboard(){
   equityPoints.forEach(pt => { run = pt.eq; if (run > peak) peak = run; const dd = peak - run; if (dd > maxDD) maxDD = dd; });
   const recovery = maxDD > 0 ? (totalPnL/maxDD).toFixed(2) : (totalPnL > 0 ? '∞' : '0');
   try { renderTodayStrip(); } catch(e){}
+  try { renderOpenTradesBanner(); } catch(e){}
   try { renderUnderwater(equityPoints, totalPnL); } catch(e){}
   const psEl = document.getElementById('perfSummary');
   if (psEl) psEl.innerHTML = `
@@ -4633,10 +4668,13 @@ function journalGroupKey(t, mode){
 }
 function journalRowHtml(t, i){
   const pnl = calcPnL(t);
-  const pc = pnl > 0 ? 'pnl-pos' : (pnl < 0 ? 'pnl-neg' : '');
+  const open = isOpenTrade(t);
+  const pc = open ? '' : (pnl > 0 ? 'pnl-pos' : (pnl < 0 ? 'pnl-neg' : ''));
   const r = (v) => v === 1 || v === true || v === '1' || Number(v) === 1 ? '✓' : '—';
   const img = t.trigger_img ? '<a href="'+t.trigger_img+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗</a>' : '';
-  return '<tr onclick="showDetail(\''+String(t.id).replace(/'/g,'')+'\')" style="cursor:pointer"><td>'+(i+1)+'</td><td><strong>'+highlightMatches(t.Symbol||'')+'</strong></td><td>'+escapeHtml(t.Direction||'')+'</td><td>'+escapeHtml(t['Entry Date']||'')+'</td><td>'+escapeHtml(t.Result||'')+'</td><td class="'+pc+'">'+(pnl>=0?'+':'')+pnl.toFixed(1)+'</td><td>'+(t.stop_usd!=null?t.stop_usd:'')+'</td><td>'+r(t.r1)+'</td><td>'+r(t.r15)+'</td><td>'+r(t.r2)+'</td><td>'+r(t.r3)+'</td><td>'+escapeHtml(t.Timeframe||'')+'</td><td>'+escapeHtml(t.Setup||'')+'</td><td>'+escapeHtml(t.zone||'')+'</td><td>'+escapeHtml(t.entry_trigger||'')+'</td><td>'+img+'</td></tr>';
+  const resLabel = open ? '<span class="badge badge-open">باز</span>' : (t.Result==='BE' ? '<span class="badge">سر‌به‌سر</span>' : escapeHtml(t.Result||''));
+  const pnlLabel = open ? '—' : ((pnl>=0?'+':'')+pnl.toFixed(1));
+  return '<tr onclick="showDetail(\''+String(t.id).replace(/'/g,'')+'\')" style="cursor:pointer"><td>'+(i+1)+'</td><td><strong>'+highlightMatches(t.Symbol||'')+'</strong></td><td>'+escapeHtml(t.Direction||'')+'</td><td>'+escapeHtml(t['Entry Date']||'')+'</td><td>'+resLabel+'</td><td class="'+pc+'">'+pnlLabel+'</td><td>'+(t.stop_usd!=null?t.stop_usd:'')+'</td><td>'+r(t.r1)+'</td><td>'+r(t.r15)+'</td><td>'+r(t.r2)+'</td><td>'+r(t.r3)+'</td><td>'+escapeHtml(t.Timeframe||'')+'</td><td>'+escapeHtml(t.Setup||'')+'</td><td>'+escapeHtml(t.zone||'')+'</td><td>'+escapeHtml(t.entry_trigger||'')+'</td><td>'+img+'</td></tr>';
 }
 let journalGroupOpenState = {};
 function renderTable(){
@@ -4806,7 +4844,7 @@ function openAddModal(editTrade){
   if (editTrade) {
     document.getElementById('tfSymbol').value = editTrade.Symbol || '';
     setDir(editTrade.Direction || 'Buy');
-    setResult(editTrade.Result === 'Loss' ? 'Loss' : 'Win');
+    setResult(['Win','Loss','BE','Open'].includes(editTrade.Result) ? editTrade.Result : (editTrade.Result === 'Loss' ? 'Loss' : 'Win'));
     document.getElementById('tfTimeframe').value = editTrade.Timeframe || 'M15';
     document.getElementById('tfDate').value = editTrade['Entry Date'] || '';
     document.getElementById('tfTime').value = editTrade['Entry Time'] != null ? editTrade['Entry Time'] : '';
@@ -4868,7 +4906,55 @@ function openAddModal(editTrade){
 function closeAddModal(){ document.getElementById('addModal').classList.remove('show'); unlockScroll(); editingId = null; }
 function setDir(dir){ document.getElementById('tfDirection').value = dir; const buy = document.getElementById('btnBuy'), sell = document.getElementById('btnSell'); if (buy) buy.classList.toggle('active-buy', dir === 'Buy'); if (sell) sell.classList.toggle('active-sell', dir === 'Sell'); }
 function setDirection(dir){ setDir(dir); }
-function setResult(res){ document.getElementById('tfResult').value = res; const w = document.getElementById('btnWin'), l = document.getElementById('btnLoss'); if (w) w.classList.toggle('active-win', res === 'Win'); if (l) l.classList.toggle('active-loss', res === 'Loss'); }
+
+function getOpenTrades(){
+  return (allTrades || []).filter(isOpenTrade).sort((a,b) => (b['Entry Date']||'').localeCompare(a['Entry Date']||''));
+}
+function renderOpenTradesBanner(){
+  const box = document.getElementById('openTradesBanner');
+  const list = document.getElementById('openTradesList');
+  const sub = document.getElementById('openTradesSub');
+  if (!box || !list) return;
+  const opens = getOpenTrades();
+  if (!opens.length) { box.style.display = 'none'; return; }
+  box.style.display = '';
+  if (sub) sub.textContent = opens.length + ' معامله هنوز تعیین‌تکلیف نشده — در موجودی، وین‌ریت و تحلیل‌ها حساب نمی‌شوند. برای بستن، روی کارت بزن.';
+  list.innerHTML = opens.slice(0, 12).map(t => {
+    const risk = t.stop_usd != null ? Number(t.stop_usd) : null;
+    const dir = t.Direction === 'Buy' ? 'خرید' : (t.Direction === 'Sell' ? 'فروش' : '—');
+    return '<div class="ob-item" onclick="editTrade(\''+String(t.id).replace(/'/g,"\\'")+'\')">'
+      + '<span class="badge badge-open">باز</span>'
+      + '<span class="ob-sym">'+(t.Symbol||'—')+'</span>'
+      + '<span class="ob-meta">'+(t['Entry Date']||'')+' · '+dir+(t.Timeframe?' · '+t.Timeframe:'')+(t.Setup?' · '+t.Setup:'')+'</span>'
+      + '<span class="ob-risk">'+(risk!=null && !isNaN(risk) ? ('ریسک '+risk+'$') : 'ریسک —')+'</span>'
+      + '<button type="button" class="btn btn-outline btn-sm" onclick="event.stopPropagation();editTrade(\''+String(t.id).replace(/'/g,"\\'")+'\')">تکمیل</button>'
+      + '</div>';
+  }).join('');
+  if (opens.length > 12) list.innerHTML += '<div style="font-size:.72rem;color:var(--text-muted);padding:4px 2px">و '+(opens.length-12)+' مورد دیگر…</div>';
+}
+
+function isOpenTrade(t){ return t && (t.Result === 'Open' || t.Result === 'open' || t.result === 'Open'); }
+function setResult(res){
+  document.getElementById('tfResult').value = res;
+  const w = document.getElementById('btnWin'), l = document.getElementById('btnLoss');
+  const be = document.getElementById('btnBE'), op = document.getElementById('btnOpen');
+  if (w) w.classList.toggle('active-win', res === 'Win');
+  if (l) l.classList.toggle('active-loss', res === 'Loss');
+  if (be) be.classList.toggle('active-be', res === 'BE');
+  if (op) op.classList.toggle('active-open', res === 'Open');
+  const pnl = document.getElementById('tfManualPnL');
+  const wrap = pnl ? pnl.closest('.form-group') : null;
+  const label = document.getElementById('tfManualPnLLabel');
+  if (res === 'Open') {
+    if (pnl) { pnl.removeAttribute('required'); pnl.value = ''; }
+    if (wrap) wrap.classList.add('is-open-mode');
+    if (label) label.textContent = '💰 سود/ضرر نهایی ($) — بعداً';
+  } else {
+    if (pnl) pnl.setAttribute('required', 'required');
+    if (wrap) wrap.classList.remove('is-open-mode');
+    if (label) label.textContent = '💰 سود/ضرر نهایی ($) *';
+  }
+}
 function toggleChip(cb){ const item = cb.closest('.check-item'); if (item) item.classList.toggle('selected', cb.checked); }
 function toggleMultiChip(el){ el.classList.toggle('selected'); }
 function selectChip(btn, hiddenId){
@@ -5004,8 +5090,11 @@ async function saveTrade(e){
   if (isSavingTrade) { showToast('در حال ذخیره...'); return; }
   const symbol = document.getElementById('tfSymbol').value.trim();
   if (!symbol) { showToast('نماد را وارد کن'); return; }
-  const manual = Number(document.getElementById('tfManualPnL').value);
-  if (isNaN(manual)) { showToast('P/L را وارد کن'); return; }
+  const resultVal = document.getElementById('tfResult').value || 'Win';
+  const manualRaw = document.getElementById('tfManualPnL').value;
+  const manual = manualRaw === '' || manualRaw == null ? NaN : Number(manualRaw);
+  if (resultVal !== 'Open' && isNaN(manual)) { showToast('P/L را وارد کن'); return; }
+  if (resultVal === 'Open' && isNaN(manual)) { /* ok */ }
   if (isRecording) { showToast('اول ضبط را متوقف کن'); return; }
   isSavingTrade = true;
   try {
@@ -5056,12 +5145,12 @@ async function saveTrade(e){
     'Stop Loss': parseFloat(document.getElementById('tfSL').value) || null,
     initial_stop: parseFloat(document.getElementById('tfInitialStop').value) || null,
     final_stop: parseFloat(document.getElementById('tfFinalStop').value) || null,
-    Result: document.getElementById('tfResult').value || 'Win',
+    Result: (document.getElementById('tfResult').value || 'Win'),
     Timeframe: document.getElementById('tfTimeframe').value,
     Setup: document.getElementById('tfSetup').value || null,
     entry_trigger: document.getElementById('tfTrigger').value || null,
     Notes: document.getElementById('tfNotes').value || null,
-    manual_pnl: Math.abs(manual),
+    manual_pnl: (document.getElementById('tfResult').value === 'Open' || isNaN(manual)) ? null : Math.abs(manual),
     stop_usd: parseFloat(document.getElementById('tfStopUsd').value) || 10,
     r1: document.getElementById('tfR1').checked ? 1 : null,
     r15: document.getElementById('tfR15').checked ? 1 : null,
@@ -5135,7 +5224,7 @@ async function showDetail(id){
   if (!t) { showToast('پیدا نشد'); return; }
   document.getElementById('detailTitle').textContent = (t.Symbol || '') + ' · ' + (t['Entry Date'] || '');
   const pnl = calcPnL(t); const pc = pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
-  const resultBadge = t.Result === 'Win' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">سود</span>' : (t.Result === 'Loss' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">ضرر</span>' : '<span class="badge" style="background:var(--bg-subtle);color:var(--text-muted)">BE</span>');
+  const resultBadge = isOpenTrade(t) ? '<span class="badge badge-open">🔓 باز — تکمیل نشده</span>' : (t.Result === 'Win' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">سود</span>' : (t.Result === 'Loss' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">ضرر</span>' : '<span class="badge" style="background:var(--bg-subtle);color:var(--text-muted)">سر‌به‌سر</span>'));
   const dirBadge = t.Direction === 'Buy' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">خرید</span>' : (t.Direction === 'Sell' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">فروش</span>' : '');
   const rHits = [t.r1&&'1R',t.r15&&'1.5R',t.r2&&'2R',t.r3&&'3R'].filter(Boolean).join(' · ') || '—';
   let dowLabel = '';
