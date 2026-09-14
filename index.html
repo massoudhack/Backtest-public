@@ -609,7 +609,7 @@ body.booting .today-strip{opacity:.4}
 
 
 .toggle-btn.active-open{background:var(--info-soft);color:var(--info-text);border-color:var(--info-text)}
-.toggle-btn.active-be{background:var(--bg-muted);color:var(--text-muted);border-color:var(--border-strong)}
+.toggle-btn.active-be{background:var(--warning-soft)!important;color:#b45309!important;border-color:var(--warning)!important;font-weight:700;box-shadow:0 0 0 2px rgba(245,158,11,.25)}
 .open-banner{background:linear-gradient(135deg,var(--info-soft),var(--bg-card));border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-xs)}
 .open-banner h4{font-size:.88rem;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .open-banner .ob-sub{font-size:.75rem;color:var(--text-muted);margin-bottom:10px;line-height:1.6}
@@ -1714,7 +1714,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27 (open trades: pending P/L, dashboard banner)';
+const APP_BUILD = 'BUILD-v27.1 (BE free-risk + visible button)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -4938,10 +4938,11 @@ function setResult(res){
   document.getElementById('tfResult').value = res;
   const w = document.getElementById('btnWin'), l = document.getElementById('btnLoss');
   const be = document.getElementById('btnBE'), op = document.getElementById('btnOpen');
-  if (w) w.classList.toggle('active-win', res === 'Win');
-  if (l) l.classList.toggle('active-loss', res === 'Loss');
-  if (be) be.classList.toggle('active-be', res === 'BE');
-  if (op) op.classList.toggle('active-open', res === 'Open');
+  // clear all then set active (قابل‌اعتمادتر روی موبایل)
+  if (w) { w.classList.remove('active-win'); if (res === 'Win') w.classList.add('active-win'); }
+  if (l) { l.classList.remove('active-loss'); if (res === 'Loss') l.classList.add('active-loss'); }
+  if (be) { be.classList.remove('active-be'); if (res === 'BE') be.classList.add('active-be'); }
+  if (op) { op.classList.remove('active-open'); if (res === 'Open') op.classList.add('active-open'); }
   const pnl = document.getElementById('tfManualPnL');
   const wrap = pnl ? pnl.closest('.form-group') : null;
   const label = document.getElementById('tfManualPnLLabel');
@@ -4949,6 +4950,11 @@ function setResult(res){
     if (pnl) { pnl.removeAttribute('required'); pnl.value = ''; }
     if (wrap) wrap.classList.add('is-open-mode');
     if (label) label.textContent = '💰 سود/ضرر نهایی ($) — بعداً';
+  } else if (res === 'BE') {
+    // سر‌به‌سر = فری‌ریسک: P/L صفر
+    if (pnl) { pnl.setAttribute('required', 'required'); pnl.value = '0'; }
+    if (wrap) wrap.classList.remove('is-open-mode');
+    if (label) label.textContent = '💰 سود/ضرر نهایی ($) — سر‌به‌سر = ۰';
   } else {
     if (pnl) pnl.setAttribute('required', 'required');
     if (wrap) wrap.classList.remove('is-open-mode');
