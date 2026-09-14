@@ -449,12 +449,12 @@ body.dark mark.search-hit{background:linear-gradient(135deg,#854d0e,#a16207);col
 #dashSections > .dash-section > .balance-card,
 #dashSections > .dash-section > .breakdown-card,
 #dashSections > .dash-section > .heatmap-card{margin-bottom:0}
-#analysisGrid,#advancedGrid,#badgesGrid{display:grid;grid-template-columns:1fr;gap:14px}
+#analysisGrid,#advancedGrid,#badgesGrid,.adv-cat-body{display:grid;grid-template-columns:1fr;gap:14px}
 @media(min-width:900px){
-  #analysisGrid,#advancedGrid{grid-template-columns:repeat(6,1fr)}
-  #analysisGrid > [data-layout-key],#advancedGrid > [data-layout-key]{grid-column:span 3}
-  #analysisGrid > [data-layout-key][data-size="s"],#advancedGrid > [data-layout-key][data-size="s"]{grid-column:span 2}
-  #analysisGrid > [data-layout-key][data-size="l"],#advancedGrid > [data-layout-key][data-size="l"]{grid-column:span 6}
+  #analysisGrid,#advancedGrid,.adv-cat-body{grid-template-columns:repeat(6,1fr)}
+  #analysisGrid > [data-layout-key],#advancedGrid > [data-layout-key],.adv-cat-body > [data-layout-key]{grid-column:span 3}
+  #analysisGrid > [data-layout-key][data-size="s"],#advancedGrid > [data-layout-key][data-size="s"],.adv-cat-body > [data-layout-key][data-size="s"]{grid-column:span 2}
+  #analysisGrid > [data-layout-key][data-size="l"],#advancedGrid > [data-layout-key][data-size="l"],.adv-cat-body > [data-layout-key][data-size="l"]{grid-column:span 6}
   #badgesGrid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
 }
 .resize-handle{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:64px;height:24px;background:var(--primary);color:#fff;border-radius:12px;align-items:center;justify-content:center;cursor:ew-resize;z-index:20;box-shadow:0 6px 16px var(--primary-glow);user-select:none;touch-action:none}
@@ -504,6 +504,17 @@ body.layout-edit .drag-handle{display:flex}
 /* Position size calculator */
 
 /* Symbol × Day heatmap */
+.adv-category{margin-bottom:14px}
+.adv-cat-header{display:flex;align-items:center;gap:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;cursor:pointer;box-shadow:var(--shadow-xs);transition:background .15s}
+.adv-cat-header:active{background:var(--bg-subtle)}
+.adv-cat-icon{width:38px;height:38px;border-radius:11px;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
+.adv-cat-info{flex:1;min-width:0}
+.adv-cat-title{font-size:.9rem;font-weight:800;color:var(--text)}
+.adv-cat-desc{font-size:.72rem;color:var(--text-muted);margin-top:2px}
+.adv-cat-chevron{font-size:.85rem;color:var(--text-muted);transition:transform .25s;flex-shrink:0}
+.adv-category.open .adv-cat-chevron{transform:rotate(180deg)}
+.adv-cat-body{margin-top:12px;display:none}
+.adv-category.open .adv-cat-body{display:grid}
 .symday-wrap{overflow-x:auto;margin-top:8px}
 .streak-glow-badge{border-radius:18px;padding:26px 16px;text-align:center;transition:background .4s,box-shadow .4s,border-color .4s}
 .streak-glow-badge.streak-win{background:linear-gradient(135deg, rgba(16,185,129,calc(.12 + var(--intensity,0)*.35)), rgba(52,211,153,calc(.05 + var(--intensity,0)*.25)));border:1.5px solid rgba(16,185,129,calc(.3 + var(--intensity,0)*.6));box-shadow:0 0 calc(10px + var(--intensity,0)*40px) rgba(16,185,129,calc(.15 + var(--intensity,0)*.4));animation:streakPulse 2.4s ease-in-out infinite}
@@ -939,92 +950,144 @@ body.booting .today-strip{opacity:.4}
   <!-- ADVANCED -->
   <div class="main-panel" id="panel-advanced">
     <div id="advancedGrid">
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advStats" data-default-size="m">
-        <h3>🧮 آمار پیشرفته</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">متریک‌های کلیدی عملکرد</p>
-        <div class="summary-grid" id="advancedStats"></div>
+      <div class="adv-category" data-adv-cat="stats">
+        <div class="adv-cat-header" onclick="toggleAdvCategory('stats')">
+          <div class="adv-cat-icon">🧮</div>
+          <div class="adv-cat-info">
+            <div class="adv-cat-title">آمار کلی و کیفیت معاملات</div>
+            <div class="adv-cat-desc">متریک‌های کلیدی، R-Multiple، Expectancy</div>
+          </div>
+          <div class="adv-cat-chevron">▾</div>
+        </div>
+        <div class="adv-cat-body">
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advStats" data-default-size="m">
+            <h3>🧮 آمار پیشرفته</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">متریک‌های کلیدی عملکرد</p>
+            <div class="summary-grid" id="advancedStats"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRDist" data-default-size="m">
+            <h3>📊 توزیع R-Multiple</h3>
+            <div class="chart-container" style="height:200px"><canvas id="rDistChart"></canvas></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advExpectancy" data-default-size="m">
+            <h3>🧮 Expectancy per Trade</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">امید ریاضی سود/ضرر به‌ازای هر معامله</p>
+            <div id="advExpectancy"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRealVsPlanned" data-default-size="m">
+            <h3>🎯 R واقعی در برابر R برنامه‌ریزی‌شده</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">چقدر سود روی میز جا گذاشتی</p>
+            <div id="advRealVsPlanned"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advTrigger" data-default-size="m">
+            <h3>🎯 عملکرد تریگر ورود</h3>
+            <div id="advPerfTrigger"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRbySymbol" data-default-size="m">
+            <h3>📏 میانگین R به تفکیک نماد</h3>
+            <div id="advRBySymbol"></div>
+          </div>
+        </div>
       </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRDist" data-default-size="m">
-        <h3>📊 توزیع R-Multiple</h3>
-        <div class="chart-container" style="height:200px"><canvas id="rDistChart"></canvas></div>
+
+      <div class="adv-category" data-adv-cat="psych">
+        <div class="adv-cat-header" onclick="toggleAdvCategory('psych')">
+          <div class="adv-cat-icon">🧠</div>
+          <div class="adv-cat-info">
+            <div class="adv-cat-title">تحلیل روانشناختی / رفتاری</div>
+            <div class="adv-cat-desc">استریک، انضباط، رابطه اعتماد با نتیجه</div>
+          </div>
+          <div class="adv-cat-chevron">▾</div>
+        </div>
+        <div class="adv-cat-body">
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advStreak" data-default-size="m">
+            <h3>🔥 برد و باخت‌های پیوسته</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">Win/Loss Streak Tracker</p>
+            <div id="streakInfo" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advStreakGlow" data-default-size="s">
+            <h3>🔥 وضعیت استریک فعلی</h3>
+            <div id="advStreakGlow"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advConfidence" data-default-size="m">
+            <h3>⚖️ رابطه اعتماد ↔ نتیجه</h3>
+            <div id="advConfidence"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advDiscipline" data-default-size="m">
+            <h3>🎯 امتیاز انضباط (Discipline Score)</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">ترکیب چک‌لیست + اجرا + خطاهای رفتاری</p>
+            <div id="advDiscipline"></div>
+          </div>
+        </div>
       </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advStreak" data-default-size="m">
-        <h3>🔥 برد و باخت‌های پیوسته</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">Win/Loss Streak Tracker</p>
-        <div id="streakInfo" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+
+      <div class="adv-category" data-adv-cat="time">
+        <div class="adv-cat-header" onclick="toggleAdvCategory('time')">
+          <div class="adv-cat-icon">⏱️</div>
+          <div class="adv-cat-info">
+            <div class="adv-cat-title">آنالیز زمان و کارایی</div>
+            <div class="adv-cat-desc">مدت معامله، ساعت، هیت‌مپ، وقفه‌ها</div>
+          </div>
+          <div class="adv-cat-chevron">▾</div>
+        </div>
+        <div class="adv-cat-body">
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advDuration" data-default-size="m">
+            <h3>⏱️ مدت معامله (Duration)</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">میانگین مدت به تفکیک نتیجه</p>
+            <div id="advDuration"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advHour" data-default-size="m">
+            <h3>🕐 ساعت معامله</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">عملکرد به تفکیک ساعت ورود</p>
+            <div id="advHour"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advSymDay" data-default-size="l">
+            <h3>🔥 Heatmap نماد × روز هفته</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">کدوم نماد توی کدوم روز بهتره (P/L)</p>
+            <div class="symday-wrap" id="advSymDay"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advGap" data-default-size="m">
+            <h3>⏳ فاصله زمانی بین معاملات</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">فاصله تا معامله قبلی و اثرش روی نتیجه</p>
+            <div id="advGap"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advNoTradeGap" data-default-size="m">
+            <h3>📆 روزهای پشت‌هم بدون معامله</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">وقفه‌های معاملاتی و اثرشون روی نتیجه</p>
+            <div id="advNoTradeGap"></div>
+          </div>
+        </div>
       </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advDuration" data-default-size="m">
-        <h3>⏱️ مدت معامله (Duration)</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">میانگین مدت به تفکیک نتیجه</p>
-        <div id="advDuration"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advHour" data-default-size="m">
-        <h3>🕐 ساعت معامله</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">عملکرد به تفکیک ساعت ورود</p>
-        <div id="advHour"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advSymDay" data-default-size="l">
-        <h3>🔥 Heatmap نماد × روز هفته</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">کدوم نماد توی کدوم روز بهتره (P/L)</p>
-        <div class="symday-wrap" id="advSymDay"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advGap" data-default-size="m">
-        <h3>⏳ فاصله زمانی بین معاملات</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">فاصله تا معامله قبلی و اثرش روی نتیجه</p>
-        <div id="advGap"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advConfidence" data-default-size="m">
-        <h3>⚖️ رابطه اعتماد ↔ نتیجه</h3>
-        <div id="advConfidence"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advDiscipline" data-default-size="m">
-        <h3>🎯 امتیاز انضباط (Discipline Score)</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">ترکیب چک‌لیست + اجرا + خطاهای رفتاری</p>
-        <div id="advDiscipline"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advTrigger" data-default-size="m">
-        <h3>🎯 عملکرد تریگر ورود</h3>
-        <div id="advPerfTrigger"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRbySymbol" data-default-size="m">
-        <h3>📏 میانگین R به تفکیک نماد</h3>
-        <div id="advRBySymbol"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advExpectancy" data-default-size="m">
-        <h3>🧮 Expectancy per Trade</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">امید ریاضی سود/ضرر به‌ازای هر معامله</p>
-        <div id="advExpectancy"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRealVsPlanned" data-default-size="m">
-        <h3>🎯 R واقعی در برابر R برنامه‌ریزی‌شده</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">چقدر سود روی میز جا گذاشتی</p>
-        <div id="advRealVsPlanned"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advCorrelation" data-default-size="m">
-        <h3>🔗 همبستگی معاملات (نماد × نماد)</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">کدوم نمادها با هم هم‌جهت حرکت می‌کنن</p>
-        <div id="advCorrelation"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advNoTradeGap" data-default-size="m">
-        <h3>📆 روزهای پشت‌هم بدون معامله</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">وقفه‌های معاملاتی و اثرشون روی نتیجه</p>
-        <div id="advNoTradeGap"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advMonteCarlo" data-default-size="l">
-        <h3>🎲 شبیه‌سازی Monte Carlo</h3>
-        <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">همین معاملات با ترتیب تصادفی — رنج احتمالی equity</p>
-        <div class="chart-container" style="height:200px"><canvas id="mcChart"></canvas></div>
-        <div id="advMonteCarloStats" style="margin-top:12px"></div>
-      </div>
-      <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advStreakGlow" data-default-size="s">
-        <h3>🔥 وضعیت استریک فعلی</h3>
-        <div id="advStreakGlow"></div>
+
+      <div class="adv-category" data-adv-cat="pro">
+        <div class="adv-cat-header" onclick="toggleAdvCategory('pro')">
+          <div class="adv-cat-icon">✨</div>
+          <div class="adv-cat-info">
+            <div class="adv-cat-title">آنالیز حرفه‌ای</div>
+            <div class="adv-cat-desc">همبستگی نمادها و شبیه‌سازی Monte Carlo</div>
+          </div>
+          <div class="adv-cat-chevron">▾</div>
+        </div>
+        <div class="adv-cat-body">
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advCorrelation" data-default-size="m">
+            <h3>🔗 همبستگی معاملات (نماد × نماد)</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">کدوم نمادها با هم هم‌جهت حرکت می‌کنن</p>
+            <div id="advCorrelation"></div>
+          </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advMonteCarlo" data-default-size="l">
+            <h3>🎲 شبیه‌سازی Monte Carlo</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">همین معاملات با ترتیب تصادفی — رنج احتمالی equity</p>
+            <div class="chart-container" style="height:200px"><canvas id="mcChart"></canvas></div>
+            <div id="advMonteCarloStats" style="margin-top:12px"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- BADGES -->
-  <div class="main-panel" id="panel-badges">
+  
+<div class="main-panel" id="panel-badges">
     <div class="badge-stats" id="badgeStats"></div>
     <div id="badgesGrid"></div>
   </div>
@@ -1496,7 +1559,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v23 (advanced: expectancy, real-vs-planned-R, correlation, no-trade-gap, monte-carlo, streak-glow)';
+const APP_BUILD = 'BUILD-v24 (advanced tab grouped into collapsible categories, closed by default)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -2099,6 +2162,19 @@ function saveAnalyticsThreshold(){
 }
 
 /* ====== LAYOUT MANAGER ====== */
+function toggleAdvCategory(key){
+  const el = document.querySelector('.adv-category[data-adv-cat="'+key+'"]');
+  if (!el) return;
+  const wasOpen = el.classList.contains('open');
+  el.classList.toggle('open');
+  if (!wasOpen) {
+    // category just opened — charts built while hidden need a re-render/resize
+    setTimeout(() => {
+      if (key === 'stats') renderRDist();
+      if (key === 'pro') renderAdvMonteCarlo();
+    }, 50);
+  }
+}
 function renderLayoutManager(){
   const wrap = document.getElementById('layoutManager'); if (!wrap) return;
   const groups = ['dashboard', 'analysis', 'advanced'];
