@@ -1153,6 +1153,11 @@ body.booting .today-strip{opacity:.4}
             <h3>🎯 عملکرد تریگر ورود</h3>
             <div id="advPerfTrigger"></div>
           </div>
+          <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advExitReason" data-default-size="m">
+            <h3>🚪 عملکرد دلیل خروج</h3>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">سهم · وین‌ریت · میانگین P/L · میانگین R — فقط معاملات بسته‌شده</p>
+            <div id="advExitReason"></div>
+          </div>
           <div class="breakdown-card" data-layout-group="advanced" data-layout-key="advRbySymbol" data-default-size="m">
             <h3>📏 میانگین R به تفکیک نماد</h3>
             <div id="advRBySymbol"></div>
@@ -1744,7 +1749,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.4 (exit-reason chips, modal X-only, tab min-height)';
+const APP_BUILD = 'BUILD-v27.6 (complete trade detail view)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1791,7 +1796,7 @@ const DEFAULT_LAYOUT = {
     advStats:{visible:true,size:'m'}, advRDist:{visible:true,size:'m'}, advStreak:{visible:true,size:'m'},
     advDuration:{visible:true,size:'m'}, advHour:{visible:true,size:'m'}, advSymDay:{visible:true,size:'l'},
     advGap:{visible:true,size:'m'}, advConfidence:{visible:true,size:'m'}, advDiscipline:{visible:true,size:'m'},
-    advTrigger:{visible:true,size:'m'}, advRbySymbol:{visible:true,size:'m'},
+    advTrigger:{visible:true,size:'m'}, advExitReason:{visible:true,size:'m'}, advRbySymbol:{visible:true,size:'m'},
     advExpectancy:{visible:true,size:'m'}, advRealVsPlanned:{visible:true,size:'m'}, advCorrelation:{visible:true,size:'m'},
     advNoTradeGap:{visible:true,size:'m'}, advMonteCarlo:{visible:true,size:'l'}, advStreakGlow:{visible:true,size:'s'}
   }
@@ -1807,7 +1812,7 @@ const LAYOUT_KEY_LABELS = {
   advStats:'آمار پیشرفته', advRDist:'توزیع R-Multiple', advStreak:'برد/باخت پیوسته',
   advDuration:'مدت معامله', advHour:'ساعت معامله', advSymDay:'هیت‌مپ نماد×روز',
   advGap:'فاصله بین معاملات', advConfidence:'اعتماد ↔ نتیجه', advDiscipline:'امتیاز انضباط',
-  advTrigger:'عملکرد تریگر', advRbySymbol:'R به تفکیک نماد',
+  advTrigger:'عملکرد تریگر', advExitReason:'عملکرد دلیل خروج', advRbySymbol:'R به تفکیک نماد',
   advExpectancy:'Expectancy per Trade', advRealVsPlanned:'R واقعی/برنامه‌ریزی‌شده', advCorrelation:'همبستگی معاملات',
   advNoTradeGap:'روزهای بدون معامله', advMonteCarlo:'شبیه‌سازی Monte Carlo', advStreakGlow:'وضعیت استریک فعلی'
 };
@@ -3673,7 +3678,8 @@ function renderHubQuality(){
     </div>
     <div class="breakdown-card"><h3>عملکرد تایم‌فریم</h3>
       ${Object.entries(byTf).sort((a,b)=>b[1].pnl-a[1].pnl).map(([k,v])=>'<div class="breakdown-row"><span>'+k+'</span><span>'+v.n+' · <span class="'+(v.pnl>=0?'pnl-pos':'pnl-neg')+'">'+(v.pnl>=0?'+':'')+v.pnl.toFixed(0)+'$</span></span></div>').join('')}
-    </div>`;
+    </div>
+    <div class="breakdown-card"><h3>دلیل خروج (وزن‌دار)</h3>${renderExitReasonInsightsHtml(buildExitReasonStats(trades))}</div>`;
 }
 
 function renderHubPro(){
@@ -3726,7 +3732,8 @@ function renderHubPro(){
       <div class="stat-card"><div class="label">WR بعد برد / باخت</div><div class="value" style="font-size:1rem">${(ww+wl)?(ww/(ww+wl)*100).toFixed(0):0}% / ${(lw+ll)?(lw/(lw+ll)*100).toFixed(0):0}%</div></div>
       <div class="stat-card"><div class="label">بیشترین روز بدون ترید</div><div class="value">${maxIdle}</div></div>
     </div>
-    <div class="hub-alert info">این بخش از همان دیتای ژورنال ساخته شده (بدون کمیسیون/سواپ). جزئیات بیشتر در تب «تحلیل پیشرفته» هم هست.</div>`;
+    <div class="hub-alert info">این بخش از همان دیتای ژورنال ساخته شده (بدون کمیسیون/سواپ). جزئیات بیشتر در تب «تحلیل پیشرفته» هم هست.</div>
+    <div class="breakdown-card"><h3>دلیل خروج</h3>${renderExitReasonInsightsHtml(buildExitReasonStats(trades))}</div>`;
 }
 
 function renderHub(){
@@ -3912,7 +3919,7 @@ function renderAdvanced(){
   renderAdvancedQuick(); renderAdvancedStats(); renderRDist(); renderRDistDash();
   renderAdvStreak(); renderAdvDuration(); renderAdvHour(); renderAdvSymDay();
   renderAdvGap(); renderAdvConfidence(); renderAdvDiscipline();
-  renderAdvPerfTrigger(); renderAdvRBySymbol();
+  renderAdvPerfTrigger(); renderAdvExitReason(); renderAdvRBySymbol();
   renderAdvExpectancy(); renderAdvRealVsPlanned(); renderAdvCorrelation();
   renderAdvNoTradeGap(); renderAdvMonteCarlo(); renderAdvStreakGlow();
 }
@@ -4123,6 +4130,75 @@ function renderAdvDiscipline(){
     <div class="breakdown-row"><span>وین ریت منظم‌ها</span><span class="pnl-pos">${avgHighWR}</span></div>
     <div class="breakdown-row"><span>وین ریت بی‌نظم‌ها</span><span class="pnl-neg">${avgLowWR}</span></div>`;
 }
+
+function buildExitReasonStats(trades){
+  const closed = (trades || []).filter(t => !isOpenTrade(t));
+  const total = closed.length || 1;
+  const map = {};
+  closed.forEach(t => {
+    const k = (t.exit_reason && String(t.exit_reason).trim()) ? String(t.exit_reason).trim() : 'بدون ثبت';
+    if (!map[k]) map[k] = { n:0, w:0, l:0, be:0, pnl:0, rSum:0, rN:0, risk:0 };
+    const b = map[k];
+    b.n++;
+    if (t.Result === 'Win') b.w++;
+    else if (t.Result === 'Loss') b.l++;
+    else if (t.Result === 'BE') b.be++;
+    b.pnl += calcPnL(t);
+    const r = typeof calcRMultiple === 'function' ? calcRMultiple(t) : 0;
+    if (!isNaN(r)) { b.rSum += r; b.rN++; }
+    const stop = Number(t.stop_usd);
+    if (stop > 0) b.risk += stop;
+  });
+  return Object.entries(map).map(([k, v]) => {
+    const decided = v.w + v.l;
+    return {
+      key: k,
+      n: v.n,
+      share: v.n / total * 100,
+      wr: decided ? v.w / decided * 100 : null,
+      w: v.w, l: v.l, be: v.be,
+      pnl: v.pnl,
+      avgPnl: v.n ? v.pnl / v.n : 0,
+      avgR: v.rN ? v.rSum / v.rN : null,
+      avgRisk: v.n ? v.risk / v.n : 0
+    };
+  }).sort((a,b) => b.n - a.n);
+}
+function renderExitReasonInsightsHtml(rows, opts){
+  opts = opts || {};
+  if (!rows.length) return '<div class="empty-state">هنوز دلیل خروجی ثبت نشده</div>';
+  const totalN = rows.reduce((s,r)=>s+r.n,0);
+  const best = [...rows].filter(r => r.n >= 2 && r.avgPnl != null).sort((a,b)=>b.avgPnl-a.avgPnl)[0];
+  const worst = [...rows].filter(r => r.n >= 2).sort((a,b)=>a.avgPnl-b.avgPnl)[0];
+  const sl = rows.find(r => /^(sl|اس‌ال|استاپ)$/i.test(r.key) || r.key === 'SL');
+  const tp = rows.find(r => /^(tp|تی‌پی)$/i.test(r.key) || r.key === 'TP');
+  let head = '<div class="hub-metric-row" style="margin-bottom:10px">';
+  head += '<div class="stat-card"><div class="label">انواع خروج</div><div class="value">'+rows.length+'</div><div class="sub">n='+totalN+'</div></div>';
+  if (best) head += '<div class="stat-card"><div class="label">بهترین میانگین</div><div class="value pnl-pos">'+escapeHtml(best.key)+'</div><div class="sub">'+(best.avgPnl>=0?'+':'')+best.avgPnl.toFixed(1)+'$ · n='+best.n+'</div></div>';
+  if (worst) head += '<div class="stat-card"><div class="label">ضعیف‌ترین میانگین</div><div class="value pnl-neg">'+escapeHtml(worst.key)+'</div><div class="sub">'+(worst.avgPnl>=0?'+':'')+worst.avgPnl.toFixed(1)+'$ · n='+worst.n+'</div></div>';
+  if (sl) head += '<div class="stat-card"><div class="label">خروج SL</div><div class="value">'+sl.share.toFixed(0)+'%</div><div class="sub">WR '+(sl.wr!=null?sl.wr.toFixed(0)+'%':'—')+' · '+(sl.pnl>=0?'+':'')+sl.pnl.toFixed(0)+'$</div></div>';
+  if (tp) head += '<div class="stat-card"><div class="label">خروج TP</div><div class="value">'+tp.share.toFixed(0)+'%</div><div class="sub">WR '+(tp.wr!=null?tp.wr.toFixed(0)+'%':'—')+' · '+(tp.pnl>=0?'+':'')+tp.pnl.toFixed(0)+'$</div></div>';
+  head += '</div>';
+  const body = rows.map(r => {
+    const wrTxt = r.wr != null ? (r.wr.toFixed(0)+'% WR') : '—';
+    const avgR = r.avgR != null ? (r.avgR>=0?'+':'')+r.avgR.toFixed(2)+'R' : '—';
+    const pc = r.pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const bar = Math.min(100, r.share);
+    return '<div class="breakdown-row"><span><strong>'+escapeHtml(r.key)+'</strong><div style="font-size:.68rem;color:var(--text-muted);margin-top:2px">سهم '+r.share.toFixed(0)+'% · '+r.w+'W/'+r.l+'L'+(r.be?(' · '+r.be+' BE'):'')+'</div></span><span style="text-align:left">'+wrTxt+' · میانگین '+(r.avgPnl>=0?'+':'')+r.avgPnl.toFixed(1)+'$ · '+avgR+' · <span class="'+pc+'">'+(r.pnl>=0?'+':'')+r.pnl.toFixed(0)+'$</span></span></div><div class="progress-bar"><div class="progress-fill" style="width:'+bar+'%;background:linear-gradient(90deg,var(--primary),#818cf8)"></div></div>';
+  }).join('');
+  let tip = '';
+  if (sl && sl.n >= 3 && sl.wr != null && sl.wr > 25) tip += '<div class="hub-alert info" style="margin-top:8px">خروج‌های SL گاهی با نتیجه برد ثبت شده‌اند — احتمالاً جابه‌جایی استاپ به سود یا ثبت نادرست.</div>';
+  if (tp && tp.n >= 3 && tp.wr != null && tp.wr < 70) tip += '<div class="hub-alert info" style="margin-top:8px">خروج TP وین‌ریت پایینی دارد؛ یا TP زود بسته می‌شود یا برچسب اشتباه خورده.</div>';
+  if (opts.compact) return body || '<div class="empty-state">—</div>';
+  return head + body + tip;
+}
+function renderAdvExitReason(){
+  const el = document.getElementById('advExitReason'); if (!el) return;
+  const trades = (filteredForAnalysis && filteredForAnalysis.length) ? filteredForAnalysis : (allTrades||[]).filter(passesAnalyticsThreshold);
+  el.innerHTML = renderExitReasonInsightsHtml(buildExitReasonStats(trades));
+}
+
+
 function renderAdvPerfTrigger(){
   const el = document.getElementById('advPerfTrigger'); if (!el) return;
   const map = {};
@@ -4773,7 +4849,11 @@ function renderAnalysis(){
   set('anSetup', groupBy(t => t.Setup || '—'));
   set('anTF', groupBy(t => t.Timeframe || '—'));
   set('anZone', groupBy(t => t.zone || '—'));
-  set('anExitReason', groupBy(t => t.exit_reason || '—'));
+  const erEl = document.getElementById('anExitReason');
+  if (erEl) {
+    const trades = (filteredForAnalysis && filteredForAnalysis.length) ? filteredForAnalysis : (filtered || []).filter(t => !isOpenTrade(t));
+    erEl.innerHTML = renderExitReasonInsightsHtml(buildExitReasonStats(trades.length ? trades : filtered));
+  }
 }
 function toggleFilters(){ document.getElementById('filtersPanel').classList.toggle('show'); }
 function resetFilters(){
@@ -5363,67 +5443,100 @@ async function showDetail(id){
   if (!t) { showToast('پیدا نشد'); return; }
   document.getElementById('detailTitle').textContent = (t.Symbol || '') + ' · ' + (t['Entry Date'] || '');
   const pnl = calcPnL(t); const pc = pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
-  const resultBadge = isOpenTrade(t) ? '<span class="badge badge-open">🔓 باز — تکمیل نشده</span>' : (t.Result === 'Win' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">سود</span>' : (t.Result === 'Loss' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">ضرر</span>' : '<span class="badge" style="background:var(--bg-subtle);color:var(--text-muted)">سر‌به‌سر</span>'));
+  const resultBadge = isOpenTrade(t) ? '<span class="badge badge-open">🔓 باز — تکمیل نشده</span>' : (t.Result === 'Win' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">سود</span>' : (t.Result === 'Loss' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">ضرر</span>' : (t.Result === 'BE' ? '<span class="badge" style="background:var(--warning-soft);color:#b45309">سر‌به‌سر</span>' : '<span class="badge" style="background:var(--bg-subtle);color:var(--text-muted)">' + escapeHtml(t.Result||'—') + '</span>')));
   const dirBadge = t.Direction === 'Buy' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">خرید</span>' : (t.Direction === 'Sell' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">فروش</span>' : '');
   const rHits = [t.r1&&'1R',t.r15&&'1.5R',t.r2&&'2R',t.r3&&'3R'].filter(Boolean).join(' · ') || '—';
   let dowLabel = '';
   if (t['Entry Date']) { const d = new Date(t['Entry Date']+'T00:00:00'); if (!isNaN(d)) dowLabel = DOW_FA[d.getDay()]; }
   const session = getSession(t);
-  const durM = calcDurationMinutes(t);
+  const durM = typeof calcDurationMinutes === 'function' ? calcDurationMinutes(t) : (t.duration_minutes || null);
   const durStr = durM ? (durM < 60 ? durM + ' دقیقه' : Math.floor(durM/60) + ' ساعت' + (durM%60?' و '+(durM%60)+' دقیقه':'')) : null;
-  let html = '<div class="detail-hero"><div class="detail-hero-main">' + resultBadge + dirBadge + '<span class="pnl-big ' + pc + '">' + (pnl>=0?'+':'') + pnl.toFixed(1) + '$</span></div><div class="detail-hero-sub"><span>📅 ' + (t['Entry Date']||'—') + (dowLabel ? ' (' + dowLabel + ')' : '') + '</span>' + (t['Entry Time'] != null && t['Entry Time'] !== '' ? '<span>🕐 ورود ' + t['Entry Time'] + '</span>' : '') + (t.exit_time ? '<span>🕐 خروج ' + t.exit_time + '</span>' : '') + (durStr ? '<span>⏱ ' + durStr + '</span>' : '') + '<span>⏱ ' + (t.Timeframe||'—') + '</span><span>🌍 ' + session + '</span></div></div>';
+  const pnlLabel = isOpenTrade(t) ? '—' : ((pnl>=0?'+':'') + pnl.toFixed(1) + '$');
+  let html = '<div class="detail-hero"><div class="detail-hero-main">' + resultBadge + dirBadge + '<span class="pnl-big ' + (isOpenTrade(t)?'':pc) + '">' + pnlLabel + '</span></div>';
+  html += '<div class="detail-hero-sub"><span>📅 ورود ' + (t['Entry Date']||'—') + (dowLabel ? ' (' + dowLabel + ')' : '') + '</span>';
+  if (t.exit_date && t.exit_date !== t['Entry Date']) html += '<span>📅 خروج ' + t.exit_date + '</span>';
+  if (t['Entry Time'] != null && t['Entry Time'] !== '') html += '<span>🕐 ورود ' + t['Entry Time'] + '</span>';
+  if (t.exit_time) html += '<span>🕐 خروج ' + t.exit_time + '</span>';
+  if (durStr) html += '<span>⏱ ' + durStr + '</span>';
+  html += '<span>TF ' + (t.Timeframe||'—') + '</span><span>🌍 ' + session + '</span></div></div>';
+
   const infoItems = [];
-  if (t.stop_usd != null) infoItems.push(['ریسک دلاری', t.stop_usd + '$']);
+  if (t.Symbol) infoItems.push(['نماد', t.Symbol]);
+  if (t.Direction) infoItems.push(['جهت', t.Direction === 'Buy' ? 'خرید' : (t.Direction === 'Sell' ? 'فروش' : t.Direction)]);
+  if (t.Result) infoItems.push(['نتیجه', isOpenTrade(t) ? 'باز' : (t.Result === 'Win' ? 'سود' : (t.Result === 'Loss' ? 'ضرر' : (t.Result === 'BE' ? 'سر‌به‌سر' : t.Result)))]);
+  if (t.stop_usd != null && t.stop_usd !== '') infoItems.push(['ریسک دلاری', t.stop_usd + '$']);
+  if (!isOpenTrade(t) && t.manual_pnl != null && t.manual_pnl !== '') infoItems.push(['P/L ثبت‌شده', (Number(t.manual_pnl)>=0?'+':'') + Number(t.manual_pnl) + '$']);
   if (t['Entry Price'] != null && t['Entry Price'] !== '') infoItems.push(['قیمت ورود', t['Entry Price']]);
   if (t['Stop Loss'] != null && t['Stop Loss'] !== '') infoItems.push(['استاپ لحظه ورود', t['Stop Loss']]);
-  if (t.final_stop != null) infoItems.push(['استاپ موقع بسته شدن', t.final_stop]);
-  infoItems.push(['ریوارد', rHits]);
+  if (t.final_stop != null && t.final_stop !== '') infoItems.push(['استاپ موقع بسته شدن', t.final_stop]);
+  if (rHits !== '—') infoItems.push(['ریوارد لمس‌شده', rHits]);
   if (t.reward_from) infoItems.push(['برگشته از', t.reward_from]);
   if (t.volume) infoItems.push(['حجم', t.volume]);
-  html += '<div class="detail-section"><div class="section-title">📌 اطلاعات</div><div class="detail-grid">' + infoItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(String(v))+'</strong></div>').join('') + '</div></div>';
+  if (t.exit_reason) infoItems.push(['دلیل خروج', t.exit_reason]);
+  if (infoItems.length) {
+    html += '<div class="detail-section"><div class="section-title">📌 اطلاعات معامله</div><div class="detail-grid">' + infoItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(String(v))+'</strong></div>').join('') + '</div></div>';
+  }
+
   const setupItems = [];
   if (t.Setup) setupItems.push(['کیفیت ستاپ', t.Setup]);
   if (t.zone) setupItems.push(['Zone', t.zone]);
   if (t.entry_trigger) setupItems.push(['تریگر ورود', t.entry_trigger]);
   if (t.divergence_type) setupItems.push(['واگرایی', t.divergence_type]);
-  const textBlocks = [];
-  if (t.entry_reason) textBlocks.push(['دلیل ورود', t.entry_reason]);
-  if (t.exit_reason) textBlocks.push(['دلیل خروج', t.exit_reason]);
-  if (t.Notes) textBlocks.push(['یادداشت', t.Notes]);
-  if (setupItems.length || textBlocks.length) {
-    html += '<div class="detail-section"><div class="section-title">🎯 دلایل ورود</div>';
-    if (setupItems.length) html += '<div class="detail-grid">' + setupItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(v)+'</strong></div>').join('') + '</div>';
-    textBlocks.forEach(([label, text]) => { html += '<div class="detail-text-block"><div class="detail-text-label">'+label+'</div><div class="detail-text">'+escapeHtml(text)+'</div></div>'; });
+  if (setupItems.length || t.entry_reason || t.exit_reason || t.Notes) {
+    html += '<div class="detail-section"><div class="section-title">🎯 ستاپ و دلایل</div>';
+    if (setupItems.length) html += '<div class="detail-grid">' + setupItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(String(v))+'</strong></div>').join('') + '</div>';
+    if (t.exit_reason) html += '<div class="detail-text-block"><div class="detail-text-label">دلیل خروج</div><div class="chip-group" style="margin-top:6px"><span class="chip selected">'+escapeHtml(t.exit_reason)+'</span></div></div>';
+    if (t.entry_reason) html += '<div class="detail-text-block"><div class="detail-text-label">دلیل ورود</div><div class="detail-text">'+escapeHtml(t.entry_reason)+'</div></div>';
+    if (t.Notes) html += '<div class="detail-text-block"><div class="detail-text-label">یادداشت</div><div class="detail-text">'+escapeHtml(t.Notes)+'</div></div>';
     html += '</div>';
   }
-  const preEm = Array.isArray(t.pre_emotions) ? t.pre_emotions.join('، ') : '';
-  const postEm = Array.isArray(t.post_emotions) ? t.post_emotions.join('، ') : '';
-  const psyItems = [];
-  if (preEm) psyItems.push(['قبل', preEm]); if (postEm) psyItems.push(['بعد', postEm]);
-  if (t.energy != null) psyItems.push(['انرژی', t.energy + '/10']);
-  if (t.confidence != null) psyItems.push(['اعتماد', t.confidence + '/10']);
-  if (t.exec_quality != null) psyItems.push(['کیفیت اجرا', t.exec_quality + '/10']);
+
+  const preEm = Array.isArray(t.pre_emotions) ? t.pre_emotions : [];
+  const postEm = Array.isArray(t.post_emotions) ? t.post_emotions : [];
   const motives = Array.isArray(t.motives) ? t.motives : [];
   const mistakes = Array.isArray(t.mistakes) ? t.mistakes : [];
-  if (psyItems.length || motives.length || mistakes.length || t.lessons) {
-    html += '<div class="detail-section"><div class="section-title">🧠 روانشناسی</div>';
-    if (psyItems.length) html += '<div class="detail-grid">' + psyItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(v)+'</strong></div>').join('') + '</div>';
-    if (motives.length) html += '<div class="detail-text-block"><div class="detail-text-label">انگیزه</div><div class="chip-group">' + motives.map(m => '<span class="chip selected">'+escapeHtml(m)+'</span>').join('') + '</div></div>';
-    if (mistakes.length) html += '<div class="detail-text-block"><div class="detail-text-label">اشتباهات</div><div class="chip-group">' + mistakes.map(m => '<span class="chip selected" style="background:var(--danger);border-color:var(--danger)">'+escapeHtml(m)+'</span>').join('') + '</div></div>';
-    if (t.lessons) html += '<div class="detail-text-block"><div class="detail-text-label">درس‌ها</div><div class="detail-text">'+escapeHtml(t.lessons)+'</div></div>';
+  const psyItems = [];
+  if (t.energy != null && t.energy !== '') psyItems.push(['انرژی', t.energy + '/10']);
+  if (t.confidence != null && t.confidence !== '') psyItems.push(['اعتماد به ستاپ', t.confidence + '/10']);
+  if (t.exec_quality != null && t.exec_quality !== '') psyItems.push(['کیفیت اجرا', t.exec_quality + '/10']);
+  if (preEm.length || postEm.length || psyItems.length || motives.length || mistakes.length || t.lessons) {
+    html += '<div class="detail-section"><div class="section-title">🧠 احساسات و رفتار</div>';
+    if (psyItems.length) html += '<div class="detail-grid">' + psyItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(String(v))+'</strong></div>').join('') + '</div>';
+    if (preEm.length) html += '<div class="detail-text-block"><div class="detail-text-label">احساس قبل</div><div class="chip-group">' + preEm.map(e => '<span class="chip selected">'+escapeHtml(e)+'</span>').join('') + '</div></div>';
+    if (postEm.length) html += '<div class="detail-text-block"><div class="detail-text-label">احساس بعد</div><div class="chip-group">' + postEm.map(e => '<span class="chip selected">'+escapeHtml(e)+'</span>').join('') + '</div></div>';
+    if (motives.length) html += '<div class="detail-text-block"><div class="detail-text-label">انگیزه ورود</div><div class="chip-group">' + motives.map(m => '<span class="chip selected">'+escapeHtml(m)+'</span>').join('') + '</div></div>';
+    if (mistakes.length) html += '<div class="detail-text-block"><div class="detail-text-label">اشتباهات</div><div class="chip-group">' + mistakes.map(m => '<span class="chip selected" style="background:var(--danger-soft);color:var(--danger);border-color:var(--danger)">'+escapeHtml(m)+'</span>').join('') + '</div></div>';
+    if (t.lessons) html += '<div class="detail-text-block"><div class="detail-text-label">درس / نکته</div><div class="detail-text">'+escapeHtml(t.lessons)+'</div></div>';
     html += '</div>';
   }
-  const clArr = Array.isArray(t.checklists) ? t.checklists : (t.checklist ? [t.checklist] : []);
-  if (clArr.length) {
-    html += '<div class="detail-section"><div class="section-title">✅ چک‌لیست‌ها</div>';
-    clArr.forEach(cl => { html += `<div style="margin-bottom:10px;padding:10px;background:var(--bg-subtle);border-radius:10px"><div style="display:flex;justify-content:space-between;font-size:.83rem;font-weight:700;margin-bottom:6px"><span>${escapeHtml(cl.name||'')}</span><span style="color:var(--primary)">${cl.score}%</span></div><div style="font-size:.73rem;color:var(--text-muted)">${cl.done}/${cl.total} آیتم</div></div>`; });
+
+  const tags = Array.isArray(t.tags) ? t.tags : [];
+  if (tags.length) {
+    html += '<div class="detail-section"><div class="section-title">🏷️ برچسب‌ها</div><div class="chip-group">' + tags.map(tg => '<span class="chip selected">'+escapeHtml(tg)+'</span>').join('') + '</div></div>';
+  }
+
+  const cls = Array.isArray(t.checklists) ? t.checklists : (t.checklist ? [t.checklist] : []);
+  if (cls.length) {
+    html += '<div class="detail-section"><div class="section-title">✅ چک‌لیست</div>';
+    cls.forEach(cl => {
+      const name = cl.name || cl.checklistId || 'چک‌لیست';
+      const score = cl.score != null ? (' · ' + cl.score + '%') : '';
+      const done = cl.done != null && cl.total != null ? (' · ' + cl.done + '/' + cl.total) : '';
+      html += '<div class="detail-text-block"><div class="detail-text-label">'+escapeHtml(name)+score+done+'</div>';
+      if (cl.checked && typeof cl.checked === 'object') {
+        const keys = Object.keys(cl.checked).filter(k => cl.checked[k]);
+        if (keys.length) html += '<div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">موارد تیک‌خورده: '+keys.length+'</div>';
+      }
+      html += '</div>';
+    });
     html += '</div>';
   }
-  if (Array.isArray(t.tags) && t.tags.length) html += '<div class="detail-section"><div class="section-title">🏷️ برچسب‌ها</div><div class="tag-list">' + t.tags.map(tag => `<span class="tag" style="background:${tagColor(tag)}">${escapeHtml(tag)}</span>`).join('') + '</div></div>';
+
   const chartLinks = [];
   if (t.trigger_img) chartLinks.push(['چارت تریگر', t.trigger_img]);
   if (t.zone_img) chartLinks.push(['چارت زون', t.zone_img]);
-  const extras = Array.isArray(t.img_extras) && t.img_extras.length ? t.img_extras : [t.img_extra1, t.img_extra2].filter(Boolean);
+  let extras = Array.isArray(t.img_extras) ? t.img_extras.filter(Boolean) : [];
+  if (!extras.length) extras = [t.img_extra1, t.img_extra2].filter(Boolean);
   if (t.has_voice || chartLinks.length || extras.length) {
     html += '<div class="detail-section"><div class="section-title">🖼️ رسانه</div>';
     if (t.has_voice) html += '<div class="voice-box" style="margin-bottom:12px"><div class="voice-row"><button type="button" class="btn btn-sm" onclick="playTradeVoice(\''+String(t.id)+'\')">▶ پخش</button><button type="button" class="btn btn-icon-danger btn-sm" onclick="deleteTradeVoice(\''+String(t.id)+'\')">🗑️</button></div><audio id="detailAudio" controls style="width:100%;margin-top:10px;display:none"></audio></div>';
@@ -5439,7 +5552,8 @@ async function showDetail(id){
     }
     html += '</div>';
   }
-  html += '<div class="detail-actions"><button class="btn btn-sm" onclick="editTrade(\''+t.id+'\')">✏️ ویرایش</button><button class="btn btn-icon-danger btn-sm" onclick="deleteTrade(\''+t.id+'\')">🗑️ حذف</button></div>';
+
+  html += '<div class="detail-actions"><button class="btn btn-sm" onclick="editTrade(\''+String(t.id).replace(/'/g,"\\'")+'\')">✏️ ویرایش</button><button class="btn btn-icon-danger btn-sm" onclick="deleteTrade(\''+String(t.id).replace(/'/g,"\\'")+'\')">🗑️ حذف</button></div>';
   document.getElementById('detailBody').innerHTML = html;
   document.getElementById('detailModal').classList.add('show'); lockScroll();
   const grid = document.getElementById('detailMediaGrid');
