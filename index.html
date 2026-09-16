@@ -641,6 +641,14 @@ body.booting .today-strip{opacity:.4}
 .final-stop-hint.synced{color:var(--text-muted)}
 .final-stop-hint.edited{color:#b45309;font-weight:600}
 
+
+.voice-slot{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--bg-card);margin-bottom:10px}
+.voice-slot-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.voice-slot-note{flex:1;min-width:140px;background:var(--bg-subtle);border:1.5px solid var(--border);color:var(--text);padding:8px 11px;border-radius:10px;font-size:.82rem;outline:none}
+.voice-slot-note:focus{border-color:var(--primary)}
+.voice-slot-meta{font-size:.72rem;color:var(--text-muted)}
+.voice-slot audio{width:100%;margin-top:8px}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1560,17 +1568,15 @@ body.booting .today-strip{opacity:.4}
         </div>
 
         <div class="form-section" id="ftab-media">
-          <div class="form-group"><label>ویس</label>
+          <div class="form-group"><label>ویس‌ها (چندتایی + توضیح)</label>
             <div class="voice-box">
-              <div class="voice-row">
-                <button type="button" class="btn btn-sm voice-rec" id="btnVoiceRec" onclick="toggleVoiceRec()">🎤 ضبط</button>
-                <button type="button" class="btn btn-outline btn-sm" id="btnVoicePlay" onclick="playPendingVoice()" style="display:none">▶</button>
-                <button type="button" class="btn btn-outline btn-sm" id="btnVoiceDel" onclick="clearPendingVoice()" style="display:none">🗑️</button>
-              </div>
-              <div class="voice-row" style="margin-top:10px">
+              <div id="voiceSlotsList"></div>
+              <div class="voice-row" style="margin-top:4px">
+                <button type="button" class="btn btn-sm voice-rec" id="btnVoiceRec" onclick="toggleVoiceRec()">🎤 ضبط ویس جدید</button>
                 <label class="btn btn-outline btn-sm" style="cursor:pointer">📎 فایل<input type="file" id="tfVoiceFile" accept="audio/*" style="display:none" onchange="onVoiceFile(event)"></label>
+                <button type="button" class="btn btn-outline btn-sm" onclick="addEmptyVoiceSlot()">+ اسلات خالی</button>
               </div>
-              <div class="voice-status" id="voiceStatus">میکروفون فقط روی HTTPS</div>
+              <div class="voice-status" id="voiceStatus">هر ویس می‌تواند توضیح داشته باشد (مثلاً ورود / وسط ترید / بستن)</div>
               <audio id="voicePreview" controls style="display:none;width:100%;margin-top:10px"></audio>
             </div>
           </div>
@@ -1749,7 +1755,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.6 (complete trade detail view)';
+const APP_BUILD = 'BUILD-v27.8 (multi voice notes with labels)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1904,6 +1910,16 @@ async function upsertTradeRemote(t){
       return true;
     }
   }
+  if (error && /voices/i.test(error.message||'') && Object.prototype.hasOwnProperty.call(row, 'voices')) {
+    const { voices, ...rest } = row;
+    const retry = await supabaseClient.from('journal_trades').upsert(rest);
+    error = retry.error;
+    if (!error) {
+      console.warn('voices column missing — saved without voices jsonb. Run ALTER for voices.');
+      showToast('ذخیره شد (ستون voices نیست — SQL را بزن)');
+      return true;
+    }
+  }
   if (error) {
     console.error('upsertTradeRemote', error);
     const msg = (error.message || error.details || 'خطا در ذخیره').toString();
@@ -1934,7 +1950,8 @@ function rowToTrade(r){
     pre_emotions: r.pre_emotions||[], post_emotions: r.post_emotions||[],
     tags: r.tags||[], motives: r.motives||[], mistakes: r.mistakes||[],
     checklist: r.checklist||null, checklists: r.checklists||null,
-    has_voice: !!r.voice_path
+    has_voice: !!(r.voice_path || (Array.isArray(r.voices)&&r.voices.length)),
+    voices: Array.isArray(r.voices) ? r.voices : (r.voice_path ? [{ id:'legacy', note:'', path:r.voice_path, durationSec:null }] : [])
   };
 }
 function tradeToRow(t, fallbackYear = null){
@@ -1965,10 +1982,16 @@ function tradeToRow(t, fallbackYear = null){
     pre_emotions: t.pre_emotions||[], post_emotions: t.post_emotions||[],
     tags: t.tags||[], motives: t.motives||[], mistakes: t.mistakes||[],
     checklist: t.checklist||null, checklists: t.checklists||null,
-    voice_path: t.has_voice?voicePathFor(t.id):null
+    voices: Array.isArray(t.voices) ? t.voices.map(v => ({ id:v.id, note:v.note||'', path:v.path||null, durationSec:v.durationSec!=null?v.durationSec:null })).filter(v => v.path) : [],
+    voice_path: (Array.isArray(t.voices) && t.voices.find(v=>v.path)) ? t.voices.find(v=>v.path).path : (t.has_voice ? voicePathFor(t.id) : null)
   };
 }
-function voicePathFor(id){ return String(id) + VOICE_EXT; }
+function voicePathFor(tradeId, voiceId){
+  if (voiceId) return String(tradeId) + '_v_' + String(voiceId) + VOICE_EXT;
+  return String(tradeId) + VOICE_EXT; // legacy single
+}
+function voiceSlotId(){ return 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
 function imgPathFor(id, slot){ return 'img_' + id + '_' + slot + '.jpg'; }
 function inferImportYear(trades){
   const ys = trades.map(t => { const m = String(t?.['Entry Date'] ?? '').match(/(?:^|[\/.-])(20\d{2})(?:$|[\/.-])/); return m?+m[1]:null; }).filter(Boolean);
@@ -2007,16 +2030,26 @@ function getImgPreviewSource(value){
   if (isStorageRef(value)) return { type:'storage', path: extractStoragePath(value) };
   return { type:'direct', src: value };
 }
-async function saveVoiceBlob(tradeId, blob){
-  const { error } = await supabaseClient.storage.from(VOICE_BUCKET).upload(voicePathFor(tradeId), blob, { upsert: true, contentType: blob.type||'audio/webm' });
-  if (error) throw error; return true;
+async function saveVoiceBlob(tradeId, blob, voiceId){
+  const path = voicePathFor(tradeId, voiceId);
+  const { error } = await supabaseClient.storage.from(VOICE_BUCKET).upload(path, blob, { upsert: true, contentType: blob.type||'audio/webm' });
+  if (error) throw error; return path;
 }
-async function loadVoiceBlob(tradeId){
-  const { data, error } = await supabaseClient.storage.from(VOICE_BUCKET).download(voicePathFor(tradeId));
+async function loadVoiceBlobByPath(path){
+  if (!path) return null;
+  const { data, error } = await supabaseClient.storage.from(VOICE_BUCKET).download(path);
   if (error) return null;
   return data;
 }
-async function removeVoiceBlob(tradeId){ await supabaseClient.storage.from(VOICE_BUCKET).remove([voicePathFor(tradeId)]); }
+async function loadVoiceBlob(tradeId){
+  // legacy
+  return loadVoiceBlobByPath(voicePathFor(tradeId));
+}
+async function removeVoiceBlobPath(path){
+  if (!path) return;
+  try { await supabaseClient.storage.from(VOICE_BUCKET).remove([path]); } catch(e){}
+}
+async function removeVoiceBlob(tradeId){ await removeVoiceBlobPath(voicePathFor(tradeId)); }
 
 /* ====== AUTH / BOOT ====== */
 async function handleLogin(){
@@ -2464,6 +2497,10 @@ function renderImageSlots(){
       </div>
     </div>`).join('');
   imageSlots.forEach(s => bindSlotEvents(s.id));
+  // بعد از رندر دوباره، پیش‌نمایش عکس‌های قبلی را برگردان
+  imageSlots.forEach(s => {
+    if (s.value) setTimeout(() => setSlotValue(s.id, s.value), 0);
+  });
 }
 function bindSlotEvents(slotId){
   const zone = document.getElementById('slot_'+slotId);
@@ -2534,6 +2571,14 @@ async function setSlotValue(slotId, value){
 document.addEventListener('paste', async (e) => {
   const modal = document.getElementById('addModal');
   if (!modal || !modal.classList.contains('show')) return;
+  // اگر داخل input/textarea متنی هستیم، پیست متن را مختل نکن
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.type !== 'file') {
+    const items = e.clipboardData && e.clipboardData.items;
+    let hasImg = false;
+    if (items) for (const it of items) { if (it.type.startsWith('image/')) { hasImg = true; break; } }
+    if (!hasImg) return;
+  }
   const items = e.clipboardData && e.clipboardData.items;
   if (!items) return;
   for (const item of items) {
@@ -2541,9 +2586,16 @@ document.addEventListener('paste', async (e) => {
       e.preventDefault();
       const f = item.getAsFile();
       if (!f) continue;
-      const id = 'img_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-      imageSlots.push({ id, value: '' });
-      renderImageSlots();
+      // اسلات خالی را پر کن؛ اگر همه پر بودند اسلات جدید بساز
+      let slot = imageSlots.find(s => !(s.value || '').trim());
+      let id;
+      if (slot) {
+        id = slot.id;
+      } else {
+        id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+        imageSlots.push({ id, value: '' });
+        renderImageSlots();
+      }
       await handleSlotImage(id, f);
       break;
     }
@@ -4879,35 +4931,100 @@ function resizeImageFile(file, maxDim, quality){
     img.src = url;
   });
 }
-function setVoiceUI(state){
-  const btn = document.getElementById('btnVoiceRec'), play = document.getElementById('btnVoicePlay'), del = document.getElementById('btnVoiceDel'), st = document.getElementById('voiceStatus'), audio = document.getElementById('voicePreview');
-  if (!btn) return;
-  if (state === 'recording') { btn.textContent = '⏹ توقف'; btn.classList.add('recording'); if (play) play.style.display = 'none'; if (del) del.style.display = 'none'; if (st) st.textContent = 'ضبط...'; }
-  else if (state === 'ready') {
-    btn.textContent = '🎤 ضبط دوباره'; btn.classList.remove('recording');
-    if (play) play.style.display = ''; if (del) del.style.display = '';
-    if (st) {
-      const sz = pendingVoiceBlob ? (pendingVoiceBlob.size / 1024) : 0;
-      const dur = pendingVoiceBlob && pendingVoiceBlob._durationSec ? pendingVoiceBlob._durationSec : 0;
-      st.textContent = 'آماده · ' + (dur ? formatVoiceDuration(dur) + ' · ' : '') + (sz ? sz.toFixed(0) + ' KB' : '');
-    }
-    if (audio && pendingVoiceUrl) { audio.src = pendingVoiceUrl; audio.style.display = 'block'; }
+/* ====== MULTI VOICE SLOTS ====== */
+let voiceSlots = []; // { id, note, blob, url, path, durationSec }
+let activeVoiceRecId = null;
+
+function resetVoiceSlots(){
+  voiceSlots.forEach(v => { if (v.url && !v.path) try { URL.revokeObjectURL(v.url); } catch(e){} });
+  voiceSlots = [];
+  activeVoiceRecId = null;
+  isRecording = false;
+  mediaRecorder = null; recChunks = [];
+  renderVoiceSlots();
+  setVoiceStatus('هر ویس می‌تواند توضیح داشته باشد (مثلاً ورود / وسط ترید / بستن)');
+}
+function clearPendingVoice(){ resetVoiceSlots(); }
+function setVoiceStatus(msg){ const st = document.getElementById('voiceStatus'); if (st) st.textContent = msg; }
+function renderVoiceSlots(){
+  const list = document.getElementById('voiceSlotsList'); if (!list) return;
+  if (!voiceSlots.length) {
+    list.innerHTML = '<div style="font-size:.8rem;color:var(--text-muted);padding:8px 4px">هنوز ویسی نیست — ضبط کن یا فایل بگذار</div>';
+    return;
   }
-  else { btn.textContent = '🎤 ضبط'; btn.classList.remove('recording'); if (play) play.style.display = 'none'; if (del) del.style.display = 'none'; if (st) st.textContent = 'HTTPS · فشرده ~24kbps · سقف ۲ دقیقه'; if (audio) { audio.removeAttribute('src'); audio.style.display = 'none'; } }
+  list.innerHTML = voiceSlots.map((v, i) => {
+    const dur = v.durationSec ? formatVoiceDuration(v.durationSec) : (v.path || v.blob ? 'آماده' : 'خالی');
+    const hasAudio = !!(v.url || v.path);
+    return '<div class="voice-slot" data-vid="'+v.id+'">'
+      + '<div class="voice-slot-head">'
+      + '<span class="badge">#'+(i+1)+'</span>'
+      + '<input type="text" class="voice-slot-note" placeholder="توضیح ویس (مثلاً موقع ورود)" value="'+escapeHtml(v.note||'')+'" oninput="updateVoiceNote(\''+v.id+'\', this.value)">'
+      + '<span class="voice-slot-meta">'+dur+'</span>'
+      + (hasAudio ? '<button type="button" class="btn btn-outline btn-sm" onclick="playVoiceSlot(\''+v.id+'\')">▶</button>' : '')
+      + '<button type="button" class="btn btn-icon-danger btn-sm" onclick="removeVoiceSlot(\''+v.id+'\')">🗑️</button>'
+      + '</div>'
+      + (v.url ? '<audio id="audio_'+v.id+'" src="'+v.url+'" controls style="width:100%"></audio>' : (v.path ? '<audio id="audio_'+v.id+'" controls style="width:100%" data-path="'+escapeHtml(v.path)+'"></audio>' : ''))
+      + '</div>';
+  }).join('');
+  // lazy load storage paths
+  voiceSlots.forEach(async v => {
+    if (v.path && !v.url) {
+      const blob = await loadVoiceBlobByPath(v.path);
+      if (blob) {
+        v.url = URL.createObjectURL(blob);
+        const a = document.getElementById('audio_'+v.id);
+        if (a) a.src = v.url;
+      }
+    }
+  });
+}
+function updateVoiceNote(id, note){ const v = voiceSlots.find(x => x.id === id); if (v) v.note = note; }
+function addEmptyVoiceSlot(){
+  voiceSlots.push({ id: voiceSlotId(), note: '', blob: null, url: null, path: null, durationSec: null });
+  renderVoiceSlots();
+}
+function removeVoiceSlot(id){
+  const v = voiceSlots.find(x => x.id === id);
+  if (v && v.url && !v.path) try { URL.revokeObjectURL(v.url); } catch(e){}
+  voiceSlots = voiceSlots.filter(x => x.id !== id);
+  renderVoiceSlots();
+}
+async function playVoiceSlot(id){
+  const v = voiceSlots.find(x => x.id === id); if (!v) return;
+  if (!v.url && v.path) {
+    const blob = await loadVoiceBlobByPath(v.path);
+    if (blob) v.url = URL.createObjectURL(blob);
+  }
+  const a = document.getElementById('audio_'+id);
+  if (a && v.url) { a.src = v.url; a.style.display = 'block'; a.play(); }
 }
 function formatVoiceDuration(sec){
-  sec = Math.max(0, Math.floor(Number(sec) || 0));
-  const m = Math.floor(sec / 60); const s = sec % 60;
-  return m + ':' + String(s).padStart(2, '0');
+  sec = Math.max(0, Math.round(Number(sec)||0));
+  const m = Math.floor(sec/60), s = sec % 60;
+  return m ? (m + ':' + String(s).padStart(2,'0')) : (s + ' ثانیه');
 }
-function clearPendingVoice(){
-  if (pendingVoiceUrl) { try { URL.revokeObjectURL(pendingVoiceUrl); } catch(e){} }
-  pendingVoiceBlob = null; pendingVoiceUrl = null; isRecording = false;
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch(e){} }
-  mediaRecorder = null; recChunks = []; setVoiceUI('idle');
+function commitBlobToNewSlot(blob, durationSec){
+  if (pendingVoiceUrl) try { URL.revokeObjectURL(pendingVoiceUrl); } catch(e){}
+  const url = URL.createObjectURL(blob);
+  const id = voiceSlotId();
+  voiceSlots.push({ id, note: '', blob, url, path: null, durationSec: durationSec || null });
+  pendingVoiceBlob = null; pendingVoiceUrl = null;
+  renderVoiceSlots();
+  setVoiceStatus('✓ ویس اضافه شد — برایش توضیح بنویس');
+  showToast('✓ ویس #' + voiceSlots.length);
 }
-function playPendingVoice(){ const a = document.getElementById('voicePreview'); if (a && pendingVoiceUrl) { a.style.display = 'block'; a.play(); } }
-function onVoiceFile(e){ const f = e.target.files && e.target.files[0]; if (!f) return; clearPendingVoice(); pendingVoiceBlob = f; try { pendingVoiceBlob._durationSec = 0; } catch(err){} pendingVoiceUrl = URL.createObjectURL(f); setVoiceUI('ready'); const a = document.getElementById('voicePreview'); if (a) { a.onloadedmetadata = () => { try { pendingVoiceBlob._durationSec = Math.round(a.duration||0); setVoiceUI('ready'); } catch(err){} }; } }
+function onVoiceFile(e){
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  e.target.value = '';
+  const url = URL.createObjectURL(f);
+  const id = voiceSlotId();
+  const slot = { id, note: '', blob: f, url, path: null, durationSec: null };
+  voiceSlots.push(slot);
+  renderVoiceSlots();
+  const a = new Audio(url);
+  a.onloadedmetadata = () => { try { slot.durationSec = Math.round(a.duration||0); renderVoiceSlots(); } catch(err){} };
+  setVoiceStatus('✓ فایل اضافه شد');
+}
 async function toggleVoiceRec(){
   if (isRecording) { if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop(); return; }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showToast('میکروفون پشتیبانی نمیشود'); return; }
@@ -4923,41 +5040,94 @@ async function toggleVoiceRec(){
     if (window._voiceRecTimer) clearInterval(window._voiceRecTimer);
     window._voiceRecTimer = setInterval(() => {
       const sec = Math.floor((Date.now() - window._voiceRecStartedAt) / 1000);
-      const st = document.getElementById('voiceStatus');
-      if (st && isRecording) st.textContent = 'ضبط... ' + formatVoiceDuration(sec);
-      if (sec >= 120 && mediaRecorder && mediaRecorder.state !== 'inactive') { try { mediaRecorder.stop(); } catch(e){} }
-    }, 250);
+      setVoiceStatus('در حال ضبط... ' + formatVoiceDuration(sec));
+      const btn = document.getElementById('btnVoiceRec');
+      if (btn) { btn.textContent = '⏹ توقف ' + formatVoiceDuration(sec); btn.classList.add('recording'); }
+    }, 400);
     mediaRecorder.ondataavailable = (ev) => { if (ev.data && ev.data.size) recChunks.push(ev.data); };
     mediaRecorder.onstop = () => {
-      stream.getTracks().forEach(t => t.stop());
-      isRecording = false;
+      try { stream.getTracks().forEach(tr => tr.stop()); } catch(e){}
       if (window._voiceRecTimer) { clearInterval(window._voiceRecTimer); window._voiceRecTimer = null; }
+      isRecording = false;
+      const btn = document.getElementById('btnVoiceRec');
+      if (btn) { btn.textContent = '🎤 ضبط ویس جدید'; btn.classList.remove('recording'); }
       const durSec = Math.max(1, Math.round((Date.now() - (window._voiceRecStartedAt || Date.now())) / 1000));
-      pendingVoiceBlob = new Blob(recChunks, { type: (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm' });
-      pendingVoiceBlob._durationSec = durSec;
-      if (pendingVoiceUrl) try { URL.revokeObjectURL(pendingVoiceUrl); } catch(e){}
-      pendingVoiceUrl = URL.createObjectURL(pendingVoiceBlob);
-      setVoiceUI('ready');
+      const blob = new Blob(recChunks, { type: (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm' });
+      commitBlobToNewSlot(blob, durSec);
     };
-    try { mediaRecorder.start(1000); } catch(e) { mediaRecorder.start(); }
-    isRecording = true; setVoiceUI('recording');
-  } catch(e){ showToast('دسترسی میکروفون نیست'); }
+    mediaRecorder.start();
+    isRecording = true;
+    setVoiceStatus('در حال ضبط...');
+    const btn = document.getElementById('btnVoiceRec');
+    if (btn) { btn.textContent = '⏹ توقف'; btn.classList.add('recording'); }
+  } catch(err) {
+    console.error(err);
+    showToast('دسترسی میکروفون داده نشد');
+    setVoiceStatus('میکروفون در دسترس نیست');
+  }
+}
+async function playDetailVoicePath(path, tradeId){
+  let blob = null;
+  if (path) blob = await loadVoiceBlobByPath(path);
+  if (!blob && tradeId) blob = await loadVoiceBlob(tradeId);
+  if (!blob) { showToast('ویس پیدا نشد'); return; }
+  const a = document.getElementById('detailAudio');
+  if (a) { a.src = URL.createObjectURL(blob); a.style.display = 'block'; a.play(); }
 }
 async function playTradeVoice(tradeId){
-  try {
-    const blob = await loadVoiceBlob(tradeId);
-    if (!blob) { showToast('ویسی نیست'); return; }
-    const audio = document.getElementById('detailAudio'); if (!audio) return;
-    audio.src = URL.createObjectURL(blob); audio.style.display = 'block'; audio.play();
-  } catch(e){ showToast('خطا'); }
+  // legacy single play — play first voice of trade
+  const t = allTrades.find(x => String(x.id) === String(tradeId));
+  const path = (t && Array.isArray(t.voices) && t.voices[0] && t.voices[0].path) ? t.voices[0].path : voicePathFor(tradeId);
+  const blob = await loadVoiceBlobByPath(path);
+  if (!blob) { showToast('ویس پیدا نشد'); return; }
+  const a = document.getElementById('detailAudio');
+  if (a) { a.src = URL.createObjectURL(blob); a.style.display = 'block'; a.play(); }
 }
 async function deleteTradeVoice(tradeId){
-  if (!confirm('ویس حذف شود؟')) return;
-  await removeVoiceBlob(tradeId);
+  if (!confirm('همه ویس‌های این معامله حذف شود؟')) return;
   const t = allTrades.find(x => String(x.id) === String(tradeId));
-  if (t) { t.has_voice = false; await upsertTradeRemote(t); }
-  showToast('حذف شد'); showDetail(tradeId);
+  if (t && Array.isArray(t.voices)) {
+    for (const v of t.voices) { if (v.path) await removeVoiceBlobPath(v.path); }
+  }
+  await removeVoiceBlob(tradeId);
+  if (t) { t.has_voice = false; t.voices = []; await upsertTradeRemote(t); }
+  showToast('حذف شد');
+  try { showDetail(tradeId); } catch(e){}
 }
+async function persistVoiceSlots(tradeId){
+  const out = [];
+  for (const v of voiceSlots) {
+    let path = v.path || null;
+    if (v.blob && !path) {
+      try {
+        path = await saveVoiceBlob(tradeId, v.blob, v.id);
+      } catch(err) {
+        console.error('voice upload', err);
+        showToast('آپلود ویس ناموفق');
+        continue;
+      }
+    }
+    if (!path) continue;
+    out.push({ id: v.id, note: (v.note||'').trim(), path, durationSec: v.durationSec != null ? v.durationSec : null });
+  }
+  return out;
+}
+function loadVoiceSlotsFromTrade(t){
+  resetVoiceSlots();
+  const list = Array.isArray(t.voices) && t.voices.length ? t.voices
+    : (t.has_voice || t.voice_path ? [{ id:'legacy', note:'', path: t.voice_path || voicePathFor(t.id), durationSec:null }] : []);
+  voiceSlots = list.map(v => ({
+    id: v.id || voiceSlotId(),
+    note: v.note || '',
+    blob: null,
+    url: null,
+    path: v.path || null,
+    durationSec: v.durationSec != null ? v.durationSec : null
+  }));
+  renderVoiceSlots();
+  if (voiceSlots.length) setVoiceStatus(voiceSlots.length + ' ویس ذخیره‌شده');
+}
+
 
 /* ====== ADD MODAL ====== */
 function openAddModal(editTrade){
@@ -4966,7 +5136,7 @@ function openAddModal(editTrade){
   if (title) title.textContent = editingId ? 'ویرایش معامله' : 'ثبت معامله جدید';
   const form = document.getElementById('tradeForm'); if (form) form.reset();
   currentTags = []; window._tradeClChecked = {};
-  clearPendingVoice(); resetImageSlots();
+  resetVoiceSlots(); resetImageSlots();
   document.querySelectorAll('.emo-tab').forEach(t => t.classList.toggle('active', t.dataset.etab === 'pre'));
   document.querySelectorAll('.emo-pane').forEach(p => p.classList.toggle('active', p.id === 'epane-pre'));
   renderTagManager(); renderFormTagChips(); renderTradeChecklistColumns();
@@ -5065,7 +5235,7 @@ function openAddModal(editTrade){
     cls.forEach(cl => { if (cl.checked) { const clDef = (custom.checklists||[]).find(c => c.id === cl.checklistId); if (clDef) Object.entries(cl.checked).forEach(([k, v]) => { if (v) window._tradeClChecked[clDef.id + '__' + k] = true; }); } });
     renderTradeChecklistColumns();
     updatePipPreview(); updateDurationPreview();
-    if (editTrade.has_voice) { const st = document.getElementById('voiceStatus'); if (st) st.textContent = 'ویس ذخیره‌شده دارد'; }
+    try { loadVoiceSlotsFromTrade(editTrade); } catch(e) { console.error(e); }
   } else { addImageSlot(); }
   document.getElementById('addModal').classList.add('show'); lockScroll();
 }
@@ -5395,12 +5565,20 @@ async function saveTrade(e){
     checklists: checklistsData,
     checklist: checklistsData && checklistsData.length ? checklistsData[0] : null,
     has_voice: false,
+    voices: [],
     motives: motives,
     mistakes: mistakes,
   };
   trade.id = newId;
-  if (pendingVoiceBlob) { try { await saveVoiceBlob(newId, pendingVoiceBlob); trade.has_voice = true; } catch(err){ trade.has_voice = !!(prevTrade && prevTrade.has_voice); } }
-  else trade.has_voice = !!(prevTrade && prevTrade.has_voice);
+  try {
+    const savedVoices = await persistVoiceSlots(newId);
+    trade.voices = savedVoices;
+    trade.has_voice = savedVoices.length > 0;
+  } catch(err) {
+    console.error(err);
+    trade.voices = (prevTrade && prevTrade.voices) ? prevTrade.voices : [];
+    trade.has_voice = !!(prevTrade && prevTrade.has_voice);
+  }
   clearPendingVoice();
   const savedOk = await upsertTradeRemote(trade);
   if (editingId != null) { const idx = allTrades.findIndex(t => String(t.id) === String(editingId)); if (idx >= 0) allTrades[idx] = trade; else allTrades.push(trade); }
@@ -5539,7 +5717,18 @@ async function showDetail(id){
   if (!extras.length) extras = [t.img_extra1, t.img_extra2].filter(Boolean);
   if (t.has_voice || chartLinks.length || extras.length) {
     html += '<div class="detail-section"><div class="section-title">🖼️ رسانه</div>';
-    if (t.has_voice) html += '<div class="voice-box" style="margin-bottom:12px"><div class="voice-row"><button type="button" class="btn btn-sm" onclick="playTradeVoice(\''+String(t.id)+'\')">▶ پخش</button><button type="button" class="btn btn-icon-danger btn-sm" onclick="deleteTradeVoice(\''+String(t.id)+'\')">🗑️</button></div><audio id="detailAudio" controls style="width:100%;margin-top:10px;display:none"></audio></div>';
+    if (t.has_voice || (Array.isArray(t.voices)&&t.voices.length)) {
+      const vlist = Array.isArray(t.voices)&&t.voices.length ? t.voices : [{ id:'legacy', note:'', path:null }];
+      html += '<div class="voice-box" style="margin-bottom:12px">';
+      vlist.forEach((v,i) => {
+        const label = (v.note||'').trim() || ('ویس '+(i+1));
+        const dur = v.durationSec ? (' · '+formatVoiceDuration(v.durationSec)) : '';
+        html += '<div class="voice-slot" style="margin-bottom:8px"><div class="voice-slot-head"><span class="chip selected">'+escapeHtml(label)+'</span><span class="voice-slot-meta">'+dur+'</span>'
+          + '<button type="button" class="btn btn-outline btn-sm" onclick="playDetailVoicePath(\''+escapeHtml(v.path||'')+'\',\''+String(t.id)+'\')">▶</button></div></div>';
+      });
+      html += '<div class="voice-row"><button type="button" class="btn btn-icon-danger btn-sm" onclick="deleteTradeVoice(\''+String(t.id)+'\')">🗑️ حذف همه ویس‌ها</button></div>';
+      html += '<audio id="detailAudio" controls style="width:100%;margin-top:10px;display:none"></audio></div>';
+    };
     if (chartLinks.length) html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' + chartLinks.map(([label,url]) => '<a class="btn btn-outline btn-sm" href="'+escapeHtml(url)+'" target="_blank" rel="noopener">🔗 '+label+'</a>').join('') + '</div>';
     if (extras.length) {
       html += '<div class="detail-media-grid" id="detailMediaGrid">';
