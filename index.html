@@ -1426,7 +1426,7 @@ body.booting .today-strip{opacity:.4}
           </div>
           <div class="form-row">
             <div class="form-group"><label>تایم‌فریم خروج</label>
-              <select id="tfExitTimeframe"><option value="">—</option><option value="M5">M5</option><option value="M15">M15</option><option value="M30">M30</option><option value="1H">1H</option><option value="4H">4H</option></select>
+              <select id="tfExitTimeframe"><option value="">—</option><option value="M5">M5</option><option value="M15">M15</option><option value="M30">M30</option><option value="1H">1H</option><option value="4H">4H</option><option value="D1">D1</option></select>
             </div>
             <div class="form-group"></div>
           </div>
@@ -1755,7 +1755,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.9 (exit timeframe save/load fix)';
+const APP_BUILD = 'BUILD-v27.10 (exit TF dual-save via tags fallback)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1942,11 +1942,26 @@ async function loadTradesFromSupabase(){
   const { data, error } = await supabaseClient.from('journal_trades').select('*').order('id', { ascending: false });
   if (error) { console.error(error); return; }
   allTrades = (data || []).map(rowToTrade);
+  allTrades.forEach(t => { if (!t.exit_timeframe) t.exit_timeframe = decodeExitTimeframeFromTags(t.tags); });
 }
+
+function encodeExitTimeframeInTags(tags, exitTf){
+  const base = (tags || []).filter(t => !String(t).startsWith('__exit_tf:'));
+  if (exitTf) base.push('__exit_tf:' + String(exitTf));
+  return base;
+}
+function decodeExitTimeframeFromTags(tags){
+  const t = (tags || []).find(x => String(x).startsWith('__exit_tf:'));
+  return t ? String(t).slice(10) : null;
+}
+function publicTags(tags){
+  return (tags || []).filter(t => !String(t).startsWith('__exit_tf:'));
+}
+
 function rowToTrade(r){
   return {
     id: r.id, Symbol: r.symbol, Direction: r.direction, 'Entry Date': r.entry_date, 'Entry Time': r.entry_time, exit_date: r.exit_date || r.entry_date,
-    'Entry Price': r.entry_price, 'Stop Loss': r.stop_loss, Result: r.result, Timeframe: r.timeframe, exit_timeframe: r.exit_timeframe||null,
+    'Entry Price': r.entry_price, 'Stop Loss': r.stop_loss, Result: r.result, Timeframe: r.timeframe, exit_timeframe: r.exit_timeframe || decodeExitTimeframeFromTags(r.tags) || null,
     Setup: r.setup, Notes: r.notes, manual_pnl: r.manual_pnl, stop_usd: r.stop_usd,
     initial_stop: r.initial_stop, final_stop: r.final_stop,
     r1: r.r1?1:null, r15: r.r15?1:null, r2: r.r2?1:null, r3: r.r3?1:null,
@@ -1958,7 +1973,7 @@ function rowToTrade(r){
     exit_time: r.exit_time, duration_minutes: r.duration_minutes,
     energy: r.energy, confidence: r.confidence, exec_quality: r.exec_quality,
     pre_emotions: r.pre_emotions||[], post_emotions: r.post_emotions||[],
-    tags: r.tags||[], motives: r.motives||[], mistakes: r.mistakes||[],
+    tags: publicTags(r.tags||[]), motives: r.motives||[], mistakes: r.mistakes||[],
     checklist: r.checklist||null, checklists: r.checklists||null,
     has_voice: !!(r.voice_path || (Array.isArray(r.voices)&&r.voices.length)),
     voices: Array.isArray(r.voices) ? r.voices : (r.voice_path ? [{ id:'legacy', note:'', path:r.voice_path, durationSec:null }] : [])
@@ -1990,7 +2005,7 @@ function tradeToRow(t, fallbackYear = null){
     energy: t.energy!=null?t.energy:null, confidence: t.confidence!=null?t.confidence:null,
     exec_quality: t.exec_quality!=null?t.exec_quality:null,
     pre_emotions: t.pre_emotions||[], post_emotions: t.post_emotions||[],
-    tags: t.tags||[], motives: t.motives||[], mistakes: t.mistakes||[],
+    tags: encodeExitTimeframeInTags(t.tags||[], t.exit_timeframe), motives: t.motives||[], mistakes: t.mistakes||[],
     checklist: t.checklist||null, checklists: t.checklists||null,
     voices: Array.isArray(t.voices) ? t.voices.map(v => ({ id:v.id, note:v.note||'', path:v.path||null, durationSec:v.durationSec!=null?v.durationSec:null })).filter(v => v.path) : [],
     voice_path: (Array.isArray(t.voices) && t.voices.find(v=>v.path)) ? t.voices.find(v=>v.path).path : (t.has_voice ? voicePathFor(t.id) : null)
@@ -5179,7 +5194,7 @@ function openAddModal(editTrade){
     setDir(editTrade.Direction || 'Buy');
     setResult(['Win','Loss','BE','Open'].includes(editTrade.Result) ? editTrade.Result : (editTrade.Result === 'Loss' ? 'Loss' : 'Win'));
     document.getElementById('tfTimeframe').value = editTrade.Timeframe || 'M15';
-    const _exTf = document.getElementById('tfExitTimeframe'); if (_exTf) _exTf.value = editTrade.exit_timeframe || '';
+    const _exTf = document.getElementById('tfExitTimeframe'); if (_exTf) _exTf.value = editTrade.exit_timeframe || decodeExitTimeframeFromTags(editTrade.tags) || '';
     document.getElementById('tfDate').value = editTrade['Entry Date'] || '';
     document.getElementById('tfTime').value = editTrade['Entry Time'] != null ? editTrade['Entry Time'] : '';
     const exd = document.getElementById('tfExitDate');
@@ -5547,7 +5562,7 @@ async function saveTrade(e){
     final_stop: (function(){ const f = parseFloat(document.getElementById('tfFinalStop')?.value); const s = parseFloat(document.getElementById('tfSL')?.value); if (!isNaN(f)) return f; if (!isNaN(s)) return s; return null; })(),
     Result: (document.getElementById('tfResult').value || 'Win'),
     Timeframe: document.getElementById('tfTimeframe').value,
-    exit_timeframe: document.getElementById('tfExitTimeframe')?.value || null,
+    exit_timeframe: (function(){ const el = document.getElementById('tfExitTimeframe'); const v = el ? String(el.value||'').trim() : ''; return v || null; })(),
     Setup: document.getElementById('tfSetup').value || null,
     entry_trigger: document.getElementById('tfTrigger').value || null,
     Notes: document.getElementById('tfNotes').value || null,
@@ -5583,6 +5598,11 @@ async function saveTrade(e){
     mistakes: mistakes,
   };
   trade.id = newId;
+  const _exitTfEl = document.getElementById('tfExitTimeframe');
+  if (_exitTfEl) {
+    const v = String(_exitTfEl.value||'').trim();
+    trade.exit_timeframe = v || null;
+  }
   try {
     const savedVoices = await persistVoiceSlots(newId);
     trade.voices = savedVoices;
@@ -5649,7 +5669,8 @@ async function showDetail(id){
   if (t['Entry Time'] != null && t['Entry Time'] !== '') html += '<span>🕐 ورود ' + t['Entry Time'] + '</span>';
   if (t.exit_time) html += '<span>🕐 خروج ' + t.exit_time + '</span>';
   if (durStr) html += '<span>⏱ ' + durStr + '</span>';
-  html += '<span>TF ورود ' + (t.Timeframe||'—') + '</span>' + (t.exit_timeframe ? '<span>TF خروج ' + escapeHtml(t.exit_timeframe) + '</span>' : '') + '<span>🌍 ' + session + '</span></div></div>';
+  const _exitTfHero = t.exit_timeframe || decodeExitTimeframeFromTags(t.tags);
+  html += '<span>TF ورود ' + (t.Timeframe||'—') + '</span>' + (_exitTfHero ? '<span>TF خروج ' + escapeHtml(_exitTfHero) + '</span>' : '') + '<span>🌍 ' + session + '</span></div></div>';
 
   const infoItems = [];
   if (t.Symbol) infoItems.push(['نماد', t.Symbol]);
@@ -5664,7 +5685,8 @@ async function showDetail(id){
   if (t.reward_from) infoItems.push(['برگشته از', t.reward_from]);
   if (t.volume) infoItems.push(['حجم', t.volume]);
   if (t.Timeframe) infoItems.push(['تایم‌فریم ورود', t.Timeframe]);
-  if (t.exit_timeframe) infoItems.push(['تایم‌فریم خروج', t.exit_timeframe]);
+  const _exitTfShow = t.exit_timeframe || decodeExitTimeframeFromTags(t.tags);
+  if (_exitTfShow) infoItems.push(['تایم‌فریم خروج', _exitTfShow]);
   if (t.exit_reason) infoItems.push(['دلیل خروج', t.exit_reason]);
   if (infoItems.length) {
     html += '<div class="detail-section"><div class="section-title">📌 اطلاعات معامله</div><div class="detail-grid">' + infoItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(String(v))+'</strong></div>').join('') + '</div></div>';
