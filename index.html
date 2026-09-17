@@ -1755,7 +1755,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.11 (multi-select exit reasons)';
+const APP_BUILD = 'BUILD-v27.12 (reset form R ticks & chips on new trade)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -5181,25 +5181,66 @@ function loadVoiceSlotsFromTrade(t){
 
 
 /* ====== ADD MODAL ====== */
+
+function resetTradeFormVisualState(){
+  // ریواردها و هر چک‌باکس فرم
+  ['tfR1','tfR15','tfR2','tfR3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.checked = false;
+    const item = el.closest('.check-item');
+    if (item) item.classList.remove('selected');
+  });
+  document.querySelectorAll('#tradeForm .check-item').forEach(it => {
+    const cb = it.querySelector('input[type=checkbox]');
+    if (cb && !cb.checked) it.classList.remove('selected');
+  });
+  // انگیزه / اشتباهات
+  document.querySelectorAll('#motiveChecks .chip, #mistakeChecks .chip').forEach(it => it.classList.remove('selected'));
+  // واگرایی → پیش‌فرض «ندارد»
+  const divBox = document.getElementById('divChips');
+  if (divBox) {
+    divBox.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    const none = divBox.querySelector('.chip[data-v=""]');
+    if (none) none.classList.add('selected');
+  }
+  const tfDiv = document.getElementById('tfDivergence');
+  if (tfDiv) tfDiv.value = '';
+  // احساسات
+  document.querySelectorAll('#preEmotionChips .emo-item, #postEmotionChips .emo-item').forEach(el => {
+    el.classList.remove('selected');
+    const cb = el.querySelector('input'); if (cb) cb.checked = false;
+  });
+  const preH = document.getElementById('tfPreEmotion'); if (preH) preH.value = '';
+  const postH = document.getElementById('tfPostEmotion'); if (postH) postH.value = '';
+  // دلیل خروج
+  const ex = document.getElementById('tfExitReason'); if (ex) ex.value = '';
+  try { renderExitReasonChips(); } catch(e){}
+  // تگ‌ها و چک‌لیست
+  currentTags = [];
+  window._tradeClChecked = {};
+  try { renderFormTagChips(); renderTradeChecklistColumns(); } catch(e){}
+  // تایم‌فریم خروج
+  const exTf = document.getElementById('tfExitTimeframe'); if (exTf) exTf.value = '';
+  // استاپ نهایی
+  const fin = document.getElementById('tfFinalStop');
+  if (fin) { fin.dataset.manual = '0'; fin.value = ''; fin.classList.add('is-synced-stop'); fin.classList.remove('is-edited-stop'); }
+}
+
 function openAddModal(editTrade){
   editingId = editTrade ? editTrade.id : null;
   const title = document.querySelector('#addModal .modal-header h2');
   if (title) title.textContent = editingId ? 'ویرایش معامله' : 'ثبت معامله جدید';
   const form = document.getElementById('tradeForm'); if (form) form.reset();
-  currentTags = []; window._tradeClChecked = {};
+  // پاک‌سازی کامل ظاهر و تیک‌ها (form.reset کلاس selected را برنمی‌دارد)
+  resetTradeFormVisualState();
   resetVoiceSlots(); resetImageSlots();
   document.querySelectorAll('.emo-tab').forEach(t => t.classList.toggle('active', t.dataset.etab === 'pre'));
   document.querySelectorAll('.emo-pane').forEach(p => p.classList.toggle('active', p.id === 'epane-pre'));
-  renderTagManager(); renderFormTagChips(); renderTradeChecklistColumns();
-  document.querySelectorAll('#motiveChecks .chip, #mistakeChecks .chip').forEach(it => it.classList.remove('selected'));
+  renderTagManager();
   document.querySelectorAll('.form-tab').forEach((t,i) => t.classList.toggle('active', i===0));
   document.querySelectorAll('.form-section').forEach((s,i) => s.classList.toggle('active', i===0));
-  const _exTfNew = document.getElementById('tfExitTimeframe'); if (_exTfNew && !editTrade) _exTfNew.value = '';
-  const _ex = document.getElementById('tfExitReason'); if (_ex && !editTrade) _ex.value = '';
-  try { renderExitReasonChips(); } catch(e){}
   setDir('Buy'); setResult('Win');
-  const _finNew = document.getElementById('tfFinalStop');
-  if (_finNew) { _finNew.dataset.manual = '0'; _finNew.value = ''; _finNew.classList.add('is-synced-stop'); _finNew.classList.remove('is-edited-stop'); }
   try { syncFinalStopFromSL(true); } catch(e){}
   exitDateLocked = false;
   document.getElementById('tfDate').value = new Date().toISOString().slice(0,10);
@@ -5254,10 +5295,14 @@ function openAddModal(editTrade){
     const divBox = document.getElementById('divChips');
     if (divBox) { const val = editTrade.divergence_type || ''; divBox.querySelectorAll('.chip').forEach(c => c.classList.toggle('selected', (c.dataset.v||'') === val)); }
     document.getElementById('tfRewardFrom').value = editTrade.reward_from || '';
-    document.getElementById('tfR1').checked = !!(editTrade.r1);
-    document.getElementById('tfR15').checked = !!(editTrade.r15);
-    document.getElementById('tfR2').checked = !!(editTrade.r2);
-    document.getElementById('tfR3').checked = !!(editTrade.r3);
+    ['tfR1','tfR15','tfR2','tfR3'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const on = !!(i===0 ? editTrade.r1 : i===1 ? editTrade.r15 : i===2 ? editTrade.r2 : editTrade.r3);
+      el.checked = on;
+      const item = el.closest('.check-item');
+      if (item) item.classList.toggle('selected', on);
+    });
     document.getElementById('tfNotes').value = editTrade.Notes || '';
     document.getElementById('tfEntryReason').value = editTrade.entry_reason || '';
     document.getElementById('tfExitReason').value = editTrade.exit_reason || '';
