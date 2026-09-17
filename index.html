@@ -1495,7 +1495,7 @@ body.booting .today-strip{opacity:.4}
           <div class="form-group"><label>دلیل خروج</label>
             <div class="chip-group" id="exitReasonChips"></div>
             <input type="hidden" id="tfExitReason" value="">
-            <div class="form-help">پیش‌فرض: SL · TP · تریل استاپ — از تنظیمات می‌تونی اضافه کنی</div>
+            <div class="form-help">چند مورد قابل انتخاب — پیش‌فرض: SL · TP · تریل استاپ</div>
           </div>
           <div class="form-group"><label>یادداشت</label><textarea id="tfNotes"></textarea></div>
         </div>
@@ -1755,7 +1755,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.10 (exit TF dual-save via tags fallback)';
+const APP_BUILD = 'BUILD-v27.11 (multi-select exit reasons)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -2650,14 +2650,33 @@ function refreshCustomUI(){
   renderExitReasonChips();
   renderFormTagChips(); renderTagManager(); renderFilterTagChips();
 }
+function parseExitReasons(val){
+  if (!val) return [];
+  if (Array.isArray(val)) return val.map(s => String(s).trim()).filter(Boolean);
+  return String(val).split(/[,،|·]+/).map(s => s.trim()).filter(Boolean);
+}
+function syncExitReasonHidden(){
+  const box = document.getElementById('exitReasonChips');
+  const hid = document.getElementById('tfExitReason');
+  if (!box || !hid) return;
+  const vals = [...box.querySelectorAll('.chip.selected')].map(c => c.dataset.v).filter(v => v != null && v !== '');
+  hid.value = vals.join(' · ');
+}
+function toggleExitReasonChip(btn){
+  btn.classList.toggle('selected');
+  syncExitReasonHidden();
+}
 function renderExitReasonChips(){
   const box = document.getElementById('exitReasonChips'); if (!box) return;
-  const cur = document.getElementById('tfExitReason')?.value || '';
+  const selected = new Set(parseExitReasons(document.getElementById('tfExitReason')?.value || ''));
   const list = (custom.exitReasons && custom.exitReasons.length) ? custom.exitReasons : DEFAULT_EXIT_REASONS;
   box.innerHTML = list.map(v => {
-    const sel = cur === v ? ' selected' : '';
-    return '<button type="button" class="chip'+sel+'" data-v="'+escapeHtml(v)+'" onclick="selectChip(this,\'tfExitReason\')">'+escapeHtml(v)+'</button>';
-  }).join('') + '<button type="button" class="chip'+(cur===''?' selected':'')+'" data-v="" onclick="selectChip(this,\'tfExitReason\')">—</button>';
+    const sel = selected.has(v) ? ' selected' : '';
+    return '<button type="button" class="chip'+sel+'" data-v="'+escapeHtml(v)+'" onclick="toggleExitReasonChip(this)">'+escapeHtml(v)+'</button>';
+  }).join('');
+  const hint = document.querySelector('#exitReasonChips')?.parentElement?.querySelector('.form-help');
+  if (hint) hint.textContent = 'چند مورد قابل انتخاب است — از تنظیمات می‌تونی اضافه کنی';
+  syncExitReasonHidden();
 }
 function onEmoCardClick(el, e, hiddenId){
   setTimeout(() => {
@@ -2979,7 +2998,10 @@ function getFiltered(){
     if (trig && t.entry_trigger !== trig) return false;
     const exitR = document.getElementById('fExitReason')?.value || '';
     if (exitR === '__none__') { if (t.exit_reason) return false; }
-    else if (exitR && t.exit_reason !== exitR) return false;
+    else if (exitR) {
+      const parts = parseExitReasons(t.exit_reason);
+      if (!parts.includes(exitR) && t.exit_reason !== exitR) return false;
+    }
     if (from && (t['Entry Date']||'') < from) return false;
     if (to && (t['Entry Date']||'') > to) return false;
     if (session && getSession(t) !== session) return false;
@@ -4213,18 +4235,22 @@ function buildExitReasonStats(trades){
   const total = closed.length || 1;
   const map = {};
   closed.forEach(t => {
-    const k = (t.exit_reason && String(t.exit_reason).trim()) ? String(t.exit_reason).trim() : 'بدون ثبت';
-    if (!map[k]) map[k] = { n:0, w:0, l:0, be:0, pnl:0, rSum:0, rN:0, risk:0 };
-    const b = map[k];
-    b.n++;
-    if (t.Result === 'Win') b.w++;
-    else if (t.Result === 'Loss') b.l++;
-    else if (t.Result === 'BE') b.be++;
-    b.pnl += calcPnL(t);
+    let keys = parseExitReasons(t.exit_reason);
+    if (!keys.length) keys = ['بدون ثبت'];
+    const pnl = calcPnL(t);
     const r = typeof calcRMultiple === 'function' ? calcRMultiple(t) : 0;
-    if (!isNaN(r)) { b.rSum += r; b.rN++; }
     const stop = Number(t.stop_usd);
-    if (stop > 0) b.risk += stop;
+    keys.forEach(k => {
+      if (!map[k]) map[k] = { n:0, w:0, l:0, be:0, pnl:0, rSum:0, rN:0, risk:0 };
+      const b = map[k];
+      b.n++;
+      if (t.Result === 'Win') b.w++;
+      else if (t.Result === 'Loss') b.l++;
+      else if (t.Result === 'BE') b.be++;
+      b.pnl += pnl;
+      if (!isNaN(r)) { b.rSum += r; b.rN++; }
+      if (stop > 0) b.risk += stop;
+    });
   });
   return Object.entries(map).map(([k, v]) => {
     const decided = v.w + v.l;
@@ -5581,7 +5607,7 @@ async function saveTrade(e){
     img_extra1: imgFinals[0] || null,
     img_extra2: imgFinals[1] || null,
     entry_reason: document.getElementById('tfEntryReason').value || null,
-    exit_reason: document.getElementById('tfExitReason').value || null,
+    exit_reason: (function(){ try { syncExitReasonHidden(); } catch(e){} const v = (document.getElementById('tfExitReason')?.value || '').trim(); return v || null; })(),
     lessons: document.getElementById('tfLessons').value || null,
     volume: document.getElementById('tfVolume').value || null,
     energy: Number(document.getElementById('tfEnergy').value) || null,
@@ -5618,7 +5644,7 @@ async function saveTrade(e){
   else allTrades.push(trade);
   ensureUniqueIds();
   if (trade.Setup && !custom.setups.includes(trade.Setup)) { custom.setups.push(trade.Setup); saveCustom(); }
-  if (trade.exit_reason && !(custom.exitReasons||[]).includes(trade.exit_reason)) { if (!custom.exitReasons) custom.exitReasons = [...DEFAULT_EXIT_REASONS]; custom.exitReasons.push(trade.exit_reason); saveCustom(); }
+  parseExitReasons(trade.exit_reason).forEach(er => { if (er && !(custom.exitReasons||[]).includes(er)) { if (!custom.exitReasons) custom.exitReasons = [...DEFAULT_EXIT_REASONS]; custom.exitReasons.push(er); saveCustom(); } });
   if (trade.entry_trigger && !custom.triggers.includes(trade.entry_trigger)) { custom.triggers.push(trade.entry_trigger); saveCustom(); }
   if (trade.zone && !custom.zones.includes(trade.zone)) { custom.zones.push(trade.zone); saveCustom(); }
   setupFilters(); applyFilters();
@@ -5687,7 +5713,7 @@ async function showDetail(id){
   if (t.Timeframe) infoItems.push(['تایم‌فریم ورود', t.Timeframe]);
   const _exitTfShow = t.exit_timeframe || decodeExitTimeframeFromTags(t.tags);
   if (_exitTfShow) infoItems.push(['تایم‌فریم خروج', _exitTfShow]);
-  if (t.exit_reason) infoItems.push(['دلیل خروج', t.exit_reason]);
+  // دلیل خروج در بخش چیپ‌ها نمایش داده می‌شود
   if (infoItems.length) {
     html += '<div class="detail-section"><div class="section-title">📌 اطلاعات معامله</div><div class="detail-grid">' + infoItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(String(v))+'</strong></div>').join('') + '</div></div>';
   }
@@ -5700,7 +5726,10 @@ async function showDetail(id){
   if (setupItems.length || t.entry_reason || t.exit_reason || t.Notes) {
     html += '<div class="detail-section"><div class="section-title">🎯 ستاپ و دلایل</div>';
     if (setupItems.length) html += '<div class="detail-grid">' + setupItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(String(v))+'</strong></div>').join('') + '</div>';
-    if (t.exit_reason) html += '<div class="detail-text-block"><div class="detail-text-label">دلیل خروج</div><div class="chip-group" style="margin-top:6px"><span class="chip selected">'+escapeHtml(t.exit_reason)+'</span></div></div>';
+    if (t.exit_reason) {
+      const ers = parseExitReasons(t.exit_reason);
+      html += '<div class="detail-text-block"><div class="detail-text-label">دلیل خروج</div><div class="chip-group" style="margin-top:6px">' + (ers.length ? ers.map(e => '<span class="chip selected">'+escapeHtml(e)+'</span>').join('') : '<span class="chip selected">'+escapeHtml(t.exit_reason)+'</span>') + '</div></div>';
+    }
     if (t.entry_reason) html += '<div class="detail-text-block"><div class="detail-text-label">دلیل ورود</div><div class="detail-text">'+escapeHtml(t.entry_reason)+'</div></div>';
     if (t.Notes) html += '<div class="detail-text-block"><div class="detail-text-label">یادداشت</div><div class="detail-text">'+escapeHtml(t.Notes)+'</div></div>';
     html += '</div>';
