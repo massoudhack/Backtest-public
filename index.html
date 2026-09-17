@@ -1755,7 +1755,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.8 (multi voice notes with labels)';
+const APP_BUILD = 'BUILD-v27.9 (exit timeframe save/load fix)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1920,6 +1920,16 @@ async function upsertTradeRemote(t){
       return true;
     }
   }
+  if (error && /exit_timeframe/i.test(error.message||'') && Object.prototype.hasOwnProperty.call(row, 'exit_timeframe')) {
+    const { exit_timeframe, ...rest } = row;
+    const retry = await supabaseClient.from('journal_trades').upsert(rest);
+    error = retry.error;
+    if (!error) {
+      console.warn('exit_timeframe column missing');
+      showToast('ذخیره شد (بدون TF خروج — SQL را بزن)');
+      return true;
+    }
+  }
   if (error) {
     console.error('upsertTradeRemote', error);
     const msg = (error.message || error.details || 'خطا در ذخیره').toString();
@@ -1936,7 +1946,7 @@ async function loadTradesFromSupabase(){
 function rowToTrade(r){
   return {
     id: r.id, Symbol: r.symbol, Direction: r.direction, 'Entry Date': r.entry_date, 'Entry Time': r.entry_time, exit_date: r.exit_date || r.entry_date,
-    'Entry Price': r.entry_price, 'Stop Loss': r.stop_loss, Result: r.result, Timeframe: r.timeframe,
+    'Entry Price': r.entry_price, 'Stop Loss': r.stop_loss, Result: r.result, Timeframe: r.timeframe, exit_timeframe: r.exit_timeframe||null,
     Setup: r.setup, Notes: r.notes, manual_pnl: r.manual_pnl, stop_usd: r.stop_usd,
     initial_stop: r.initial_stop, final_stop: r.final_stop,
     r1: r.r1?1:null, r15: r.r15?1:null, r2: r.r2?1:null, r3: r.r3?1:null,
@@ -1962,7 +1972,7 @@ function tradeToRow(t, fallbackYear = null){
     exit_date: t.exit_date||null,
     entry_price: t['Entry Price']!=null?t['Entry Price']:null,
     stop_loss: t['Stop Loss']!=null?t['Stop Loss']:null,
-    result: t.Result||null, timeframe: t.Timeframe||null,
+    result: t.Result||null, timeframe: t.Timeframe||null, exit_timeframe: t.exit_timeframe||null,
     setup: t.Setup||null, notes: t.Notes||null,
     manual_pnl: t.manual_pnl!=null?t.manual_pnl:null,
     stop_usd: t.stop_usd!=null?t.stop_usd:null,
@@ -5143,6 +5153,7 @@ function openAddModal(editTrade){
   document.querySelectorAll('#motiveChecks .chip, #mistakeChecks .chip').forEach(it => it.classList.remove('selected'));
   document.querySelectorAll('.form-tab').forEach((t,i) => t.classList.toggle('active', i===0));
   document.querySelectorAll('.form-section').forEach((s,i) => s.classList.toggle('active', i===0));
+  const _exTfNew = document.getElementById('tfExitTimeframe'); if (_exTfNew && !editTrade) _exTfNew.value = '';
   const _ex = document.getElementById('tfExitReason'); if (_ex && !editTrade) _ex.value = '';
   try { renderExitReasonChips(); } catch(e){}
   setDir('Buy'); setResult('Win');
@@ -5168,6 +5179,7 @@ function openAddModal(editTrade){
     setDir(editTrade.Direction || 'Buy');
     setResult(['Win','Loss','BE','Open'].includes(editTrade.Result) ? editTrade.Result : (editTrade.Result === 'Loss' ? 'Loss' : 'Win'));
     document.getElementById('tfTimeframe').value = editTrade.Timeframe || 'M15';
+    const _exTf = document.getElementById('tfExitTimeframe'); if (_exTf) _exTf.value = editTrade.exit_timeframe || '';
     document.getElementById('tfDate').value = editTrade['Entry Date'] || '';
     document.getElementById('tfTime').value = editTrade['Entry Time'] != null ? editTrade['Entry Time'] : '';
     const exd = document.getElementById('tfExitDate');
@@ -5535,6 +5547,7 @@ async function saveTrade(e){
     final_stop: (function(){ const f = parseFloat(document.getElementById('tfFinalStop')?.value); const s = parseFloat(document.getElementById('tfSL')?.value); if (!isNaN(f)) return f; if (!isNaN(s)) return s; return null; })(),
     Result: (document.getElementById('tfResult').value || 'Win'),
     Timeframe: document.getElementById('tfTimeframe').value,
+    exit_timeframe: document.getElementById('tfExitTimeframe')?.value || null,
     Setup: document.getElementById('tfSetup').value || null,
     entry_trigger: document.getElementById('tfTrigger').value || null,
     Notes: document.getElementById('tfNotes').value || null,
@@ -5636,7 +5649,7 @@ async function showDetail(id){
   if (t['Entry Time'] != null && t['Entry Time'] !== '') html += '<span>🕐 ورود ' + t['Entry Time'] + '</span>';
   if (t.exit_time) html += '<span>🕐 خروج ' + t.exit_time + '</span>';
   if (durStr) html += '<span>⏱ ' + durStr + '</span>';
-  html += '<span>TF ' + (t.Timeframe||'—') + '</span><span>🌍 ' + session + '</span></div></div>';
+  html += '<span>TF ورود ' + (t.Timeframe||'—') + '</span>' + (t.exit_timeframe ? '<span>TF خروج ' + escapeHtml(t.exit_timeframe) + '</span>' : '') + '<span>🌍 ' + session + '</span></div></div>';
 
   const infoItems = [];
   if (t.Symbol) infoItems.push(['نماد', t.Symbol]);
@@ -5650,6 +5663,8 @@ async function showDetail(id){
   if (rHits !== '—') infoItems.push(['ریوارد لمس‌شده', rHits]);
   if (t.reward_from) infoItems.push(['برگشته از', t.reward_from]);
   if (t.volume) infoItems.push(['حجم', t.volume]);
+  if (t.Timeframe) infoItems.push(['تایم‌فریم ورود', t.Timeframe]);
+  if (t.exit_timeframe) infoItems.push(['تایم‌فریم خروج', t.exit_timeframe]);
   if (t.exit_reason) infoItems.push(['دلیل خروج', t.exit_reason]);
   if (infoItems.length) {
     html += '<div class="detail-section"><div class="section-title">📌 اطلاعات معامله</div><div class="detail-grid">' + infoItems.map(([k,v]) => '<div class="detail-item"><span>'+k+'</span><strong>'+escapeHtml(String(v))+'</strong></div>').join('') + '</div></div>';
