@@ -1755,7 +1755,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.12 (reset form R ticks & chips on new trade)';
+const APP_BUILD = 'BUILD-v27.13 (Iran week Sat–Fri filter)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -2926,12 +2926,31 @@ function fillSelect(id, items){
   if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
 }
 let customPeriodFrom = null, customPeriodTo = null;
+function localYMD(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return y + '-' + m + '-' + day;
+}
+/** شروع هفته ایران: شنبه — پایان: جمعه (یا تا امروز اگر وسط هفته باشیم) */
+function startOfIranWeek(date){
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0, 0);
+  // JS: 0=یکشنبه ... 6=شنبه → فاصله از شنبه
+  const sinceSat = (d.getDay() + 1) % 7;
+  d.setDate(d.getDate() - sinceSat);
+  return d;
+}
 function getPeriodRange(){
-  const now = new Date(), today = now.toISOString().slice(0,10);
+  const now = new Date();
+  const today = localYMD(now);
   if (currentPeriod === 'today') return { from: today, to: today };
-  if (currentPeriod === 'week') { const d = new Date(now); d.setDate(d.getDate()-7); return { from: d.toISOString().slice(0,10), to: today }; }
-  if (currentPeriod === 'month') { const d = new Date(now); d.setMonth(d.getMonth()-1); return { from: d.toISOString().slice(0,10), to: today }; }
-  if (currentPeriod === 'year') { const d = new Date(now); d.setFullYear(d.getFullYear()-1); return { from: d.toISOString().slice(0,10), to: today }; }
+  if (currentPeriod === 'week') {
+    // فقط معاملات از شنبهٔ همین هفته تا امروز (نه ۷ روز غلطان)
+    const from = localYMD(startOfIranWeek(now));
+    return { from, to: today };
+  }
+  if (currentPeriod === 'month') { const d = new Date(now); d.setMonth(d.getMonth()-1); return { from: localYMD(d), to: today }; }
+  if (currentPeriod === 'year') { const d = new Date(now); d.setFullYear(d.getFullYear()-1); return { from: localYMD(d), to: today }; }
   if (currentPeriod === 'custom') return { from: customPeriodFrom || null, to: customPeriodTo || null };
   return { from: null, to: null };
 }
@@ -5910,7 +5929,7 @@ function openExportModal(){ document.getElementById('exportModal').classList.add
 function closeExportModal(){ document.getElementById('exportModal').classList.remove('show'); unlockScroll(); }
 function getExportRange(){
   const now = new Date(); const todayStr = now.toISOString().slice(0,10);
-  if (pendingExportRange === 'week') { const d = new Date(now); d.setDate(d.getDate()-7); return { from:d.toISOString().slice(0,10), to:todayStr, label:'هفته اخیر' }; }
+  if (pendingExportRange === 'week') { const from = localYMD(startOfIranWeek(now)); return { from, to:todayStr, label:'هفته جاری (شنبه تا امروز)' }; }
   if (pendingExportRange === 'month') { const d = new Date(now); d.setMonth(d.getMonth()-1); return { from:d.toISOString().slice(0,10), to:todayStr, label:'ماه اخیر' }; }
   if (pendingExportRange === 'year') { const d = new Date(now); d.setFullYear(d.getFullYear()-1); return { from:d.toISOString().slice(0,10), to:todayStr, label:'سال اخیر' }; }
   if (pendingExportRange === 'all') return { from:null, to:null, label:'همه' };
