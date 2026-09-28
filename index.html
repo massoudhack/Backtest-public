@@ -649,6 +649,18 @@ body.booting .today-strip{opacity:.4}
 .voice-slot-meta{font-size:.72rem;color:var(--text-muted)}
 .voice-slot audio{width:100%;margin-top:8px}
 
+
+.remind-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px}
+.remind-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.remind-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;flex-wrap:wrap}
+.remind-item .ri-main{flex:1;min-width:140px}
+.remind-item .ri-title{font-weight:700;font-size:.9rem}
+.remind-item .ri-meta{font-size:.72rem;color:var(--text-muted);margin-top:4px}
+.remind-item.done{opacity:.55}
+.remind-item.done .ri-title{text-decoration:line-through}
+.remind-perm{font-size:.8rem;padding:10px 12px;border-radius:10px;background:var(--info-soft);color:var(--info-text);margin-bottom:12px;line-height:1.7}
+.remind-perm.warn{background:var(--warning-soft);color:#b45309}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1287,6 +1299,30 @@ body.booting .today-strip{opacity:.4}
     <div id="checklistBoard"></div>
   </div>
 
+
+  <div class="main-panel" id="panel-reminders">
+    <div class="remind-card">
+      <strong style="font-size:1rem">🔔 یادآوری و نوتیفیکیشن (تست)</strong>
+      <div style="font-size:.78rem;color:var(--text-muted);margin-top:6px;line-height:1.7">
+        متن و ساعت بگذار تا نوتیفیکیشن زمان‌بندی شود.
+        روی اندروید با PWA نصب‌شده بهتر کار می‌کند. اگر اپ کاملاً از حافظه بسته شود، ممکن است نوتیف نیاید (برای حالت قطعی بعداً Push سرور لازم است).
+      </div>
+      <div class="remind-perm" id="remindPermBox">وضعیت اجازه: در حال بررسی...</div>
+      <div class="form-group"><label>متن نوتیفیکیشن</label><input type="text" id="rmText" placeholder="مثلاً: ترید امروز را ثبت کن"></div>
+      <div class="form-row">
+        <div class="form-group"><label>تاریخ</label><input type="date" id="rmDate"></div>
+        <div class="form-group"><label>ساعت</label><input type="time" id="rmTime"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn" onclick="scheduleReminder()">⏱ زمان‌بندی</button>
+        <button type="button" class="btn btn-outline" onclick="testNotifyNow()">🔔 تست همین الان</button>
+        <button type="button" class="btn btn-outline" onclick="requestNotifPermission(true)">اجازه نوتیفیکیشن</button>
+      </div>
+      <div class="section-title" style="margin-top:18px">زمان‌بندی‌شده‌ها</div>
+      <div class="remind-list" id="remindList"></div>
+    </div>
+  </div>
+
   <p class="storage-info" id="storageInfo"></p>
   <p id="buildInfo" style="text-align:center;font-size:.72rem;padding:8px;margin-top:6px;background:var(--warning-soft);color:var(--warning);border-radius:10px;font-weight:600;"></p>
 </div>
@@ -1755,7 +1791,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.13 (Iran week Sat–Fri filter)';
+const APP_BUILD = 'BUILD-v27.14 (local reminder notifications test tab)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1778,7 +1814,8 @@ const DEFAULT_MENU = [
   {key:'analysis',  label:'تحلیل', icon:'📊'},
   {key:'advanced',  label:'تحلیل پیشرفته', icon:'🧮'},
   {key:'badges',    label:'مدال‌ها', icon:'🏆'},
-  {key:'checklist', label:'چک‌لیست', icon:'✅'}
+  {key:'checklist', label:'چک‌لیست', icon:'✅'},
+  {key:'reminders', label:'یادآوری', icon:'🔔'}
 ];
 const PIP_SIZE_MAP = {
   eurusd: 0.0001, gbpusd: 0.0001, audusd: 0.0001, nzdusd: 0.0001,
@@ -2088,6 +2125,143 @@ async function handleLogin(){
   document.getElementById('loginOverlay').style.display = 'none';
   await bootApp();
 }
+
+/* ====== LOCAL REMINDERS (test notifications) ====== */
+const REMIND_KEY = 'tj_local_reminders_v1';
+let remindTimers = {};
+
+function loadReminders(){
+  try { return JSON.parse(localStorage.getItem(REMIND_KEY) || '[]'); } catch(e){ return []; }
+}
+function saveReminders(list){
+  try { localStorage.setItem(REMIND_KEY, JSON.stringify(list)); } catch(e){}
+}
+function updateRemindPermUI(){
+  const box = document.getElementById('remindPermBox'); if (!box) return;
+  if (!('Notification' in window)) {
+    box.className = 'remind-perm warn';
+    box.textContent = 'این مرورگر Notification API ندارد.';
+    return;
+  }
+  const p = Notification.permission;
+  if (p === 'granted') { box.className = 'remind-perm'; box.textContent = '✓ اجازه نوتیفیکیشن فعال است. می‌توانی زمان‌بندی کنی.'; }
+  else if (p === 'denied') { box.className = 'remind-perm warn'; box.textContent = 'اجازه رد شده. از تنظیمات مرورگر/سایت اجازه نوتیفیکیشن را روشن کن.'; }
+  else { box.className = 'remind-perm warn'; box.textContent = 'هنوز اجازه نگرفته‌ای — دکمه «اجازه نوتیفیکیشن» را بزن.'; }
+}
+async function requestNotifPermission(fromBtn){
+  if (!('Notification' in window)) { showToast('پشتیبانی نمی‌شود'); return false; }
+  if (Notification.permission === 'granted') { updateRemindPermUI(); if (fromBtn) showToast('قبلاً فعال است'); return true; }
+  if (Notification.permission === 'denied') { updateRemindPermUI(); showToast('اجازه رد شده — از تنظیمات سایت'); return false; }
+  const r = await Notification.requestPermission();
+  updateRemindPermUI();
+  if (r === 'granted') { showToast('✓ اجازه داده شد'); return true; }
+  showToast('اجازه داده نشد');
+  return false;
+}
+async function showLocalNotification(title, body){
+  const opts = { body: body || '', icon: './icon-192.png', badge: './icon-192.png', lang: 'fa', dir: 'rtl', tag: 'tj-remind-' + Date.now() };
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.ready;
+      if (reg && reg.showNotification) { await reg.showNotification(title, opts); return true; }
+    }
+  } catch(e){ console.warn('SW notify', e); }
+  try {
+    if (Notification.permission === 'granted') { new Notification(title, opts); return true; }
+  } catch(e){ console.warn('Notification', e); }
+  return false;
+}
+async function testNotifyNow(){
+  const ok = await requestNotifPermission(false);
+  if (!ok) return;
+  const text = (document.getElementById('rmText')?.value || '').trim() || 'تست نوتیفیکیشن ژورنال';
+  const shown = await showLocalNotification('ژورنال ترید', text);
+  showToast(shown ? '✓ نوتیف ارسال شد' : 'ناموفق — اجازه یا SW را چک کن');
+}
+function renderRemindList(){
+  const el = document.getElementById('remindList'); if (!el) return;
+  const list = loadReminders().sort((a,b) => (a.at||0) - (b.at||0));
+  if (!list.length) { el.innerHTML = '<div class="empty-state">هنوز یادآوری‌ای نیست</div>'; return; }
+  const now = Date.now();
+  el.innerHTML = list.map(r => {
+    const d = new Date(r.at);
+    const when = isNaN(d) ? '—' : (d.toLocaleDateString('fa-IR') + ' · ' + d.toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'}));
+    const status = r.fired ? 'ارسال شد' : (r.at <= now ? 'گذشته' : 'در انتظار');
+    const cls = r.fired ? ' done' : '';
+    return '<div class="remind-item'+cls+'"><div class="ri-main"><div class="ri-title">'+escapeHtml(r.text||'')+'</div><div class="ri-meta">'+when+' · '+status+'</div></div>'
+      + '<button type="button" class="btn btn-outline btn-sm" onclick="cancelReminder(\''+r.id+'\')">حذف</button></div>';
+  }).join('');
+}
+function clearRemindTimers(){
+  Object.keys(remindTimers).forEach(id => { try { clearTimeout(remindTimers[id]); } catch(e){} });
+  remindTimers = {};
+}
+function armReminder(r){
+  if (!r || r.fired) return;
+  const delay = r.at - Date.now();
+  if (delay <= 0) return;
+  if (remindTimers[r.id]) clearTimeout(remindTimers[r.id]);
+  // setTimeout سقف تقریبی دارد؛ برای تست‌های نزدیک (تا چند روز) کافی است
+  if (delay > 2147483647) return;
+  remindTimers[r.id] = setTimeout(async () => {
+    const list = loadReminders();
+    const cur = list.find(x => x.id === r.id);
+    if (!cur || cur.fired) return;
+    const ok = await requestNotifPermission(false);
+    if (ok) await showLocalNotification('یادآوری ژورنال', cur.text || 'یادآوری');
+    cur.fired = true;
+    saveReminders(list);
+    renderRemindList();
+    try { showToast('🔔 ' + (cur.text || 'یادآوری')); } catch(e){}
+  }, delay);
+}
+function rescheduleAllReminders(){
+  clearRemindTimers();
+  loadReminders().forEach(r => { if (!r.fired && r.at > Date.now()) armReminder(r); });
+  renderRemindList();
+}
+async function scheduleReminder(){
+  const text = (document.getElementById('rmText')?.value || '').trim();
+  const date = document.getElementById('rmDate')?.value || '';
+  const time = document.getElementById('rmTime')?.value || '';
+  if (!text) { showToast('متن را بنویس'); return; }
+  if (!date || !time) { showToast('تاریخ و ساعت را مشخص کن'); return; }
+  const at = new Date(date + 'T' + time + ':00').getTime();
+  if (isNaN(at)) { showToast('تاریخ/ساعت نامعتبر'); return; }
+  if (at <= Date.now() + 2000) { showToast('زمان باید در آینده باشد (حداقل چند ثانیه بعد)'); return; }
+  const ok = await requestNotifPermission(false);
+  if (!ok) return;
+  const item = { id: 'rm_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), text, at, fired: false };
+  const list = loadReminders();
+  list.push(item);
+  saveReminders(list);
+  armReminder(item);
+  renderRemindList();
+  const sec = Math.round((at - Date.now())/1000);
+  showToast('✓ زمان‌بندی شد (' + (sec < 120 ? sec + ' ثانیه دیگر' : Math.round(sec/60) + ' دقیقه دیگر') + ')');
+}
+function cancelReminder(id){
+  const list = loadReminders().filter(r => r.id !== id);
+  saveReminders(list);
+  if (remindTimers[id]) { clearTimeout(remindTimers[id]); delete remindTimers[id]; }
+  renderRemindList();
+  showToast('حذف شد');
+}
+function initRemindersTab(){
+  const d = document.getElementById('rmDate');
+  const t = document.getElementById('rmTime');
+  if (d && !d.value) {
+    const n = new Date();
+    d.value = n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0') + '-' + String(n.getDate()).padStart(2,'0');
+  }
+  if (t && !t.value) {
+    const n = new Date(Date.now() + 2*60*1000);
+    t.value = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  }
+  updateRemindPermUI();
+  rescheduleAllReminders();
+}
+
 async function init(){
   try { const { data } = await supabaseClient.auth.getSession(); if (data && data.session) { document.getElementById('loginOverlay').style.display = 'none'; await bootApp(); return; } } catch(e){}
   document.getElementById('loginOverlay').style.display = 'flex';
@@ -2117,6 +2291,7 @@ async function bootApp(){
   try { checkNewBadges(); } catch(e){}
   const bi = document.getElementById('buildInfo');
   if (bi) bi.textContent = '🔧 نسخه فایل: ' + APP_BUILD;
+  try { initRemindersTab(); } catch(e){ console.warn(e); }
   document.body.classList.remove('booting');
   if (sk) sk.classList.remove('show');
 }
@@ -2197,6 +2372,7 @@ function bindMainTabs(){
       document.querySelectorAll('.main-panel').forEach(p=>p.classList.remove('active'));
       const panel = document.getElementById('panel-'+tab.dataset.main);
       if (panel) panel.classList.add('active');
+      if (tab.dataset.main === 'reminders') { try { initRemindersTab(); } catch(e){} }
     });
   });
 }
