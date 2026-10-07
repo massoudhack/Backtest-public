@@ -1791,7 +1791,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.14 (local reminder notifications test tab)';
+const APP_BUILD = 'BUILD-v27.15 (per-R win rate: hit target vs miss = loss)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1869,11 +1869,11 @@ const BADGES = [
   { id:'streak5', medal:'⚡', title:'استریک ۵', desc:'۵ برد پیوسته', color:'silver', check:t=>calcStreaks(t).maxWin>=5, progress:t=>Math.min(1,calcStreaks(t).maxWin/5) },
   { id:'streak10', medal:'💎', title:'الماس', desc:'۱۰ برد پیوسته', color:'gold', check:t=>calcStreaks(t).maxWin>=10, progress:t=>Math.min(1,calcStreaks(t).maxWin/10) },
   { id:'profit500', medal:'💰', title:()=>'سود '+getBadgeTarget('profit500',500)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit500',500)+' دلار', color:'bronze', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=getBadgeTarget('profit500',500), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/getBadgeTarget('profit500',500)) },
-  { id:'profit1000', medal:'💎', title:()=>'سود '+getBadgeTarget('profit1000',1000)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit1000',1000)+' دلار', color:'silver', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=getBadgeTarget('profit1000',1000), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/getBadgeTarget('profit1000',1000)) },
-  { id:'profit5000', medal:'🏅', title:()=>'سود '+getBadgeTarget('profit5000',5000)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit5000',5000)+' دلار', color:'gold', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=getBadgeTarget('profit5000',5000), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/getBadgeTarget('profit5000',5000)) },
+  { id:'profit1000', medal:'💎', title:()=>'سود '+getBadgeTarget('profit1000',1000)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit1000',1000)+' دلار', color:'silver', check:t=>t.reduce((s,x)=>s+calcPnLActual(x),0)>=getBadgeTarget('profit1000',1000), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnLActual(x),0)/getBadgeTarget('profit1000',1000)) },
+  { id:'profit5000', medal:'🏅', title:()=>'سود '+getBadgeTarget('profit5000',5000)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit5000',5000)+' دلار', color:'gold', check:t=>t.reduce((s,x)=>s+calcPnLActual(x),0)>=getBadgeTarget('profit5000',5000), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnLActual(x),0)/getBadgeTarget('profit5000',5000)) },
   { id:'wr60', medal:'🎖️', title:'دقت بالا', desc:'وین ریت ≥ ۶۰٪ (حداقل ۲۰ معامله)', color:'gold', check:t=>t.length>=20&&(()=>{const w=t.filter(x=>x.Result==='Win').length,l=t.filter(x=>x.Result==='Loss').length;return w+l?((w/(w+l))*100)>=60:false;})(), progress:t=>t.length>=20?Math.min(1,1):t.length/20 },
-  { id:'pf2', medal:'⚖️', title:'پروفیت فاکتور ۲', desc:'PF ≥ ۲ (سود÷ضرر)', color:'gold', check:t=>{const w=t.filter(x=>calcPnL(x)>0).reduce((s,x)=>s+calcPnL(x),0);const l=t.filter(x=>calcPnL(x)<0).reduce((s,x)=>s+Math.abs(calcPnL(x)),0);return l>0&&w/l>=2;}, progress:t=>{const w=t.filter(x=>calcPnL(x)>0).reduce((s,x)=>s+calcPnL(x),0);const l=t.filter(x=>calcPnL(x)<0).reduce((s,x)=>s+Math.abs(calcPnL(x)),0);return l>0?Math.min(1,(w/l)/2):0;} },
-  { id:'r3ten', medal:'🌟', title:'۱۰ برد 3R', desc:'۱۰ معامله با +۳R', color:'gold', check:t=>t.filter(x=>x.r3&&calcPnL(x)>0).length>=10, progress:t=>Math.min(1,t.filter(x=>x.r3&&calcPnL(x)>0).length/10) },
+  { id:'pf2', medal:'⚖️', title:'پروفیت فاکتور ۲', desc:'PF ≥ ۲ (سود÷ضرر)', color:'gold', check:t=>{const w=t.filter(x=>calcPnLActual(x)>0).reduce((s,x)=>s+calcPnLActual(x),0);const l=t.filter(x=>calcPnLActual(x)<0).reduce((s,x)=>s+Math.abs(calcPnLActual(x)),0);return l>0&&w/l>=2;}, progress:t=>{const w=t.filter(x=>calcPnLActual(x)>0).reduce((s,x)=>s+calcPnLActual(x),0);const l=t.filter(x=>calcPnLActual(x)<0).reduce((s,x)=>s+Math.abs(calcPnLActual(x)),0);return l>0?Math.min(1,(w/l)/2):0;} },
+  { id:'r3ten', medal:'🌟', title:'۱۰ برد 3R', desc:'۱۰ معامله با +۳R', color:'gold', check:t=>t.filter(x=>x.r3).length>=10, progress:t=>Math.min(1,t.filter(x=>x.r3).length/10) },
   { id:'disciplined', medal:'🎯', title:'منظم', desc:'امتیاز انضباط ≥ ۸۰ (حداقل ۱۰ معامله)', color:'gold', check:t=>t.length>=10&&calcDisciplineAvg(t)>=80, progress:t=>Math.min(1,calcDisciplineAvg(t)/80) },
   { id:'lessons10', medal:'🧠', title:'یادگیرنده', desc:'۱۰ درس آموخته‌شده نوشتی', color:'silver', check:t=>t.filter(x=>x.lessons&&String(x.lessons).trim()).length>=10, progress:t=>Math.min(1,t.filter(x=>x.lessons&&String(x.lessons).trim()).length/10) },
   { id:'notefull', medal:'📝', title:'ژورنال‌نویس', desc:'۵۰ معامله با یادداشت', color:'silver', check:t=>t.filter(x=>x.Notes&&String(x.Notes).trim()).length>=50, progress:t=>Math.min(1,t.filter(x=>x.Notes&&String(x.Notes).trim()).length/50) },
@@ -3272,22 +3272,47 @@ function ensureUniqueIds(){
   });
   allTrades = out;
 }
+/** آیا در حالت فعلی اکوییتی، تارگت همان ریوارد لمس شده؟ */
+function hitRewardForMode(t){
+  if (equityMode === 'manual') return null;
+  const map = { '1R': t.r1, '1.5R': t.r15, '2R': t.r2, '3R': t.r3 };
+  const h = map[equityMode];
+  return !!(h === 1 || h === true || h === '1' || Number(h) === 1);
+}
+/** برد/باخت بر اساس حالت اکوییتی (manual=نتیجه واقعی، ریوارد=لمس تارگت) */
+function isModeWin(t){
+  if (isOpenTrade(t)) return false;
+  if (equityMode === 'manual') return t.Result === 'Win';
+  if (t.Result === 'BE') return false;
+  return hitRewardForMode(t) === true;
+}
+function isModeLoss(t){
+  if (isOpenTrade(t)) return false;
+  if (equityMode === 'manual') return t.Result === 'Loss';
+  if (t.Result === 'BE') return false;
+  return hitRewardForMode(t) === false;
+}
+/** P/L واقعی ژورنال (همیشه Result + manual_pnl) — برای مدال‌ها */
+function calcPnLActual(t){
+  if (isOpenTrade(t)) return 0;
+  const m = Number(t.manual_pnl);
+  if (isNaN(m)) return 0;
+  if (t.Result === 'Win') return Math.abs(m);
+  if (t.Result === 'Loss') return -Math.abs(m);
+  return 0;
+}
 function calcPnL(t){
   if (isOpenTrade(t)) return 0;
   const stop = Number(t.stop_usd) || 10;
-  if (equityMode === 'manual') {
-    const m = Number(t.manual_pnl);
-    if (isNaN(m)) return 0;
-    if (t.Result === 'Win') return Math.abs(m);
-    if (t.Result === 'Loss') return -Math.abs(m);
-    if (t.Result === 'BE') return 0;
-    return 0;
-  }
-  const map = { '1R':[t.r1,1], '1.5R':[t.r15,1.5], '2R':[t.r2,2], '3R':[t.r3,3] };
-  const [hit, mult] = map[equityMode] || [null, 0];
-  if (t.Result === 'Win' && (hit === 1 || hit === true || hit === '1' || Number(hit) === 1)) return stop * mult;
-  if (t.Result === 'Loss') return -stop;
-  return 0;
+  if (equityMode === 'manual') return calcPnLActual(t);
+  // سر‌به‌سر در سناریوی ریوارد وارد برد/باخت نمی‌شود
+  if (t.Result === 'BE') return 0;
+  const multMap = { '1R': 1, '1.5R': 1.5, '2R': 2, '3R': 3 };
+  const mult = multMap[equityMode];
+  if (mult == null) return calcPnLActual(t);
+  // ملاک: لمس تارگت همان ریوارد — زده = سود، نزده = ضرر کامل استاپ
+  if (hitRewardForMode(t)) return stop * mult;
+  return -stop;
 }
 function calcRMultiple(t){
   const stop = Number(t.stop_usd) || 0;
@@ -3383,7 +3408,7 @@ function calcEmotionEdge(trades){
     unique.forEach(e => {
       if (!buckets[e]) buckets[e] = { n:0, w:0, pnl:0 };
       buckets[e].n++;
-      if (t.Result === 'Win') buckets[e].w++;
+      if (isModeWin(t)) buckets[e].w++;
       buckets[e].pnl += calcPnL(t);
     });
   });
@@ -3670,7 +3695,7 @@ function renderHubDaily(){
     if (!dayMap[ds]) dayMap[ds] = { pnl:0, n:0, w:0, l:0 };
     dayMap[ds].pnl += calcPnL(t);
     dayMap[ds].n++;
-    if (t.Result === 'Win') dayMap[ds].w++;
+    if (isModeWin(t)) dayMap[ds].w++;
     else if (t.Result === 'Loss') dayMap[ds].l++;
   });
   renderHubCal(dayMap);
@@ -3684,7 +3709,7 @@ function renderHubDaily(){
   let pnl = 0, w = 0, l = 0;
   trades.forEach(t => {
     const p = calcPnL(t); pnl += p;
-    if (t.Result === 'Win') w++; else if (t.Result === 'Loss') l++;
+    if (isModeWin(t)) w++; else if (isModeLoss(t)) l++;
   });
   const decided = w + l;
   const wr = decided ? (w/decided*100) : 0;
@@ -4283,8 +4308,8 @@ function renderAdvDuration(){
     const h = Math.floor(m/60), mm = Math.round(m%60);
     return h+' ساعت'+(mm?' و '+mm+' دقیقه':'');
   };
-  const wins = arr.filter(x => x.t.Result === 'Win');
-  const losses = arr.filter(x => x.t.Result === 'Loss');
+  const wins = arr.filter(x => isModeWin(x.t));
+  const losses = arr.filter(x => isModeLoss(x.t));
   const avgW = wins.length ? wins.reduce((s, x) => s + x.m, 0)/wins.length : 0;
   const avgL = losses.length ? losses.reduce((s, x) => s + x.m, 0)/losses.length : 0;
   const maxDur = Math.max(...arr.map(x => x.m));
@@ -4307,7 +4332,7 @@ function renderAdvHour(){
     const hh = Math.floor(h);
     if (!map[hh]) map[hh] = { n:0, w:0, l:0, pnl:0 };
     map[hh].n++;
-    if (t.Result === 'Win') map[hh].w++; else if (t.Result === 'Loss') map[hh].l++;
+    if (isModeWin(t)) map[hh].w++; else if (isModeLoss(t)) map[hh].l++;
     map[hh].pnl += calcPnL(t);
   });
   const entries = Object.entries(map).sort((a,b) => +a[0]-+b[0]);
@@ -4336,7 +4361,7 @@ function renderAdvSymDay(){
     const key = sym+'|'+di;
     if (!map[key]) map[key] = { n:0, pnl:0, w:0 };
     map[key].n++; map[key].pnl += calcPnL(t);
-    if (t.Result === 'Win') map[key].w++;
+    if (isModeWin(t)) map[key].w++;
   });
   let html = '<table class="symday-table"><thead><tr><th class="sym-col">نماد</th>' + days.map(d => '<th>'+d.slice(0,3)+'</th>').join('') + '</tr></thead><tbody>';
   symbols.slice(0, 15).forEach(sym => {
@@ -4393,7 +4418,7 @@ function renderAdvConfidence(){
     let key = null;
     if (c <= 3) key = '1-3'; else if (c <= 6) key = '4-6'; else if (c <= 8) key = '7-8'; else key = '9-10';
     buckets[key].n++;
-    if (t.Result === 'Win') buckets[key].w++; else if (t.Result === 'Loss') buckets[key].l++;
+    if (isModeWin(t)) buckets[key].w++; else if (isModeLoss(t)) buckets[key].l++;
     buckets[key].pnl += calcPnL(t);
   });
   const labels = { '1-3':'اعتماد کم (1-3)', '4-6':'متوسط (4-6)', '7-8':'بالا (7-8)', '9-10':'خیلی بالا (9-10)' };
@@ -4439,8 +4464,8 @@ function buildExitReasonStats(trades){
       if (!map[k]) map[k] = { n:0, w:0, l:0, be:0, pnl:0, rSum:0, rN:0, risk:0 };
       const b = map[k];
       b.n++;
-      if (t.Result === 'Win') b.w++;
-      else if (t.Result === 'Loss') b.l++;
+      if (isModeWin(t)) b.w++;
+      else if (isModeLoss(t)) b.l++;
       else if (t.Result === 'BE') b.be++;
       b.pnl += pnl;
       if (!isNaN(r)) { b.rSum += r; b.rN++; }
@@ -4504,7 +4529,7 @@ function renderAdvPerfTrigger(){
     const k = t.entry_trigger || 'بدون تریگر';
     if (!map[k]) map[k] = { w:0, l:0, pnl:0, n:0 };
     map[k].n++;
-    if (t.Result === 'Win') map[k].w++; else if (t.Result === 'Loss') map[k].l++;
+    if (isModeWin(t)) map[k].w++; else if (isModeLoss(t)) map[k].l++;
     map[k].pnl += calcPnL(t);
   });
   el.innerHTML = renderBarBreak(map, true);
@@ -4744,7 +4769,7 @@ function renderTodayStrip(){
   let pnl = 0, w = 0, l = 0;
   dayTrades.forEach(t => {
     const p = calcPnL(t); pnl += p;
-    if (t.Result === 'Win') w++; else if (t.Result === 'Loss') l++;
+    if (isModeWin(t)) w++; else if (isModeLoss(t)) l++;
   });
   const wr = (w + l) ? Math.round(w / (w + l) * 100) : 0;
   el.className = '';
@@ -4791,8 +4816,8 @@ function renderUnderwater(equityPoints, totalPnL){
 }
 function renderDashboard(){
   const total = filtered.length;
-  const wins = filtered.filter(t => t.Result === 'Win').length;
-  const losses = filtered.filter(t => t.Result === 'Loss').length;
+  const wins = filtered.filter(t => isModeWin(t)).length;
+  const losses = filtered.filter(t => isModeLoss(t)).length;
   const be = total - wins - losses;
   const wr = (wins + losses) ? ((wins/(wins+losses))*100).toFixed(1) : '0';
   let totalPnL = 0, winSum = 0, lossSum = 0, winCount = 0, lossCount = 0;
@@ -4850,12 +4875,12 @@ function renderDashboard(){
   const sellT = filtered.filter(t => t.Direction === 'Sell');
   const buyPnL = buyT.reduce((s, t) => s + calcPnL(t), 0);
   const sellPnL = sellT.reduce((s, t) => s + calcPnL(t), 0);
-  const buyW = buyT.filter(t => t.Result === 'Win').length;
-  const sellW = sellT.filter(t => t.Result === 'Win').length;
+  const buyW = buyT.filter(t => isModeWin(t)).length;
+  const sellW = sellT.filter(t => isModeWin(t)).length;
   const dc = document.getElementById('dirCards');
   if (dc) dc.innerHTML = `
-    <div class="dir-card"><h4>📈 خرید</h4><div class="big ${buyPnL>=0?'pnl-pos':'pnl-neg'}">${buyPnL>=0?'+':''}${buyPnL.toFixed(0)}$</div><div class="dir-mini"><span>تعداد<strong>${buyT.length}</strong></span><span>WR<strong>${buyT.length?(buyW/buyT.length*100).toFixed(0):0}%</strong></span></div></div>
-    <div class="dir-card"><h4>📉 فروش</h4><div class="big ${sellPnL>=0?'pnl-pos':'pnl-neg'}">${sellPnL>=0?'+':''}${sellPnL.toFixed(0)}$</div><div class="dir-mini"><span>تعداد<strong>${sellT.length}</strong></span><span>WR<strong>${sellT.length?(sellW/sellT.length*100).toFixed(0):0}%</strong></span></div></div>`;
+    <div class="dir-card"><h4>📈 خرید</h4><div class="big ${buyPnL>=0?'pnl-pos':'pnl-neg'}">${buyPnL>=0?'+':''}${buyPnL.toFixed(0)}$</div><div class="dir-mini"><span>تعداد<strong>${buyT.length}</strong></span><span>WR<strong>${(buyW+(buyT.filter(t=>isModeLoss(t)).length))?(buyW/(buyW+buyT.filter(t=>isModeLoss(t)).length)*100).toFixed(0):0}%</strong></span></div></div>
+    <div class="dir-card"><h4>📉 فروش</h4><div class="big ${sellPnL>=0?'pnl-pos':'pnl-neg'}">${sellPnL>=0?'+':''}${sellPnL.toFixed(0)}$</div><div class="dir-mini"><span>تعداد<strong>${sellT.length}</strong></span><span>WR<strong>${(sellW+(sellT.filter(t=>isModeLoss(t)).length))?(sellW/(sellW+sellT.filter(t=>isModeLoss(t)).length)*100).toFixed(0):0}%</strong></span></div></div>`;
   let peak = 0, maxDD = 0, run = 0;
   equityPoints.forEach(pt => { run = pt.eq; if (run > peak) peak = run; const dd = peak - run; if (dd > maxDD) maxDD = dd; });
   const recovery = maxDD > 0 ? (totalPnL/maxDD).toFixed(2) : (totalPnL > 0 ? '∞' : '0');
@@ -4906,7 +4931,7 @@ function groupBy(fn){
     const k = fn(t) || 'Unknown';
     if (!m[k]) m[k] = { w:0, l:0, pnl:0, n:0 };
     m[k].n++;
-    if (t.Result === 'Win') m[k].w++; else if (t.Result === 'Loss') m[k].l++;
+    if (isModeWin(t)) m[k].w++; else if (isModeLoss(t)) m[k].l++;
     m[k].pnl += calcPnL(t);
   });
   return m;
@@ -4941,7 +4966,7 @@ function renderPerfTab(){
       const k = DOW_FA[d.getDay()];
       if (!dowMap[k]) dowMap[k] = { w:0, l:0, pnl:0, n:0 };
       dowMap[k].n++;
-      if (t.Result === 'Win') dowMap[k].w++; else if (t.Result === 'Loss') dowMap[k].l++;
+      if (isModeWin(t)) dowMap[k].w++; else if (isModeLoss(t)) dowMap[k].l++;
       dowMap[k].pnl += calcPnL(t);
     });
     el.innerHTML = renderBarBreak(dowMap, true);
@@ -5032,7 +5057,7 @@ function renderHeatmap(){
       if (!dayMap[day]) dayMap[day] = { count:0, pnl:0, wins:0, losses:0 };
       dayMap[day].count++;
       dayMap[day].pnl += calcPnL(t);
-      if (t.Result === 'Win') dayMap[day].wins++; else if (t.Result === 'Loss') dayMap[day].losses++;
+      if (isModeWin(t)) dayMap[day].wins++; else if (isModeLoss(t)) dayMap[day].losses++;
     });
     const daysInMonth = new Date(hmYear, hmMonth+1, 0).getDate();
     const firstDow = new Date(hmYear, hmMonth, 1).getDay();
@@ -6159,7 +6184,7 @@ async function exportExcel(range){
   XLSX.utils.book_append_sheet(wb, wsSummary, 'خلاصه');
   const bySymbol = {};
   trades.forEach(t => { const s = (t.Symbol||'—').toUpperCase(); if (!bySymbol[s]) bySymbol[s] = { n:0, w:0, l:0, pnl:0, rSum:0 };
-    bySymbol[s].n++; if (t.Result === 'Win') bySymbol[s].w++; else if (t.Result === 'Loss') bySymbol[s].l++;
+    bySymbol[s].n++; if (isModeWin(t)) bySymbol[s].w++; else if (isModeLoss(t)) bySymbol[s].l++;
     bySymbol[s].pnl += calcPnL(t); bySymbol[s].rSum += calcRMultiple(t); });
   const symbolData = Object.entries(bySymbol).map(([sym, v]) => ({
     'نماد':sym, 'تعداد':v.n, 'برد':v.w, 'باخت':v.l,
