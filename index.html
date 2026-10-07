@@ -1791,7 +1791,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.15 (per-R win rate: hit target vs miss = loss)';
+const APP_BUILD = 'BUILD-v27.16 (journal list P/L always actual; R mode only for charts)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1868,7 +1868,7 @@ const BADGES = [
   { id:'streak3', medal:'🔥', title:'گرم شدن', desc:'۳ برد پیوسته', color:'bronze', check:t=>calcStreaks(t).maxWin>=3, progress:t=>Math.min(1,calcStreaks(t).maxWin/3) },
   { id:'streak5', medal:'⚡', title:'استریک ۵', desc:'۵ برد پیوسته', color:'silver', check:t=>calcStreaks(t).maxWin>=5, progress:t=>Math.min(1,calcStreaks(t).maxWin/5) },
   { id:'streak10', medal:'💎', title:'الماس', desc:'۱۰ برد پیوسته', color:'gold', check:t=>calcStreaks(t).maxWin>=10, progress:t=>Math.min(1,calcStreaks(t).maxWin/10) },
-  { id:'profit500', medal:'💰', title:()=>'سود '+getBadgeTarget('profit500',500)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit500',500)+' دلار', color:'bronze', check:t=>t.reduce((s,x)=>s+calcPnL(x),0)>=getBadgeTarget('profit500',500), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnL(x),0)/getBadgeTarget('profit500',500)) },
+  { id:'profit500', medal:'💰', title:()=>'سود '+getBadgeTarget('profit500',500)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit500',500)+' دلار', color:'bronze', check:t=>t.reduce((s,x)=>s+calcPnLActual(x),0)>=getBadgeTarget('profit500',500), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnLActual(x),0)/getBadgeTarget('profit500',500)) },
   { id:'profit1000', medal:'💎', title:()=>'سود '+getBadgeTarget('profit1000',1000)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit1000',1000)+' دلار', color:'silver', check:t=>t.reduce((s,x)=>s+calcPnLActual(x),0)>=getBadgeTarget('profit1000',1000), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnLActual(x),0)/getBadgeTarget('profit1000',1000)) },
   { id:'profit5000', medal:'🏅', title:()=>'سود '+getBadgeTarget('profit5000',5000)+'$', desc:()=>'سود خالص ≥ '+getBadgeTarget('profit5000',5000)+' دلار', color:'gold', check:t=>t.reduce((s,x)=>s+calcPnLActual(x),0)>=getBadgeTarget('profit5000',5000), progress:t=>Math.min(1,t.reduce((s,x)=>s+calcPnLActual(x),0)/getBadgeTarget('profit5000',5000)) },
   { id:'wr60', medal:'🎖️', title:'دقت بالا', desc:'وین ریت ≥ ۶۰٪ (حداقل ۲۰ معامله)', color:'gold', check:t=>t.length>=20&&(()=>{const w=t.filter(x=>x.Result==='Win').length,l=t.filter(x=>x.Result==='Loss').length;return w+l?((w/(w+l))*100)>=60:false;})(), progress:t=>t.length>=20?Math.min(1,1):t.length/20 },
@@ -5132,7 +5132,8 @@ function journalGroupKey(t, mode){
   }
 }
 function journalRowHtml(t, i){
-  const pnl = calcPnL(t);
+  // لیست ژورنال همیشه P/L واقعی ثبت‌شده را نشان می‌دهد (نه سناریوی ریوارد)
+  const pnl = calcPnLActual(t);
   const open = isOpenTrade(t);
   const pc = open ? '' : (pnl > 0 ? 'pnl-pos' : (pnl < 0 ? 'pnl-neg' : ''));
   const r = (v) => v === 1 || v === true || v === '1' || Number(v) === 1 ? '✓' : '—';
@@ -5156,9 +5157,9 @@ function renderTable(){
   sorted.forEach(t => { const key = journalGroupKey(t, groupMode) || '—'; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(t); });
   let entries = [...groups.entries()];
   if (groupMode === 'day' || groupMode === 'month' || groupMode === 'week') entries.sort((a,b) => b[0].localeCompare(a[0]));
-  else entries.sort((a,b) => b[1].reduce((s,t) => s + calcPnL(t), 0) - a[1].reduce((s,t) => s + calcPnL(t), 0));
+  else entries.sort((a,b) => b[1].reduce((s,t) => s + calcPnLActual(t), 0) - a[1].reduce((s,t) => s + calcPnLActual(t), 0));
   area.innerHTML = entries.map(([key, trades]) => {
-    const sum = trades.reduce((s,t) => s + calcPnL(t), 0);
+    const sum = trades.reduce((s,t) => s + calcPnLActual(t), 0);
     const pc = sum > 0 ? 'pnl-pos' : (sum < 0 ? 'pnl-neg' : '');
     const isOpen = journalGroupOpenState[key] === true;
     return '<details class="trade-group"' + (isOpen?' open':'') + ' data-gkey="' + escapeHtml(key) + '"><summary class="trade-group-header"><span class="tg-chevron">▾</span><span class="tg-name">' + escapeHtml(key) + '</span><span class="tg-count">' + trades.length + ' معامله</span><span class="tg-pnl ' + pc + '">' + (sum>=0?'+':'') + sum.toFixed(1) + '$</span></summary><div class="table-scroll"><table>' + JOURNAL_TABLE_HEAD + '<tbody>' + trades.map((t,i) => journalRowHtml(t,i)).join('') + '</tbody></table></div></details>';
@@ -5944,7 +5945,7 @@ async function showDetail(id){
   const t = allTrades.find(x => String(x.id) === String(id));
   if (!t) { showToast('پیدا نشد'); return; }
   document.getElementById('detailTitle').textContent = (t.Symbol || '') + ' · ' + (t['Entry Date'] || '');
-  const pnl = calcPnL(t); const pc = pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+  const pnl = calcPnLActual(t); const pc = pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
   const resultBadge = isOpenTrade(t) ? '<span class="badge badge-open">🔓 باز — تکمیل نشده</span>' : (t.Result === 'Win' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">سود</span>' : (t.Result === 'Loss' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">ضرر</span>' : (t.Result === 'BE' ? '<span class="badge" style="background:var(--warning-soft);color:#b45309">سر‌به‌سر</span>' : '<span class="badge" style="background:var(--bg-subtle);color:var(--text-muted)">' + escapeHtml(t.Result||'—') + '</span>')));
   const dirBadge = t.Direction === 'Buy' ? '<span class="badge" style="background:var(--success-soft);color:var(--success)">خرید</span>' : (t.Direction === 'Sell' ? '<span class="badge" style="background:var(--danger-soft);color:var(--danger)">فروش</span>' : '');
   const rHits = [t.r1&&'1R',t.r15&&'1.5R',t.r2&&'2R',t.r3&&'3R'].filter(Boolean).join(' · ') || '—';
@@ -5968,7 +5969,10 @@ async function showDetail(id){
   if (t.Direction) infoItems.push(['جهت', t.Direction === 'Buy' ? 'خرید' : (t.Direction === 'Sell' ? 'فروش' : t.Direction)]);
   if (t.Result) infoItems.push(['نتیجه', isOpenTrade(t) ? 'باز' : (t.Result === 'Win' ? 'سود' : (t.Result === 'Loss' ? 'ضرر' : (t.Result === 'BE' ? 'سر‌به‌سر' : t.Result)))]);
   if (t.stop_usd != null && t.stop_usd !== '') infoItems.push(['ریسک دلاری', t.stop_usd + '$']);
-  if (!isOpenTrade(t) && t.manual_pnl != null && t.manual_pnl !== '') infoItems.push(['P/L ثبت‌شده', (Number(t.manual_pnl)>=0?'+':'') + Number(t.manual_pnl) + '$']);
+  if (!isOpenTrade(t) && t.manual_pnl != null && t.manual_pnl !== '') {
+    const actual = calcPnLActual(t);
+    infoItems.push(['P/L ثبت‌شده', (actual>=0?'+':'') + Math.abs(actual).toFixed(1) + '$']);
+  }
   if (t['Entry Price'] != null && t['Entry Price'] !== '') infoItems.push(['قیمت ورود', t['Entry Price']]);
   if (t['Stop Loss'] != null && t['Stop Loss'] !== '') infoItems.push(['استاپ لحظه ورود', t['Stop Loss']]);
   if (t.final_stop != null && t.final_stop !== '') infoItems.push(['استاپ موقع بسته شدن', t.final_stop]);
