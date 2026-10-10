@@ -1016,7 +1016,10 @@ body.booting .today-strip{opacity:.4}
     <div class="journal-toolbar">
       <div class="filter-group"><label>مرتب‌سازی</label>
         <select id="jSort">
-          <option value="date_desc">جدیدترین</option><option value="date_asc">قدیمی‌ترین</option>
+          <option value="id_desc">جدیدترین ثبت</option>
+          <option value="date_desc">جدیدترین تاریخ</option>
+          <option value="date_asc">قدیمی‌ترین تاریخ</option>
+          <option value="id_asc">قدیمی‌ترین ثبت</option>
           <option value="pnl_desc">سود زیاد</option><option value="pnl_asc">ضرر زیاد</option>
           <option value="r_desc">R بالا</option><option value="r_asc">R پایین</option>
           <option value="stop_desc">Stop زیاد</option><option value="stop_asc">Stop کم</option>
@@ -1783,7 +1786,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.18 (reliable image paste: button + paste box + Ctrl+V)';
+const APP_BUILD = 'BUILD-v27.19 (journal sort: newest by registration id)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -5232,7 +5235,10 @@ const JOURNAL_TABLE_HEAD = '<thead><tr><th>#</th><th>نماد</th><th>جهت</th
 function rRank(t){ return t.r3?4:(t.r2?3:(t.r15?2:(t.r1?1:0))); }
 function sortJournalTrades(list, mode){
   const arr = [...list];
+  const idNum = (t) => { const n = Number(t && t.id); return isNaN(n) ? -1 : n; };
   switch (mode) {
+    case 'id_desc': arr.sort((a,b) => idNum(b) - idNum(a) || (b['Entry Date']||'').localeCompare(a['Entry Date']||'')); break;
+    case 'id_asc': arr.sort((a,b) => idNum(a) - idNum(b) || (a['Entry Date']||'').localeCompare(b['Entry Date']||'')); break;
     case 'date_asc': arr.sort((a,b) => (a['Entry Date']||'').localeCompare(b['Entry Date']||'') || (getEntryHour(a)||0)-(getEntryHour(b)||0)); break;
     case 'pnl_desc': arr.sort((a,b) => calcPnL(b) - calcPnL(a)); break;
     case 'pnl_asc': arr.sort((a,b) => calcPnL(a) - calcPnL(b)); break;
@@ -5279,7 +5285,7 @@ function journalRowHtml(t, i){
 let journalGroupOpenState = {};
 function renderTable(){
   const area = document.getElementById('journalListArea'); if (!area) return;
-  const sortMode = document.getElementById('jSort')?.value || 'date_desc';
+  const sortMode = document.getElementById('jSort')?.value || 'id_desc';
   const groupMode = document.getElementById('jGroup')?.value || '';
   if (!filtered.length) {
     area.innerHTML = '<div class="table-scroll" style="text-align:center;padding:30px;color:var(--text-muted)">'+(globalSearchQuery?'نتیجه‌ای پیدا نشد':'معامله‌ای یافت نشد')+'</div>';
