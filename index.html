@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="trades_data.js"></script>
@@ -1374,6 +1375,18 @@ body.booting .today-strip{opacity:.4}
         </div>
         <div class="export-check"></div>
       </div>
+      <div class="export-opt" data-export-type="zip">
+        <div class="export-icon" style="background:#e0e7ff;color:#4f46e5">📦</div>
+        <div class="export-info">
+          <div class="export-title">بک‌آپ ZIP (اکسل + عکس‌ها)</div>
+          <div class="export-desc">اکسل با لینک محلی + پوشه images داخل یک فایل فشرده</div>
+        </div>
+        <div class="export-check"></div>
+      </div>
+      <label style="display:flex;align-items:flex-start;gap:10px;margin-top:14px;padding:12px;background:var(--bg-subtle);border-radius:12px;cursor:pointer;font-size:.82rem;line-height:1.6">
+        <input type="checkbox" id="exportIncludeImgLinks" checked style="margin-top:3px;width:18px;height:18px;flex-shrink:0">
+        <span>در اکسل ستون لینک/آدرس عکس‌ها هم باشد (لینک مستقیم یا آدرس استوریج)</span>
+      </label>
       <div class="form-actions" style="margin-top:20px">
         <button type="button" class="btn btn-outline" onclick="closeExportModal()">انصراف</button>
         <button type="button" class="btn btn-success btn-lg" id="exportGoBtn" onclick="runExport()">📥 دریافت فایل</button>
@@ -1786,7 +1799,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.19 (journal sort: newest by registration id)';
+const APP_BUILD = 'BUILD-v27.21b (equity tooltip date Gregorian)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -2090,6 +2103,76 @@ function getImgPreviewSource(value){
   if (isStorageRef(value)) return { type:'storage', path: extractStoragePath(value) };
   return { type:'direct', src: value };
 }
+/** لیست همه رفرنس‌های عکس یک ترید */
+function collectTradeImageRefs(t){
+  const out = [];
+  if (t.trigger_img) out.push({ kind:'trigger', ref: t.trigger_img });
+  if (t.zone_img) out.push({ kind:'zone', ref: t.zone_img });
+  let extras = Array.isArray(t.img_extras) ? t.img_extras.filter(Boolean) : [];
+  if (!extras.length) extras = [t.img_extra1, t.img_extra2].filter(Boolean);
+  extras.forEach((r,i) => out.push({ kind:'extra'+(i+1), ref: r }));
+  return out;
+}
+/** تبدیل رفرنس به URL قابل‌باز شدن در مرورگر (لینک یا public/signed) */
+async function imageRefToOpenableUrl(ref){
+  if (!ref) return '';
+  if (typeof ref !== 'string') return '';
+  if (/^https?:\/\//i.test(ref) || ref.startsWith('data:')) return ref;
+  if (isStorageRef(ref)) {
+    const path = extractStoragePath(ref);
+    try {
+      // اول signed (برای باکت خصوصی هم کار می‌کند)
+      const { data, error } = await supabaseClient.storage.from(VOICE_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 30); // 30 روز
+      if (!error && data && data.signedUrl) return data.signedUrl;
+    } catch(e){}
+    try {
+      const { data } = supabaseClient.storage.from(VOICE_BUCKET).getPublicUrl(path);
+      if (data && data.publicUrl) return data.publicUrl;
+    } catch(e){}
+    return path; // حداقل مسیر استوریج
+  }
+  return ref;
+}
+async function resolveTradeImageUrls(t){
+  const refs = collectTradeImageRefs(t);
+  const urls = [];
+  for (const r of refs) {
+    const u = await imageRefToOpenableUrl(r.ref);
+    if (u) urls.push(u);
+  }
+  return urls;
+}
+async function loadImageBlobFromRef(ref){
+  if (!ref) return null;
+  if (typeof ref === 'string' && ref.startsWith('data:')) {
+    const res = await fetch(ref);
+    return await res.blob();
+  }
+  if (typeof ref === 'string' && /^https?:\/\//i.test(ref)) {
+    try {
+      const res = await fetch(ref);
+      if (res.ok) return await res.blob();
+    } catch(e){}
+    return null;
+  }
+  if (isStorageRef(ref)) {
+    const path = extractStoragePath(ref);
+    try {
+      const { data, error } = await supabaseClient.storage.from(VOICE_BUCKET).download(path);
+      if (!error && data) return data;
+    } catch(e){}
+  }
+  return null;
+}
+function extFromBlob(blob, fallback='jpg'){
+  const t = (blob && blob.type) || '';
+  if (t.includes('png')) return 'png';
+  if (t.includes('webp')) return 'webp';
+  if (t.includes('gif')) return 'gif';
+  if (t.includes('jpeg') || t.includes('jpg')) return 'jpg';
+  return fallback;
+}
+
 async function saveVoiceBlob(tradeId, blob, voiceId){
   const path = voicePathFor(tradeId, voiceId);
   const { error } = await supabaseClient.storage.from(VOICE_BUCKET).upload(path, blob, { upsert: true, contentType: blob.type||'audio/webm' });
@@ -4958,11 +5041,22 @@ function renderDashboard(){
   const be = total - wins - losses;
   const wr = (wins + losses) ? ((wins/(wins+losses))*100).toFixed(1) : '0';
   let totalPnL = 0, winSum = 0, lossSum = 0, winCount = 0, lossCount = 0;
-  const sorted = [...filtered].sort((a, b) => (a['Entry Date']||'').localeCompare(b['Entry Date']||'') || (getEntryHour(a)||0)-(getEntryHour(b)||0));
-  const equityPoints = []; let eq = 0;
-  sorted.forEach(t => {
+  const sorted = [...filtered].sort((a, b) => (a['Entry Date']||'').localeCompare(b['Entry Date']||'') || (getEntryHour(a)||0)-(getEntryHour(b)||0) || (Number(a.id)||0)-(Number(b.id)||0));
+  const equityPoints = []; let eq = 0; let peakEq = 0;
+  sorted.forEach((t, idx) => {
     const p = calcPnL(t); totalPnL += p; eq += p;
-    equityPoints.push({ eq, date:t['Entry Date'], p });
+    if (eq > peakEq) peakEq = eq;
+    const dd = peakEq - eq;
+    equityPoints.push({
+      eq, p, dd, peak: peakEq,
+      date: t['Entry Date'] || '',
+      time: t['Entry Time'] != null ? t['Entry Time'] : '',
+      id: t.id,
+      symbol: t.Symbol || '',
+      direction: t.Direction || '',
+      result: t.Result || '',
+      n: idx + 1
+    });
     if (p > 0) { winSum += p; winCount++; } else if (p < 0) { lossSum += Math.abs(p); lossCount++; }
   });
   const avgWin = winCount ? winSum/winCount : 0;
@@ -5116,24 +5210,147 @@ function chartColors(){
   const dark = document.body.classList.contains('dark');
   return { primary: dark ? '#818cf8' : '#4f46e5', primaryFill: dark ? 'rgba(129,140,248,.16)' : 'rgba(79,70,229,.1)', warning: dark ? '#fbbf24' : '#f59e0b', success: dark ? '#34d399' : '#10b981', danger: dark ? '#f87171' : '#ef4444', muted: dark ? '#6b7689' : '#94a3b8', grid: dark ? '#262e3b' : '#f1f5f9', text: dark ? '#9aa5b8' : '#64748b' };
 }
+function formatEqTooltipDate(ds){
+  if (!ds) return '—';
+  const d = parseTradeDate(ds);
+  if (!d) return String(ds);
+  try {
+    // میلادی — همان تقویمی که برای ثبت Entry Date استفاده می‌شود
+    return d.toLocaleDateString('en-GB', { year:'numeric', month:'short', day:'numeric', weekday:'short' });
+  } catch(e) {
+    const m = String(ds).match(/(\d{4})-(\d{2})-(\d{2})/);
+    return m ? (m[3] + '/' + m[2] + '/' + m[1]) : String(ds);
+  }
+}
 function renderEquityChart(points){
   const ctx = document.getElementById('equityChart'); if (!ctx || typeof Chart === 'undefined') return;
   if (equityChart) equityChart.destroy();
   const C = chartColors();
-  const labels = points.map((p, i) => i+1);
+  const labels = points.map((p, i) => p.n || (i+1));
   const data = points.map(p => p.eq);
   const ma = data.map((_, i) => { const slice = data.slice(Math.max(0,i-4), i+1); return slice.reduce((a,b)=>a+b,0)/slice.length; });
-  equityChart = new Chart(ctx, { type:'line', data:{ labels, datasets:[
-    { label:'Equity', data, borderColor:C.primary, backgroundColor:C.primaryFill, fill:true, tension:0.25, pointRadius:0, borderWidth:2.5 },
-    { label:'MA5', data:ma, borderColor:C.warning, borderDash:[5,5], fill:false, tension:0.25, pointRadius:0, borderWidth:1.5 }
-  ]}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:true, labels:{ boxWidth:12, font:{ size:10, family:'Vazirmatn' }, color:C.text } } }, scales:{ x:{ display:false }, y:{ grid:{ color:C.grid }, ticks:{ font:{ size:10, family:'Vazirmatn' }, color:C.text } } } } });
+  const nPts = points.length;
+  const showDots = nPts <= 80;
+  equityChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Equity',
+          data,
+          borderColor: C.primary,
+          backgroundColor: C.primaryFill,
+          fill: true,
+          tension: 0.25,
+          pointRadius: showDots ? 2.5 : 0,
+          pointHoverRadius: 6,
+          pointHitRadius: 12,
+          pointBackgroundColor: C.primary,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 1,
+          borderWidth: 2.5
+        },
+        {
+          label: 'MA5',
+          data: ma,
+          borderColor: C.warning,
+          borderDash: [5,5],
+          fill: false,
+          tension: 0.25,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHitRadius: 10,
+          borderWidth: 1.5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          labels: { boxWidth: 12, font: { size: 10, family: 'Vazirmatn' }, color: C.text }
+        },
+        tooltip: {
+          enabled: true,
+          rtl: true,
+          titleFont: { family: 'Vazirmatn', size: 12, weight: '700' },
+          bodyFont: { family: 'Vazirmatn', size: 11 },
+          footerFont: { family: 'Vazirmatn', size: 10 },
+          padding: 10,
+          cornerRadius: 10,
+          displayColors: true,
+          callbacks: {
+            title: function(items) {
+              if (!items || !items.length) return '';
+              const i = items[0].dataIndex;
+              const pt = points[i];
+              if (!pt) return '#' + (i+1);
+              const faDate = formatEqTooltipDate(pt.date);
+              return 'معامله #' + (pt.n || (i+1)) + (pt.id != null ? (' · ID ' + pt.id) : '') + ' — ' + faDate;
+            },
+            label: function(item) {
+              const v = item.parsed.y;
+              if (item.dataset.label === 'MA5') return 'MA5: ' + (v != null ? v.toFixed(1) : '—') + '$';
+              return 'موجودی: ' + (v != null ? ((v>=0?'+':'') + v.toFixed(1)) : '—') + '$';
+            },
+            afterBody: function(items) {
+              if (!items || !items.length) return [];
+              const i = items[0].dataIndex;
+              const pt = points[i];
+              if (!pt) return [];
+              const lines = [];
+              const sym = (pt.symbol || '').toUpperCase();
+              const dir = pt.direction === 'Buy' ? 'خرید' : (pt.direction === 'Sell' ? 'فروش' : (pt.direction || ''));
+              const res = pt.result === 'Win' ? 'سود' : (pt.result === 'Loss' ? 'ضرر' : (pt.result === 'BE' ? 'سر‌به‌سر' : (pt.result === 'Open' ? 'باز' : (pt.result || ''))));
+              if (sym || dir || res) lines.push([sym, dir, res].filter(Boolean).join(' · '));
+              if (pt.time !== '' && pt.time != null) lines.push('ساعت ورود: ' + pt.time);
+              const pnl = Number(pt.p);
+              if (!isNaN(pnl)) lines.push('P/L این ترید: ' + (pnl>=0?'+':'') + pnl.toFixed(1) + '$');
+              const dd = Number(pt.dd);
+              if (!isNaN(dd) && dd > 0.01) lines.push('Drawdown از سقف: -' + dd.toFixed(1) + '$');
+              else if (!isNaN(dd)) lines.push('وضعیت: در سقف / نزدیک سقف');
+              return lines;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          display: nPts <= 40,
+          ticks: {
+            font: { size: 9, family: 'Vazirmatn' },
+            color: C.text,
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 8,
+            callback: function(val, idx) {
+              const pt = points[idx];
+              if (!pt || !pt.date) return '';
+              // کوتاه: ماه-روز
+              const m = String(pt.date).match(/(\d{4})-(\d{2})-(\d{2})/);
+              return m ? (m[2] + '/' + m[3]) : String(pt.n || '');
+            }
+          },
+          grid: { display: false }
+        },
+        y: {
+          grid: { color: C.grid },
+          ticks: { font: { size: 10, family: 'Vazirmatn' }, color: C.text }
+        }
+      }
+    }
+  });
 }
 function renderSpark(points){
   const ctx = document.getElementById('sparkChart'); if (!ctx || typeof Chart === 'undefined') return;
   if (sparkChart) sparkChart.destroy();
   const C = chartColors();
   const data = points.map(p => p.eq);
-  sparkChart = new Chart(ctx, { type:'line', data:{ labels:data.map((_,i)=>i), datasets:[{ data, borderColor:C.primary, backgroundColor:C.primaryFill, fill:true, tension:0.3, pointRadius:0, borderWidth:2 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ display:false }, y:{ display:false } } } });
+  sparkChart = new Chart(ctx, { type:'line', data:{ labels:data.map((_,i)=>i), datasets:[{ data, borderColor:C.primary, backgroundColor:C.primaryFill, fill:true, tension:0.3, pointRadius:0, pointHitRadius:10, borderWidth:2 }] }, options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false }, plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ title:(items)=>{ const i=items[0]?.dataIndex; const pt=points[i]; return pt ? (formatEqTooltipDate(pt.date) + ' · #' + (pt.n||i+1)) : ''; }, label:(item)=> 'Equity: ' + (item.parsed.y!=null?item.parsed.y.toFixed(1):'—') + '$' } } }, scales:{ x:{ display:false }, y:{ display:false } } } });
 }
 function renderPieChart(wins, losses, be){
   const ctx = document.getElementById('pieChart'); if (!ctx || typeof Chart === 'undefined') return;
@@ -6288,13 +6505,18 @@ async function runExport(){
   if (!range.from && !range.to && pendingExportRange === 'custom') { showToast('تاریخ‌ها را پر کن'); return; }
   const btn = document.getElementById('exportGoBtn'); const prevTxt = btn.innerHTML;
   btn.disabled = true; btn.innerHTML = '⏳ ...';
-  try { if (pendingExportType === 'excel') await exportExcel(range); else await exportPDF(range); }
+  try {
+    if (pendingExportType === 'excel') await exportExcel(range);
+    else if (pendingExportType === 'zip') await exportZipBackup(range);
+    else await exportPDF(range);
+  }
   catch(e) { console.error(e); showToast('خطا'); }
   finally { btn.disabled = false; btn.innerHTML = prevTxt; closeExportModal(); }
 }
-async function exportExcel(range){
-  const trades = getTradesInRange(range);
-  if (!trades.length) { showToast('معامله‌ای نیست'); return; }
+async function buildExcelWorkbook(range, trades, opts){
+  opts = opts || {};
+  const includeImg = opts.includeImgLinks !== false;
+  const localPathMap = opts.localPathMap || null; // tradeId -> array of relative paths
   const wins = trades.filter(t => t.Result === 'Win').length;
   const losses = trades.filter(t => t.Result === 'Loss').length;
   const be = trades.length - wins - losses;
@@ -6303,15 +6525,28 @@ async function exportExcel(range){
   trades.forEach(t => { const p = calcPnL(t); totalPnL += p; if (p > 0) winSum += p; else if (p < 0) lossSum += Math.abs(p); });
   const pf = lossSum > 0 ? (winSum/lossSum).toFixed(2) : '∞';
   const wb = XLSX.utils.book_new();
-  const tradesData = trades.map(t => ({
-    'نماد':t.Symbol||'', 'جهت':t.Direction||'', 'تاریخ':t['Entry Date']||'', 'ساعت ورود':t['Entry Time']||'', 'ساعت خروج':t.exit_time||'',
-    'مدت (دقیقه)':calcDurationMinutes(t)||'', 'نتیجه':t.Result||'', 'P/L ($)':calcPnL(t).toFixed(2), 'ریسک ($)':t.stop_usd||'',
-    'قیمت ورود':t['Entry Price']||'', 'استاپ':t['Stop Loss']||'', 'استاپ بسته شدن':t.final_stop||'',
-    '1R':t.r1?'✓':'', '1.5R':t.r15?'✓':'', '2R':t.r2?'✓':'', '3R':t.r3?'✓':'',
-    'تایم‌فریم':t.Timeframe||'', 'کیفیت ستاپ':t.Setup||'', 'Zone':t.zone||'', 'تریگر':t.entry_trigger||'',
-    'واگرایی':t.divergence_type||'', 'دلیل ورود':t.entry_reason||'', 'دلیل خروج':t.exit_reason||'',
-    'یادداشت':t.Notes||'', 'درس‌ها':t.lessons||'', 'برچسب‌ها':(t.tags||[]).join(' · ')
-  }));
+  const tradesData = [];
+  for (const t of trades) {
+    const row = {
+      'نماد':t.Symbol||'', 'جهت':t.Direction||'', 'تاریخ':t['Entry Date']||'', 'ساعت ورود':t['Entry Time']||'', 'ساعت خروج':t.exit_time||'',
+      'مدت (دقیقه)':calcDurationMinutes(t)||'', 'نتیجه':t.Result||'', 'P/L ($)':calcPnL(t).toFixed(2), 'ریسک ($)':t.stop_usd||'',
+      'قیمت ورود':t['Entry Price']||'', 'استاپ':t['Stop Loss']||'', 'استاپ بسته شدن':t.final_stop||'',
+      '1R':t.r1?'✓':'', '1.5R':t.r15?'✓':'', '2R':t.r2?'✓':'', '3R':t.r3?'✓':'',
+      'تایم‌فریم':t.Timeframe||'', 'کیفیت ستاپ':t.Setup||'', 'Zone':t.zone||'', 'تریگر':t.entry_trigger||'',
+      'واگرایی':t.divergence_type||'', 'دلیل ورود':t.entry_reason||'', 'دلیل خروج':t.exit_reason||'',
+      'یادداشت':t.Notes||'', 'درس‌ها':t.lessons||'', 'برچسب‌ها':(t.tags||[]).join(' · ')
+    };
+    if (includeImg) {
+      row['لینک چارت تریگر'] = (t.trigger_img && !isStorageRef(t.trigger_img)) ? t.trigger_img : '';
+      row['لینک چارت زون'] = (t.zone_img && !isStorageRef(t.zone_img)) ? t.zone_img : '';
+      const urls = await resolveTradeImageUrls(t);
+      row['آدرس عکس‌ها (باز کردن)'] = urls.join(' | ');
+      if (localPathMap && t.id != null && localPathMap[String(t.id)]) {
+        row['فایل محلی عکس'] = localPathMap[String(t.id)].join(' | ');
+      }
+    }
+    tradesData.push(row);
+  }
   const wsTrades = XLSX.utils.json_to_sheet(tradesData);
   XLSX.utils.book_append_sheet(wb, wsTrades, 'معاملات');
   const summaryData = [
@@ -6338,9 +6573,74 @@ async function exportExcel(range){
   })).sort((a,b) => parseFloat(b['P/L ($)']) - parseFloat(a['P/L ($)']));
   const wsSymbols = XLSX.utils.json_to_sheet(symbolData);
   XLSX.utils.book_append_sheet(wb, wsSymbols, 'نمادها');
+  return wb;
+}
+async function exportExcel(range){
+  const trades = getTradesInRange(range);
+  if (!trades.length) { showToast('معامله‌ای نیست'); return; }
+  const includeImg = !!(document.getElementById('exportIncludeImgLinks')?.checked);
+  const wb = await buildExcelWorkbook(range, trades, { includeImgLinks: includeImg });
   const fname = `trading-journal-${range.label.replace(/\s+/g,'-')}-${new Date().toISOString().slice(0,10)}.xlsx`;
   XLSX.writeFile(wb, fname);
-  showToast('✓ اکسل آماده شد');
+  showToast(includeImg ? '✓ اکسل + لینک عکس‌ها' : '✓ اکسل آماده شد');
+}
+async function exportZipBackup(range){
+  if (typeof JSZip === 'undefined') { showToast('کتابخانه ZIP لود نشد — رفرش کن'); return; }
+  const trades = getTradesInRange(range);
+  if (!trades.length) { showToast('معامله‌ای نیست'); return; }
+  showToast('در حال آماده‌سازی بک‌آپ...');
+  const zip = new JSZip();
+  const imgFolder = zip.folder('images');
+  const localPathMap = {};
+  let imgCount = 0, failCount = 0;
+  for (const t of trades) {
+    const refs = collectTradeImageRefs(t);
+    if (!refs.length) continue;
+    const paths = [];
+    let i = 0;
+    for (const r of refs) {
+      i++;
+      try {
+        const blob = await loadImageBlobFromRef(r.ref);
+        if (!blob) { failCount++; continue; }
+        const ext = extFromBlob(blob, 'jpg');
+        const fname = 'trade_' + String(t.id) + '_' + r.kind + '_' + i + '.' + ext;
+        imgFolder.file(fname, blob);
+        paths.push('images/' + fname);
+        imgCount++;
+      } catch(err) {
+        console.warn('zip img', t.id, err);
+        failCount++;
+      }
+    }
+    if (paths.length) localPathMap[String(t.id)] = paths;
+  }
+  const includeImg = true;
+  const wb = await buildExcelWorkbook(range, trades, { includeImgLinks: includeImg, localPathMap });
+  const xlsxArr = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const xlsxName = 'trading-journal-' + range.label.replace(/\s+/g,'-') + '.xlsx';
+  zip.file(xlsxName, xlsxArr);
+  zip.file('README.txt',
+    'بک‌آپ ژورنال ترید\n' +
+    'تاریخ: ' + new Date().toISOString() + '\n' +
+    'تعداد معامله: ' + trades.length + '\n' +
+    'تعداد عکس ذخیره‌شده: ' + imgCount + '\n' +
+    (failCount ? ('عکس ناموفق: ' + failCount + '\n') : '') +
+    '\nراهنما:\n' +
+    '1) کل ZIP را از حالت فشرده خارج کن\n' +
+    '2) فایل اکسل را باز کن\n' +
+    '3) ستون «فایل محلی عکس» مسیر نسبی داخل پوشه images است\n' +
+    '4) ستون «آدرس عکس‌ها» لینک آنلاین (در صورت دسترسی) است\n' +
+    '5) برای دیدن عکس، فایل داخل پوشه images را باز کن\n'
+  );
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'trading-journal-backup-' + range.label.replace(/\s+/g,'-') + '-' + new Date().toISOString().slice(0,10) + '.zip';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+  showToast('✓ ZIP آماده — ' + imgCount + ' عکس' + (failCount ? (' (' + failCount + ' ناموفق)') : ''));
 }
 async function exportPDF(range){
   const trades = getTradesInRange(range);
