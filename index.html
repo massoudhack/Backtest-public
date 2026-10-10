@@ -661,6 +661,12 @@ body.booting .today-strip{opacity:.4}
 .remind-perm{font-size:.8rem;padding:10px 12px;border-radius:10px;background:var(--info-soft);color:var(--info-text);margin-bottom:12px;line-height:1.7}
 .remind-perm.warn{background:var(--warning-soft);color:#b45309}
 
+
+.img-paste-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 4px}
+.img-paste-target{width:100%;min-height:52px;border:2px dashed var(--border-strong);border-radius:14px;background:var(--bg-subtle);padding:12px 14px;font-size:.82rem;color:var(--text-muted);outline:none;cursor:text;line-height:1.6;margin-top:8px;transition:border-color .15s,background .15s,box-shadow .15s}
+.img-paste-target:focus{border-color:var(--primary);background:var(--primary-soft);box-shadow:0 0 0 3px var(--primary-glow);color:var(--text)}
+.img-paste-target.drag-over{border-color:var(--primary);background:var(--primary-soft)}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1594,9 +1600,15 @@ body.booting .today-strip{opacity:.4}
           <div class="form-group"><label>لینک چارت زون</label><input type="url" id="tfZoneImg"></div>
           <div class="section-title">🖼️ تصاویر (نامحدود)</div>
           <div class="img-drop-grid" id="imgSlotsGrid"></div>
-          <button type="button" class="cl-add-btn" onclick="addImageSlot()" style="margin-top:10px">+ افزودن عکس</button>
-          <div style="font-size:.72rem;color:var(--text-muted);margin-top:10px;line-height:1.7">
-            💡 می‌تونی از هر جای دیگه عکس رو Copy کنی و توی مودال <strong>Ctrl+V</strong> بزنی.
+          <div class="img-paste-bar">
+            <button type="button" class="cl-add-btn" onclick="addImageSlot()" style="margin-top:0">+ افزودن عکس</button>
+            <button type="button" class="btn btn-sm" onclick="pasteImageFromClipboardBtn()">📋 پیست عکس</button>
+          </div>
+          <div id="imgPasteTarget" class="img-paste-target" contenteditable="true" spellcheck="false" role="textbox" aria-label="محل پیست عکس"
+            data-placeholder="اینجا کلیک کن، بعد Ctrl+V بزن (یا دکمه پیست عکس)"
+            onfocus="this.dataset.focused='1'" onblur="this.dataset.focused='0'"></div>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:8px;line-height:1.7">
+            💡 اول روی کادر بالا کلیک کن، بعد <strong>Ctrl+V</strong> — یا دکمه «پیست عکس» را بزن. از فایل هم می‌توانی درگ کنی.
           </div>
         </div>
 
@@ -1771,7 +1783,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.17 (addable motives/mistakes/emotions like other lists)';
+const APP_BUILD = 'BUILD-v27.18 (reliable image paste: button + paste box + Ctrl+V)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -2274,6 +2286,7 @@ async function bootApp(){
   try { checkNewBadges(); } catch(e){}
   const bi = document.getElementById('buildInfo');
   if (bi) bi.textContent = '🔧 نسخه فایل: ' + APP_BUILD;
+  try { bindImgPasteTarget(); } catch(e){}
   try { initRemindersTab(); } catch(e){ console.warn(e); }
   document.body.classList.remove('booting');
   if (sk) sk.classList.remove('show');
@@ -2756,39 +2769,145 @@ async function setSlotValue(slotId, value){
   if (filled) filled.style.display = 'block';
   zone.classList.add('has-image');
 }
+function switchToMediaTab(){
+  const tab = document.querySelector('.form-tab[data-ftab="media"]');
+  if (tab && !tab.classList.contains('active')) tab.click();
+}
+function collectImageFilesFromClipboardEvent(e){
+  const files = [];
+  const seen = new Set();
+  const push = (f) => {
+    if (!f || !f.type || !String(f.type).startsWith('image/')) return;
+    const key = (f.name||'') + '|' + f.size + '|' + f.type + '|' + (f.lastModified||0);
+    if (seen.has(key)) return;
+    seen.add(key);
+    files.push(f);
+  };
+  try {
+    if (e && e.clipboardData && e.clipboardData.files) {
+      for (const f of e.clipboardData.files) push(f);
+    }
+  } catch(err){}
+  try {
+    const items = e && e.clipboardData && e.clipboardData.items;
+    if (items) {
+      for (const it of items) {
+        if (it && it.type && it.type.startsWith('image/')) {
+          try { push(it.getAsFile()); } catch(err){}
+        }
+      }
+    }
+  } catch(err){}
+  return files;
+}
+async function addImageFromFile(file){
+  if (!file) return false;
+  let slot = imageSlots.find(s => !(s.value || '').trim());
+  let id;
+  if (slot) {
+    id = slot.id;
+  } else {
+    id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    imageSlots.push({ id, value: '' });
+    renderImageSlots();
+    await new Promise(r => setTimeout(r, 30));
+  }
+  await handleSlotImage(id, file);
+  return true;
+}
+async function handlePasteImagesEvent(e){
+  const modal = document.getElementById('addModal');
+  if (!modal || !modal.classList.contains('show')) return false;
+  const files = collectImageFilesFromClipboardEvent(e);
+  if (!files.length) return false;
+  e.preventDefault();
+  e.stopPropagation();
+  switchToMediaTab();
+  let n = 0;
+  for (const f of files) {
+    if (await addImageFromFile(f)) n++;
+  }
+  if (n) showToast(n > 1 ? ('✓ ' + n + ' عکس پیست شد') : '✓ عکس پیست شد');
+  // پاک کردن متن تصادفی داخل کادر پیست
+  const pt = document.getElementById('imgPasteTarget');
+  if (pt) setTimeout(() => { try { pt.innerHTML = ''; } catch(err){} }, 0);
+  return true;
+}
+async function pasteImageFromClipboardBtn(){
+  const modal = document.getElementById('addModal');
+  if (!modal || !modal.classList.contains('show')) { showToast('اول معامله را باز کن'); return; }
+  switchToMediaTab();
+  // Clipboard API (با کلیک کاربر اجازه می‌گیرد)
+  try {
+    if (navigator.clipboard && navigator.clipboard.read) {
+      const items = await navigator.clipboard.read();
+      let n = 0;
+      for (const item of items) {
+        const type = (item.types || []).find(t => String(t).startsWith('image/'));
+        if (!type) continue;
+        const blob = await item.getType(type);
+        const file = new File([blob], 'paste-' + Date.now() + '.png', { type: type });
+        if (await addImageFromFile(file)) n++;
+      }
+      if (n) { showToast(n > 1 ? ('✓ ' + n + ' عکس پیست شد') : '✓ عکس پیست شد'); return; }
+    }
+  } catch (err) {
+    console.warn('clipboard.read', err);
+  }
+  // fallback: فوکوس روی کادر پیست
+  const pt = document.getElementById('imgPasteTarget');
+  if (pt) {
+    pt.focus();
+    showToast('اینجا Ctrl+V بزن');
+  } else {
+    showToast('کلیپ‌بورد عکس ندارد یا اجازه داده نشد — Ctrl+V را امتحان کن');
+  }
+}
 document.addEventListener('paste', async (e) => {
   const modal = document.getElementById('addModal');
   if (!modal || !modal.classList.contains('show')) return;
-  // اگر داخل input/textarea متنی هستیم، پیست متن را مختل نکن
+  // اگر فیلد متنی فوکوس است و فقط متن است، دست نزن
   const ae = document.activeElement;
-  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae.type !== 'file') {
-    const items = e.clipboardData && e.clipboardData.items;
-    let hasImg = false;
-    if (items) for (const it of items) { if (it.type.startsWith('image/')) { hasImg = true; break; } }
-    if (!hasImg) return;
+  const isTextField = ae && ((ae.tagName === 'INPUT' && ae.type !== 'file') || ae.tagName === 'TEXTAREA');
+  const isPasteTarget = ae && (ae.id === 'imgPasteTarget' || ae.closest && ae.closest('#imgPasteTarget'));
+  const files = collectImageFilesFromClipboardEvent(e);
+  if (!files.length) return;
+  if (isTextField && !isPasteTarget) {
+    // حتی داخل input اگر عکس در کلیپ‌بورد باشد، عکس را بگیر
+    await handlePasteImagesEvent(e);
+    return;
   }
-  const items = e.clipboardData && e.clipboardData.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      e.preventDefault();
-      const f = item.getAsFile();
-      if (!f) continue;
-      // اسلات خالی را پر کن؛ اگر همه پر بودند اسلات جدید بساز
-      let slot = imageSlots.find(s => !(s.value || '').trim());
-      let id;
-      if (slot) {
-        id = slot.id;
-      } else {
-        id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-        imageSlots.push({ id, value: '' });
-        renderImageSlots();
+  await handlePasteImagesEvent(e);
+}, true);
+// پیست مستقیم روی کادر
+document.addEventListener('DOMContentLoaded', () => {});
+function bindImgPasteTarget(){
+  const pt = document.getElementById('imgPasteTarget');
+  if (!pt || pt.dataset.bound === '1') return;
+  pt.dataset.bound = '1';
+  pt.addEventListener('paste', async (e) => { await handlePasteImagesEvent(e); });
+  pt.addEventListener('keydown', (e) => {
+    // جلوگیری از تایپ متن طولانی
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key.length === 1) e.preventDefault();
+  });
+  ['dragenter','dragover'].forEach(ev => pt.addEventListener(ev, (e) => { e.preventDefault(); pt.classList.add('drag-over'); }));
+  ['dragleave','drop'].forEach(ev => pt.addEventListener(ev, (e) => { e.preventDefault(); pt.classList.remove('drag-over'); }));
+  pt.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    const fl = e.dataTransfer && e.dataTransfer.files;
+    if (!fl || !fl.length) return;
+    switchToMediaTab();
+    let n = 0;
+    for (const f of fl) {
+      if (f.type && f.type.startsWith('image/')) {
+        if (await addImageFromFile(f)) n++;
       }
-      await handleSlotImage(id, f);
-      break;
     }
-  }
-});
+    if (n) showToast(n > 1 ? ('✓ ' + n + ' عکس') : '✓ عکس اضافه شد');
+  });
+}
+
 
 /* ====== REFRESH UI ====== */
 function refreshCustomUI(){
@@ -5571,7 +5690,8 @@ function openAddModal(editTrade){
     updatePipPreview(); updateDurationPreview();
     try { loadVoiceSlotsFromTrade(editTrade); } catch(e) { console.error(e); }
   } else { addImageSlot(); }
-  document.getElementById('addModal').classList.add('show'); lockScroll();
+  document.getElementById('addModal').classList.add('show');
+  try { bindImgPasteTarget(); const _pt=document.getElementById('imgPasteTarget'); if(_pt){ _pt.innerHTML=''; } } catch(e){} lockScroll();
 }
 function closeAddModal(){ document.getElementById('addModal').classList.remove('show'); unlockScroll(); editingId = null; }
 function setDir(dir){ document.getElementById('tfDirection').value = dir; const buy = document.getElementById('btnBuy'), sell = document.getElementById('btnSell'); if (buy) buy.classList.toggle('active-buy', dir === 'Buy'); if (sell) sell.classList.toggle('active-sell', dir === 'Sell'); }
