@@ -962,21 +962,10 @@ body.booting .today-strip{opacity:.4}
           <div class="filter-group"><label>کیفیت از</label><input type="number" id="fExecMin" min="1" max="10"></div>
           <div class="filter-group"><label>کیفیت تا</label><input type="number" id="fExecMax" min="1" max="10"></div>
           <div class="filter-group"><label>انگیزه</label>
-            <select id="fMotive"><option value="">همه</option>
-              <option value="طبق استراتژی">طبق استراتژی</option><option value="FOMO">FOMO</option>
-              <option value="انتقام از بازار">انتقام</option><option value="شهود">شهود</option>
-              <option value="توصیه دیگران">توصیه دیگران</option><option value="اخبار">اخبار</option>
-              <option value="سیگنال تکنیکال">تکنیکال</option><option value="سیگنال فاندامنتال">فاندامنتال</option>
-            </select>
+            <select id="fMotive"><option value="">همه</option></select>
           </div>
           <div class="filter-group"><label>اشتباه</label>
-            <select id="fMistake"><option value="">همه</option>
-              <option value="جابجایی حد ضرر">جابجایی SL</option><option value="خروج زودهنگام">خروج زود</option>
-              <option value="ورود دیرهنگام">ورود دیر</option><option value="عدم پایبندی به پلن">عدم پایبندی</option>
-              <option value="معامله بیش از حد">بیش از حد</option><option value="ریسک بالا">ریسک بالا</option>
-              <option value="FOMO">FOMO</option><option value="معامله انتقامی">انتقامی</option>
-              <option value="عدم صبر">عدم صبر</option>
-            </select>
+            <select id="fMistake"><option value="">همه</option></select>
           </div>
         </div>
       </details>
@@ -1545,6 +1534,7 @@ body.booting .today-strip{opacity:.4}
             <div class="emo-block">
               <div class="emo-block-head"><span class="emo-num">01</span><div><div class="emo-block-title">وضعیت احساسی</div></div></div>
               <div class="emo-grid" id="preEmotionChips"></div>
+              <button type="button" class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addCustomInline('emotions')">+ احساس جدید</button>
               <input type="hidden" id="tfPreEmotion" value="">
             </div>
             <div class="emo-block">
@@ -1559,22 +1549,15 @@ body.booting .today-strip{opacity:.4}
             </div>
             <div class="emo-block">
               <div class="emo-block-head"><span class="emo-num">04</span><div><div class="emo-block-title">انگیزه ورود</div></div></div>
-              <div class="chip-group" id="motiveChecks">
-                <span class="chip check-item" data-val="طبق استراتژی" style="margin:0" onclick="toggleMultiChip(this)">طبق استراتژی</span>
-                <span class="chip check-item" data-val="FOMO" style="margin:0" onclick="toggleMultiChip(this)">FOMO</span>
-                <span class="chip check-item" data-val="انتقام از بازار" style="margin:0" onclick="toggleMultiChip(this)">انتقام</span>
-                <span class="chip check-item" data-val="شهود" style="margin:0" onclick="toggleMultiChip(this)">شهود</span>
-                <span class="chip check-item" data-val="توصیه دیگران" style="margin:0" onclick="toggleMultiChip(this)">توصیه دیگران</span>
-                <span class="chip check-item" data-val="اخبار" style="margin:0" onclick="toggleMultiChip(this)">اخبار</span>
-                <span class="chip check-item" data-val="سیگنال تکنیکال" style="margin:0" onclick="toggleMultiChip(this)">تکنیکال</span>
-                <span class="chip check-item" data-val="سیگنال فاندامنتال" style="margin:0" onclick="toggleMultiChip(this)">فاندامنتال</span>
-              </div>
+              <div class="chip-group" id="motiveChecks"></div>
+              <button type="button" class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addCustomInline('motives')">+ انگیزه جدید</button>
             </div>
           </div>
           <div class="emo-pane" id="epane-post">
             <div class="emo-block">
               <div class="emo-block-head"><span class="emo-num">01</span><div><div class="emo-block-title">احساس بعد از بستن</div></div></div>
               <div class="emo-grid" id="postEmotionChips"></div>
+              <button type="button" class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addCustomInline('emotions')">+ احساس جدید</button>
               <input type="hidden" id="tfPostEmotion" value="">
             </div>
             <div class="emo-block">
@@ -1584,17 +1567,8 @@ body.booting .today-strip{opacity:.4}
             </div>
             <div class="emo-block">
               <div class="emo-block-head"><span class="emo-num">03</span><div><div class="emo-block-title">اشتباهات</div></div></div>
-              <div class="chip-group" id="mistakeChecks">
-                <span class="chip check-item" data-val="جابجایی حد ضرر" style="margin:0" onclick="toggleMultiChip(this)">جابجایی SL</span>
-                <span class="chip check-item" data-val="خروج زودهنگام" style="margin:0" onclick="toggleMultiChip(this)">خروج زود</span>
-                <span class="chip check-item" data-val="ورود دیرهنگام" style="margin:0" onclick="toggleMultiChip(this)">ورود دیر</span>
-                <span class="chip check-item" data-val="عدم پایبندی به پلن" style="margin:0" onclick="toggleMultiChip(this)">عدم پایبندی</span>
-                <span class="chip check-item" data-val="معامله بیش از حد" style="margin:0" onclick="toggleMultiChip(this)">بیش از حد</span>
-                <span class="chip check-item" data-val="ریسک بالا" style="margin:0" onclick="toggleMultiChip(this)">ریسک بالا</span>
-                <span class="chip check-item" data-val="FOMO" style="margin:0" onclick="toggleMultiChip(this)">FOMO</span>
-                <span class="chip check-item" data-val="معامله انتقامی" style="margin:0" onclick="toggleMultiChip(this)">انتقامی</span>
-                <span class="chip check-item" data-val="عدم صبر" style="margin:0" onclick="toggleMultiChip(this)">عدم صبر</span>
-              </div>
+              <div class="chip-group" id="mistakeChecks"></div>
+              <button type="button" class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addCustomInline('mistakes')">+ اشتباه جدید</button>
             </div>
             <div class="emo-block">
               <div class="emo-block-head"><span class="emo-num">04</span><div><div class="emo-block-title">درس‌ها</div></div></div>
@@ -1683,6 +1657,12 @@ body.booting .today-strip{opacity:.4}
         <div class="section-title">احساسات</div>
         <div class="manage-row"><input type="text" id="newEmotion" placeholder="احساس جدید..."><button class="btn btn-sm" onclick="addCustom('emotions','newEmotion')">+</button></div>
         <div class="manage-list" id="listEmotions"></div>
+        <div class="section-title">انگیزه ورود</div>
+        <div class="manage-row"><input type="text" id="newMotive" placeholder="انگیزه جدید..."><button class="btn btn-sm" onclick="addCustom('motives','newMotive')">+</button></div>
+        <div class="manage-list" id="listMotives"></div>
+        <div class="section-title">اشتباهات</div>
+        <div class="manage-row"><input type="text" id="newMistake" placeholder="اشتباه جدید..."><button class="btn btn-sm" onclick="addCustom('mistakes','newMistake')">+</button></div>
+        <div class="manage-list" id="listMistakes"></div>
         <div class="section-title">دلیل خروج</div>
         <div class="manage-row"><input type="text" id="newExitReason" placeholder="دلیل خروج جدید..."><button class="btn btn-sm" onclick="addCustom('exitReasons','newExitReason')">+</button></div>
         <div class="manage-list" id="listExitReasons"></div>
@@ -1791,13 +1771,16 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.16 (journal list P/L always actual; R mode only for charts)';
+const APP_BUILD = 'BUILD-v27.17 (addable motives/mistakes/emotions like other lists)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
 const DEFAULT_TRIGGERS = [];
 const DEFAULT_EXIT_REASONS = ['SL','TP','تریل استاپ'];
 const DEFAULT_EMOTIONS = ['آرام','مطمئن','مضطرب','ترسیده','طمع‌کار','هیجان‌زده','ناامید','خنثی','عصبان','خسته','راضی','پشیمان','خوشحال','ناراحت','بی‌تفاوت'];
+const DEFAULT_MOTIVES = ['طبق استراتژی','FOMO','انتقام از بازار','شهود','توصیه دیگران','اخبار','سیگنال تکنیکال','سیگنال فاندامنتال'];
+const DEFAULT_MISTAKES = ['جابجایی حد ضرر','خروج زودهنگام','ورود دیرهنگام','عدم پایبندی به پلن','معامله بیش از حد','ریسک بالا','FOMO','معامله انتقامی','عدم صبر'];
+
 const DOW_FA = ['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'];
 const MONTH_FA = ['ژانویه','فوریه','مارس','آوریل','مه','ژوئن','ژوئیه','اوت','سپتامبر','اکتبر','نوامبر','دسامبر'];
 const TAG_COLORS = ['#8b5cf6','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#06b6d4','#84cc16','#f97316','#a855f7','#14b8a6','#f43f5e','#0ea5e9','#d946ef'];
@@ -2305,6 +2288,8 @@ async function loadCustomFromSupabase(){
       if (!custom.exitReasons || !custom.exitReasons.length) custom.exitReasons = [...DEFAULT_EXIT_REASONS];
       if (!custom.triggers || !custom.triggers.length) custom.triggers = [...DEFAULT_TRIGGERS];
       if (!custom.emotions || !custom.emotions.length) custom.emotions = [...DEFAULT_EMOTIONS];
+      if (!custom.motives || !custom.motives.length) custom.motives = [...DEFAULT_MOTIVES];
+      if (!custom.mistakes || !custom.mistakes.length) custom.mistakes = [...DEFAULT_MISTAKES];
       if (!custom.zones) custom.zones = [];
       if (!custom.tags) custom.tags = [];
       if (!custom.tagColors) custom.tagColors = {};
@@ -2530,6 +2515,8 @@ function loadCustom(){
   if (!custom.setups || !custom.setups.length) custom.setups = [...DEFAULT_SETUPS];
   if (!custom.triggers || !custom.triggers.length) custom.triggers = [...DEFAULT_TRIGGERS];
   if (!custom.emotions || !custom.emotions.length) custom.emotions = [...DEFAULT_EMOTIONS];
+  if (!custom.motives || !custom.motives.length) custom.motives = [...DEFAULT_MOTIVES];
+  if (!custom.mistakes || !custom.mistakes.length) custom.mistakes = [...DEFAULT_MISTAKES];
   if (!custom.zones) custom.zones = [];
   if (!custom.exitReasons || !custom.exitReasons.length) custom.exitReasons = [...DEFAULT_EXIT_REASONS];
   if (!custom.tags) custom.tags = [];
@@ -2819,12 +2806,28 @@ function refreshCustomUI(){
   if (tfz) { const cur = tfz.value; const zones = [...new Set([...(custom.zones||[]), ...allTrades.map(t => t.zone).filter(Boolean)])].sort();
     tfz.innerHTML = '<option value="">— انتخاب —</option>' + zones.map(z => '<option value="'+escapeHtml(z)+'">'+escapeHtml(z)+'</option>').join('');
     if (cur) tfz.value = cur; }
-  const manageMap = { listSetups:'setups', listZones:'zones', listTriggers:'triggers', listEmotions:'emotions', listTags:'tags', listExitReasons:'exitReasons' };
+  const manageMap = { listSetups:'setups', listZones:'zones', listTriggers:'triggers', listEmotions:'emotions', listMotives:'motives', listMistakes:'mistakes', listTags:'tags', listExitReasons:'exitReasons' };
   Object.keys(manageMap).forEach((id) => {
     if (document.getElementById(id)) renderManageList(id, custom[manageMap[id]] || [], manageMap[id]);
   });
+  renderMotiveMistakeChips();
   renderExitReasonChips();
   renderFormTagChips(); renderTagManager(); renderFilterTagChips();
+}
+function renderMotiveMistakeChips(){
+  function fillChips(elId, arr){
+    const el = document.getElementById(elId); if (!el) return;
+    const selected = [...el.querySelectorAll('.chip.selected')].map(c => c.dataset.val);
+    const list = (arr && arr.length) ? arr : [];
+    el.innerHTML = list.map(m => {
+      const sel = selected.includes(m) ? ' selected' : '';
+      return '<span class="chip check-item' + sel + '" data-val="' + escapeHtml(m) + '" style="margin:0" onclick="toggleMultiChip(this)">' + escapeHtml(m) + '</span>';
+    }).join('');
+  }
+  if (!custom.motives || !custom.motives.length) custom.motives = [...DEFAULT_MOTIVES];
+  if (!custom.mistakes || !custom.mistakes.length) custom.mistakes = [...DEFAULT_MISTAKES];
+  fillChips('motiveChecks', custom.motives);
+  fillChips('mistakeChecks', custom.mistakes);
 }
 function parseExitReasons(val){
   if (!val) return [];
@@ -2936,10 +2939,11 @@ async function addCustom(key, inputId){
   const inp = document.getElementById(inputId);
   const v = (inp && inp.value || '').trim();
   const isTag = key === 'tags';
-  const labels = { setups:'کیفیت ستاپ جدید', triggers:'تریگر جدید', zones:'Zone جدید', emotions:'احساس جدید', tags:'برچسب جدید' };
+  const labels = { setups:'کیفیت ستاپ جدید', triggers:'تریگر جدید', zones:'Zone جدید', emotions:'احساس جدید', motives:'انگیزه جدید', mistakes:'اشتباه جدید', tags:'برچسب جدید', exitReasons:'دلیل خروج جدید' };
   const result = await showInputModal({ title: labels[key] || 'افزودن', label: 'نام', defaultValue: v, showColor: isTag });
   if (!result) { if (inp) inp.value = ''; return; }
   const val = result.value;
+  if (!Array.isArray(custom[key])) custom[key] = [];
   if (!custom[key].includes(val)) {
     custom[key].push(val);
     if (isTag && result.color) { if (!custom.tagColors) custom.tagColors = {}; custom.tagColors[val] = result.color; }
@@ -2948,21 +2952,24 @@ async function addCustom(key, inputId){
   } else showToast('قبلاً بود');
   if (inp) inp.value = '';
 }
-function removeCustom(key, idx){ custom[key].splice(idx, 1); saveCustom(); refreshCustomUI(); setupFilters(); }
+function removeCustom(key, idx){ if (!Array.isArray(custom[key])) return; custom[key].splice(idx, 1); saveCustom(); refreshCustomUI(); setupFilters(); }
 async function addCustomInline(key, selectId){
   const isTag = key === 'tags';
-  const labels = { setups:'افزودن کیفیت ستاپ', triggers:'افزودن تریگر', zones:'افزودن Zone', emotions:'افزودن احساس', tags:'افزودن برچسب' };
+  const labels = { setups:'افزودن کیفیت ستاپ', triggers:'افزودن تریگر', zones:'افزودن Zone', emotions:'افزودن احساس', motives:'افزودن انگیزه', mistakes:'افزودن اشتباه', tags:'افزودن برچسب', exitReasons:'افزودن دلیل خروج' };
   const result = await showInputModal({ title: labels[key] || 'افزودن', label: 'نام', showColor: isTag });
   if (!result) return;
   const trimmed = result.value;
+  if (!Array.isArray(custom[key])) custom[key] = [];
   if (!custom[key].includes(trimmed)) {
     custom[key].push(trimmed);
     if (isTag && result.color) { if (!custom.tagColors) custom.tagColors = {}; custom.tagColors[trimmed] = result.color; }
     saveCustom(); refreshCustomUI(); setupFilters();
     showToast('اضافه شد');
   }
-  const sel = document.getElementById(selectId);
-  if (sel) sel.value = trimmed;
+  if (selectId) {
+    const sel = document.getElementById(selectId);
+    if (sel) sel.value = trimmed;
+  }
 }
 
 /* ====== SESSIONS ====== */
@@ -3091,6 +3098,14 @@ function setupFilters(){
   allTrades.forEach(t => { (t.pre_emotions||[]).forEach(e => emos.add(e)); (t.post_emotions||[]).forEach(e => emos.add(e)); });
   fillSelect('fPreEmotion', [...emos].filter(Boolean).sort());
   fillSelect('fPostEmotion', [...emos].filter(Boolean).sort());
+  const mots = new Set(custom.motives || DEFAULT_MOTIVES);
+  const mists = new Set(custom.mistakes || DEFAULT_MISTAKES);
+  allTrades.forEach(t => {
+    (t.motives||[]).forEach(x => { if (x) mots.add(x); });
+    (t.mistakes||[]).forEach(x => { if (x) mists.add(x); });
+  });
+  fillSelect('fMotive', [...mots].filter(Boolean).sort());
+  fillSelect('fMistake', [...mists].filter(Boolean).sort());
   const sl = document.getElementById('symbolList'); if (sl) sl.innerHTML = symbols.map(s => '<option value="'+escapeHtml(s)+'">').join('');
   fillChecklistSelects();
 }
@@ -6346,6 +6361,8 @@ function openSettings(){
   renderManageList('listSetups', custom.setups, 'setups');
   renderManageList('listTriggers', custom.triggers, 'triggers');
   renderManageList('listEmotions', custom.emotions, 'emotions');
+  renderManageList('listMotives', custom.motives || DEFAULT_MOTIVES, 'motives');
+  renderManageList('listMistakes', custom.mistakes || DEFAULT_MISTAKES, 'mistakes');
   renderManageList('listZones', custom.zones, 'zones');
   renderManageList('listExitReasons', custom.exitReasons || DEFAULT_EXIT_REASONS, 'exitReasons');
   renderManageList('listTags', custom.tags, 'tags');
