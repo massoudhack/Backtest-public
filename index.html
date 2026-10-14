@@ -1897,7 +1897,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.26 (editable score→label rules: A/B/half-risk)';
+const APP_BUILD = 'BUILD-v27.27 (score<20 forbidden, ≥20 half risk)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1910,7 +1910,8 @@ const PRETRADE_CHECKLIST_ID = 'cl_pretrade_watchlist';
 const DEFAULT_SCORE_RULES = [
   { min: 90, key: 'A setup', label: 'A setup', cls: 'a', msg: 'ستاپ قوی از روی تیک‌ها — تصمیم ورود با توست.' },
   { min: 70, key: 'B setup', label: 'B setup', cls: 'b', msg: 'ستاپ قابل‌قبول — ورود ممکن است.' },
-  { min: 0, key: 'ریسک نصف', label: 'ریسک نصف', cls: 'half', msg: 'تیک‌ها کمتر است؛ اگر وارد می‌شوی ریسک را نصف کن.' }
+  { min: 20, key: 'ریسک نصف', label: 'ریسک نصف', cls: 'half', msg: 'تیک‌ها کمتر است (زیر ۷۰، حداقل ۲۰) — اگر وارد می‌شوی ریسک را نصف کن.' },
+  { min: 0, key: 'ترید ممنوع', label: '🚫 ترید ممنوع', cls: 'blocked', msg: 'امتیاز خیلی پایین (زیر ۲۰٪) — از نظر واچ‌لیست ورود توصیه نمی‌شود (قفل نیست؛ یادآوری است).' }
 ];
 const DEFAULT_PRETRADE_CHECKLIST = {
   id: PRETRADE_CHECKLIST_ID,
@@ -1971,11 +1972,17 @@ function ensurePretradeChecklist(){
     }
     if (!Array.isArray(cl.scoreRules) || !cl.scoreRules.length) {
       cl.scoreRules = JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
+    } else {
+      // مهاجرت: اگر هنوز «۰ = ریسک نصف» بدون قانون ترید ممنوع بود
+      const hasForbidden = cl.scoreRules.some(r => (r.key || r.label || '').includes('ممنوع'));
+      const zeroHalf = cl.scoreRules.some(r => (Number(r.min)||0) === 0 && (r.cls === 'half' || (r.key || '') === 'ریسک نصف'));
+      if (!hasForbidden && zeroHalf) {
+        cl.scoreRules = JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
+      }
     }
-    // حذف No setup از قوانین قدیمی اگر هنوز هست و کاربر قوانین پیش‌فرض‌مانند دارد
     try { saveCustom(); } catch(e){}
   }
-  ['A setup','B setup','ریسک نصف'].forEach(s => {
+  ['A setup','B setup','ریسک نصف','ترید ممنوع'].forEach(s => {
     if (!custom.setups) custom.setups = [];
     if (!custom.setups.includes(s)) custom.setups.push(s);
   });
@@ -2015,31 +2022,29 @@ function updateSetupSuggestionUI(){
   const msg = document.getElementById('setupSuggestMsg');
   if (!pctEl || !badge) return;
   const info = computePretradeScore();
-  // پیشنهاد ستاپ همیشه از امتیاز تیک‌های غیرمسدود
   const sug = mapScoreToSetup(info.score, false, getPretradeChecklist());
   window._suggestedSetup = sug.key;
   window._pretradeScore = info.score;
   window._pretradeBlocked = !!info.blocked;
+  const scoreForbidden = (sug.cls === 'blocked') || ((sug.key || '').includes('ممنوع'));
   pctEl.textContent = info.score + '%';
   if (fill) {
     fill.style.width = Math.max(0, Math.min(100, info.score)) + '%';
     const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b', bad: '#ef4444', blocked: '#dc2626' };
-    fill.style.background = info.blocked ? colors.blocked : (colors[sug.cls] || '#94a3b8');
+    fill.style.background = (info.blocked || scoreForbidden) ? colors.blocked : (colors[sug.cls] || '#94a3b8');
   }
-  if (info.blocked) {
+  if (info.blocked || scoreForbidden) {
     badge.className = 'setup-suggest-badge blocked';
-    badge.textContent = '🚫 ترید ممنوع';
+    badge.textContent = scoreForbidden ? (sug.label || '🚫 ترید ممنوع') : '🚫 ترید ممنوع';
   } else {
     badge.className = 'setup-suggest-badge ' + sug.cls;
     badge.textContent = sug.label;
   }
-  let message = '';
-  if (info.blocked) {
-    message = 'یادآوری: «' + (info.blockLabels || []).join(' · ') + '» — ترید ممنوع به‌عنوان هشدار ثبت می‌شود؛ چیزی قفل نیست. ';
-    message += 'پیشنهاد ستاپ از تیک‌ها: ' + (sug.label || '—') + ' (' + info.score + '٪). تصمیم با توست.';
-  } else {
-    message = sug.msg + ' (امتیاز ' + info.score + '٪ از تیک‌ها)';
+  let message = sug.msg || '';
+  if (info.blocked && info.blockLabels && info.blockLabels.length) {
+    message = 'یادآوری: «' + info.blockLabels.join(' · ') + '» — قفل نیست. ' + message;
   }
+  message += ' (امتیاز ' + info.score + '٪)';
   if (msg) msg.textContent = message;
   const applyBtn = document.getElementById('btnApplySuggestedSetup');
   if (applyBtn) {
@@ -2049,6 +2054,7 @@ function updateSetupSuggestionUI(){
   const auto = document.getElementById('autoApplySuggestedSetup');
   if (auto && auto.checked && sug.key) applySuggestedSetup(true);
 }
+
 function applySuggestedSetup(silent){
   const key = window._suggestedSetup;
   if (!key) { if (!silent) showToast('اول تیک‌های واچ‌لیست را بزن'); return; }
@@ -6116,28 +6122,34 @@ function updateGateSuggestionUI(){
   const msg = document.getElementById('gateSuggestMsg');
   if (!pctEl || !badge) return;
   const info = computePretradeScore();
+  // مسدودکننده چک‌باکس فقط یادآوری است؛ پیشنهاد از امتیاز می‌آید
   const sug = mapScoreToSetup(info.score, false, getPretradeChecklist());
   window._suggestedSetup = sug.key;
   window._pretradeScore = info.score;
   window._pretradeBlocked = !!info.blocked;
+  const scoreForbidden = (sug.cls === 'blocked') || ((sug.key || '').includes('ممنوع'));
   pctEl.textContent = info.score + '%';
   if (fill) {
     fill.style.width = Math.max(0, Math.min(100, info.score)) + '%';
     const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b', bad: '#ef4444', blocked: '#dc2626' };
-    fill.style.background = info.blocked ? colors.blocked : (colors[sug.cls] || '#94a3b8');
+    fill.style.background = (info.blocked || scoreForbidden) ? colors.blocked : (colors[sug.cls] || '#94a3b8');
   }
-  if (info.blocked) {
+  if (info.blocked || scoreForbidden) {
     badge.className = 'setup-suggest-badge blocked';
-    badge.textContent = '🚫 ترید ممنوع';
+    badge.textContent = scoreForbidden ? (sug.label || '🚫 ترید ممنوع') : '🚫 ترید ممنوع';
   } else {
     badge.className = 'setup-suggest-badge ' + sug.cls;
     badge.textContent = sug.label;
   }
   if (msg) {
-    if (info.blocked) msg.textContent = 'یادآوری مسدودکننده فعال است — چیزی قفل نیست. پیشنهاد: ' + sug.label;
-    else msg.textContent = sug.msg;
+    let t = sug.msg || '';
+    if (info.blocked && info.blockLabels && info.blockLabels.length) {
+      t = 'یادآوری: «' + info.blockLabels.join(' · ') + '» — چیزی قفل نیست. ' + t;
+    }
+    msg.textContent = t;
   }
 }
+
 function continueAfterPretrade(){
   // اعمال پیشنهاد ستاپ (اگر باشد) سپس فرم
   try { if (window._suggestedSetup) applySuggestedSetup(true); } catch(e){}
