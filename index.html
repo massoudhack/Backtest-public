@@ -712,6 +712,14 @@ body.booting .today-strip{opacity:.4}
 #tradeFormShell.hidden-for-gate{display:none!important}
 #pretradeGate.hidden-for-form{display:none!important}
 
+
+.setup-suggest-badge.half{background:rgba(14,165,233,.15);color:#0284c7;border:1.5px solid rgba(14,165,233,.4)}
+.score-rules-box{margin-top:14px;padding:12px;background:var(--bg-subtle);border-radius:12px;border:1px solid var(--border)}
+.score-rules-box h4{font-size:.82rem;margin:0 0 8px;font-weight:700}
+.score-rule-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.score-rule-row input[type=number]{width:64px;padding:8px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text)}
+.score-rule-row input[type=text]{flex:1;min-width:120px;padding:8px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text)}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1720,7 +1728,7 @@ body.booting .today-strip{opacity:.4}
                 <input type="checkbox" id="autoApplySuggestedSetup" style="width:16px;height:16px"> اعمال خودکار
               </label>
             </div>
-            <div class="setup-suggest-hint">پیشنهاد ستاپ از تیک‌های امتیازده. ۹۰+ A · ۷۰–۸۹ B · ۵۰–۶۹ No setup · زیر ۵۰ حرکت اشتباه. آیتم مسدودکننده فقط یادآوری «ترید ممنوع» است و چیزی را قفل نمی‌کند</div>
+            <div class="setup-suggest-hint">قوانین امتیاز→برچسب را از تب چک‌لیست ویرایش کن. پیش‌فرض: ۹۰+ A · ۷۰+ B · زیر آن ریسک نصف. مسدودکننده فقط یادآوری است.</div>
           </div>
           <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:12px">همه چک‌لیست‌ها کنار هم — واچ‌لیست پیش‌ترید امتیاز ستاپ را می‌سازد</p>
           <div class="cl-columns" id="tradeChecklistColumns"></div>
@@ -1860,11 +1868,17 @@ body.booting .today-strip{opacity:.4}
       <button type="button" class="cl-add-btn" onclick="addClItem()">+ افزودن</button>
       <div id="clWeightSum" style="font-size:.8rem;margin:12px 0;color:var(--text-muted)"></div>
       <div class="form-group" style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg-subtle);padding:14px;border-radius:12px">
-        <div><strong style="font-size:.86rem">حالت پیشرفته</strong><div style="font-size:.73rem;color:var(--text-muted)">وزن سفارشی</div></div>
+        <div><strong style="font-size:.86rem">حالت پیشرفته</strong><div style="font-size:.73rem;color:var(--text-muted)">وزن سفارشی آیتم‌ها</div></div>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
           <input type="checkbox" id="clAdvanced" onchange="onClAdvancedToggle()" style="width:auto;accent-color:var(--primary)">
           <span style="font-size:.82rem;font-weight:600">فعال</span>
         </label>
+      </div>
+      <div class="score-rules-box" id="clScoreRulesBox">
+        <h4>قوانین امتیاز → پیشنهاد (A / B / ریسک نصف / …)</h4>
+        <p style="font-size:.72rem;color:var(--text-muted);margin:0 0 10px;line-height:1.6">از بالاترین حداقل‌امتیاز به پایین. هر ردیف: اگر امتیاز ≥ این عدد → این برچسب. مسدودکننده جداست.</p>
+        <div id="clScoreRulesEditor"></div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addScoreRuleRow()" style="margin-top:6px">+ قانون</button>
       </div>
       <div class="form-actions">
         <button type="button" class="btn btn-outline" onclick="closeChecklistEditor()">انصراف</button>
@@ -1883,7 +1897,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.25 (fast pretrade gate before new trade form)';
+const APP_BUILD = 'BUILD-v27.26 (editable score→label rules: A/B/half-risk)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1893,12 +1907,16 @@ const DEFAULT_EMOTIONS = ['آرام','مطمئن','مضطرب','ترسیده','�
 const DEFAULT_MOTIVES = ['طبق استراتژی','FOMO','انتقام از بازار','شهود','توصیه دیگران','اخبار','سیگنال تکنیکال','سیگنال فاندامنتال'];
 const DEFAULT_MISTAKES = ['جابجایی حد ضرر','خروج زودهنگام','ورود دیرهنگام','عدم پایبندی به پلن','معامله بیش از حد','ریسک بالا','FOMO','معامله انتقامی','عدم صبر'];
 const PRETRADE_CHECKLIST_ID = 'cl_pretrade_watchlist';
-/** آستانه‌های پیش‌فرض — فقط برای پیشنهاد ستاپ از روی امتیاز واچ‌لیست */
-const SETUP_SCORE_THRESHOLDS = { a: 90, b: 70, none: 50 };
+const DEFAULT_SCORE_RULES = [
+  { min: 90, key: 'A setup', label: 'A setup', cls: 'a', msg: 'ستاپ قوی از روی تیک‌ها — تصمیم ورود با توست.' },
+  { min: 70, key: 'B setup', label: 'B setup', cls: 'b', msg: 'ستاپ قابل‌قبول — ورود ممکن است.' },
+  { min: 0, key: 'ریسک نصف', label: 'ریسک نصف', cls: 'half', msg: 'تیک‌ها کمتر است؛ اگر وارد می‌شوی ریسک را نصف کن.' }
+];
 const DEFAULT_PRETRADE_CHECKLIST = {
   id: PRETRADE_CHECKLIST_ID,
   name: 'واچ‌لیست پیش‌ترید',
   advanced: true,
+  scoreRules: JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES)),
   items: [
     { id: 'pt_zone', text: 'ناحیه مشخص داری؟ (نه No Zone)', weight: 25, block: false },
     { id: 'pt_trigger', text: 'تریگر واضح داری؟', weight: 25, block: false },
@@ -1906,21 +1924,38 @@ const DEFAULT_PRETRADE_CHECKLIST = {
     { id: 'pt_trend', text: 'با ساختار/روند هم‌خوان است؟', weight: 15, block: false },
     { id: 'pt_emotion', text: 'از نظر احساسی آماده‌ای؟ (نه FOMO/انتقام/عجله)', weight: 10, block: false },
     { id: 'pt_risk', text: 'ریسک و حد ضرر این ترید مشخص است؟', weight: 5, block: false },
-    { id: 'pt_daily_sl', text: 'حد ضرر روزانه خورده؟ (اگر بله → ترید ممنوع)', weight: 0, block: true }
+    { id: 'pt_daily_sl', text: 'حد ضرر روزانه خورده؟ (اگر بله → یادآوری ترید ممنوع)', weight: 0, block: true }
   ]
 };
-function mapScoreToSetup(score, blocked){
+function getChecklistScoreRules(cl){
+  if (cl && Array.isArray(cl.scoreRules) && cl.scoreRules.length) {
+    return [...cl.scoreRules].sort((a,b) => (Number(b.min)||0) - (Number(a.min)||0));
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
+}
+function mapScoreToSetup(score, blocked, checklist){
   if (blocked) {
-    return { key: null, cls: 'blocked', label: '🚫 ترید ممنوع', msg: 'یک مورد مسدودکننده تیک خورده (مثلاً حد ضرر روزانه) — امروز/الان ورود نکن.', blocked: true };
+    return { key: null, cls: 'blocked', label: '🚫 ترید ممنوع', msg: 'یادآوری مسدودکننده — چیزی قفل نیست؛ در دیتا می‌ماند.', blocked: true };
   }
   const s = Number(score) || 0;
-  const th = (custom && custom.setupScoreThresholds) ? custom.setupScoreThresholds : SETUP_SCORE_THRESHOLDS;
-  const a = th.a != null ? th.a : 90, b = th.b != null ? th.b : 70, n = th.none != null ? th.none : 50;
-  if (s >= a) return { key: 'A setup', cls: 'a', label: 'A setup', msg: 'از روی تیک‌های واچ‌لیست: ستاپ قوی. تصمیم ورود با خودت است.', blocked: false };
-  if (s >= b) return { key: 'B setup', cls: 'b', label: 'B setup', msg: 'از روی تیک‌های واچ‌لیست: ستاپ قابل‌قبول. تصمیم ورود با خودت است.', blocked: false };
-  if (s >= n) return { key: 'No setup', cls: 'none', label: 'No setup', msg: 'تیک‌ها کافی نیست — لبه ضعیف؛ بهتر است رد کنی.', blocked: false };
-  return { key: 'حرکت اشتباه', cls: 'bad', label: 'حرکت اشتباه', msg: 'ناحیه/تریگر/… ناقص — در دیتای خودت شبیه حرکت اشتباه بوده.', blocked: false };
+  const cl = checklist || (typeof getPretradeChecklist === 'function' ? getPretradeChecklist() : null);
+  const rules = getChecklistScoreRules(cl);
+  for (const r of rules) {
+    if (s >= (Number(r.min) || 0)) {
+      return {
+        key: r.key || r.label,
+        cls: r.cls || 'b',
+        label: r.label || r.key || '—',
+        msg: r.msg || ('پیشنهاد: ' + (r.label || r.key)),
+        blocked: false
+      };
+    }
+  }
+  const last = rules[rules.length - 1];
+  if (last) return { key: last.key || last.label, cls: last.cls || 'half', label: last.label || last.key, msg: last.msg || '', blocked: false };
+  return { key: 'ریسک نصف', cls: 'half', label: 'ریسک نصف', msg: 'تیک کم — ریسک را کم کن.', blocked: false };
 }
+
 function ensurePretradeChecklist(){
   if (!custom.checklists) custom.checklists = [];
   let cl = custom.checklists.find(c => c.id === PRETRADE_CHECKLIST_ID || c.name === 'واچ‌لیست پیش‌ترید');
@@ -1928,16 +1963,19 @@ function ensurePretradeChecklist(){
     custom.checklists.unshift(JSON.parse(JSON.stringify(DEFAULT_PRETRADE_CHECKLIST)));
     try { saveCustom(); } catch(e){}
   } else {
-    // مهاجرت از نسخهٔ قبلی که آیتم «ستاپ معتبر» داشت
     const hasOldMeta = (cl.items || []).some(it => it.id === 'pt_setup' || (it.text || '').includes('ستاپ معتبر A/B'));
     const hasBlocker = (cl.items || []).some(it => it.block || it.id === 'pt_daily_sl');
     if (hasOldMeta && !hasBlocker) {
       cl.items = JSON.parse(JSON.stringify(DEFAULT_PRETRADE_CHECKLIST.items));
       cl.advanced = true;
-      try { saveCustom(); } catch(e){}
     }
+    if (!Array.isArray(cl.scoreRules) || !cl.scoreRules.length) {
+      cl.scoreRules = JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
+    }
+    // حذف No setup از قوانین قدیمی اگر هنوز هست و کاربر قوانین پیش‌فرض‌مانند دارد
+    try { saveCustom(); } catch(e){}
   }
-  ['A setup','B setup','No setup','حرکت اشتباه'].forEach(s => {
+  ['A setup','B setup','ریسک نصف'].forEach(s => {
     if (!custom.setups) custom.setups = [];
     if (!custom.setups.includes(s)) custom.setups.push(s);
   });
@@ -1978,14 +2016,14 @@ function updateSetupSuggestionUI(){
   if (!pctEl || !badge) return;
   const info = computePretradeScore();
   // پیشنهاد ستاپ همیشه از امتیاز تیک‌های غیرمسدود
-  const sug = mapScoreToSetup(info.score, false);
+  const sug = mapScoreToSetup(info.score, false, getPretradeChecklist());
   window._suggestedSetup = sug.key;
   window._pretradeScore = info.score;
   window._pretradeBlocked = !!info.blocked;
   pctEl.textContent = info.score + '%';
   if (fill) {
     fill.style.width = Math.max(0, Math.min(100, info.score)) + '%';
-    const colors = { a: '#10b981', b: '#6366f1', none: '#f59e0b', bad: '#ef4444', blocked: '#dc2626' };
+    const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b', bad: '#ef4444', blocked: '#dc2626' };
     fill.style.background = info.blocked ? colors.blocked : (colors[sug.cls] || '#94a3b8');
   }
   if (info.blocked) {
@@ -2126,6 +2164,7 @@ let editingId = null, currentPeriod = 'all', currentTags = [];
 let custom = { setups: [], zones: [], triggers: [], emotions: [], tags: [], tagColors: {}, checklists: [], sessions: [], layout: {}, analyticsFromDate: '', analyticsFromTradeNum: null, badgeTargets: { profit500: 500, profit1000: 1000, profit5000: 5000 } };
 let editingChecklistId = null;
 let clEditorItems = [];
+let clEditorScoreRules = [];
 let activeFilterTags = [];
 let modalCount = 0;
 let deferredPrompt = null;
@@ -6077,14 +6116,14 @@ function updateGateSuggestionUI(){
   const msg = document.getElementById('gateSuggestMsg');
   if (!pctEl || !badge) return;
   const info = computePretradeScore();
-  const sug = mapScoreToSetup(info.score, false);
+  const sug = mapScoreToSetup(info.score, false, getPretradeChecklist());
   window._suggestedSetup = sug.key;
   window._pretradeScore = info.score;
   window._pretradeBlocked = !!info.blocked;
   pctEl.textContent = info.score + '%';
   if (fill) {
     fill.style.width = Math.max(0, Math.min(100, info.score)) + '%';
-    const colors = { a: '#10b981', b: '#6366f1', none: '#f59e0b', bad: '#ef4444', blocked: '#dc2626' };
+    const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b', bad: '#ef4444', blocked: '#dc2626' };
     fill.style.background = info.blocked ? colors.blocked : (colors[sug.cls] || '#94a3b8');
   }
   if (info.blocked) {
@@ -6472,7 +6511,7 @@ function getTradeChecklistsData(){
         row.score = info.score;
         row.blocked = info.blocked;
         row.blockLabels = info.blockLabels || [];
-        const sug = mapScoreToSetup(info.score, info.blocked);
+        const sug = mapScoreToSetup(info.score, info.blocked, getPretradeChecklist());
         row.suggestedSetup = sug.key;
         row.isPretrade = true;
         if (info.blocked) row.tradeForbidden = true;
@@ -7154,9 +7193,39 @@ function openChecklistEditor(id){
   document.getElementById('clModalTitle').textContent = cl ? 'ویرایش' : 'جدید';
   document.getElementById('clName').value = cl ? (cl.name || '') : '';
   document.getElementById('clAdvanced').checked = cl ? !!cl.advanced : true;
-  clEditorItems = cl ? JSON.parse(JSON.stringify(cl.items || [])) : [{ id:'i_'+Date.now(), text:'', weight:50 }];
+  clEditorItems = cl ? JSON.parse(JSON.stringify(cl.items || [])) : [{ id:'i_'+Date.now(), text:'', weight:50, block:false }];
+  clEditorScoreRules = cl && Array.isArray(cl.scoreRules) && cl.scoreRules.length
+    ? JSON.parse(JSON.stringify(cl.scoreRules))
+    : JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
   renderClItemsEditor();
+  renderScoreRulesEditor();
   document.getElementById('checklistModal').classList.add('show'); lockScroll();
+}
+function renderScoreRulesEditor(){
+  const el = document.getElementById('clScoreRulesEditor'); if (!el) return;
+  if (!clEditorScoreRules.length) clEditorScoreRules = JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
+  el.innerHTML = '';
+  clEditorScoreRules.forEach((r, i) => {
+    const row = document.createElement('div'); row.className = 'score-rule-row';
+    const min = document.createElement('input'); min.type = 'number'; min.min = 0; min.max = 100; min.value = r.min != null ? r.min : 0; min.title = 'حداقل امتیاز';
+    min.addEventListener('input', () => { clEditorScoreRules[i].min = +min.value; });
+    const lab = document.createElement('input'); lab.type = 'text'; lab.value = r.label || r.key || ''; lab.placeholder = 'برچسب (مثلاً A setup)';
+    lab.addEventListener('input', () => { clEditorScoreRules[i].label = lab.value; clEditorScoreRules[i].key = lab.value; });
+    const cls = document.createElement('select');
+    [['a','سبز A'],['b','بنفش B'],['half','آبی نصف'],['none','نارنجی'],['bad','قرمز'],['blocked','مسدود']].forEach(([v,t]) => {
+      const o = document.createElement('option'); o.value = v; o.textContent = t; if ((r.cls||'b')===v) o.selected = true; cls.appendChild(o);
+    });
+    cls.addEventListener('change', () => { clEditorScoreRules[i].cls = cls.value; });
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'btn btn-outline btn-sm'; del.style.color = 'var(--danger)'; del.textContent = '🗑️';
+    del.onclick = () => { clEditorScoreRules.splice(i, 1); renderScoreRulesEditor(); };
+    const minLbl = document.createElement('span'); minLbl.style.cssText = 'font-size:.72rem;color:var(--text-muted)'; minLbl.textContent = '≥';
+    row.appendChild(minLbl); row.appendChild(min); row.appendChild(lab); row.appendChild(cls); row.appendChild(del);
+    el.appendChild(row);
+  });
+}
+function addScoreRuleRow(){
+  clEditorScoreRules.push({ min: 0, key: 'جدید', label: 'جدید', cls: 'half', msg: '' });
+  renderScoreRulesEditor();
 }
 function closeChecklistEditor(){ document.getElementById('checklistModal').classList.remove('show'); unlockScroll(); editingChecklistId = null; }
 function addClItem(){ clEditorItems.push({ id:'i_'+Date.now()+Math.random().toString(36).slice(2,6), text:'', weight:0, block:false }); if (document.getElementById('clAdvanced').checked) redistributeWeights(); renderClItemsEditor(); }
@@ -7219,9 +7288,22 @@ function saveChecklistEditor(){
   }));
   if (!items.length) { showToast('حداقل ۱ آیتم'); return; }
   const advanced = document.getElementById('clAdvanced').checked;
+  const scoreRules = (clEditorScoreRules || []).map(r => ({
+    min: Number(r.min) || 0,
+    key: (r.key || r.label || '').trim() || '—',
+    label: (r.label || r.key || '').trim() || '—',
+    cls: r.cls || 'b',
+    msg: r.msg || ''
+  })).sort((a,b) => b.min - a.min);
+  // برچسب‌ها را به لیست ستاپ‌ها اضافه کن
+  scoreRules.forEach(r => {
+    if (!custom.setups) custom.setups = [];
+    if (r.key && !custom.setups.includes(r.key)) custom.setups.push(r.key);
+  });
   if (!custom.checklists) custom.checklists = [];
-  if (editingChecklistId) { const idx = custom.checklists.findIndex(c => c.id === editingChecklistId); if (idx >= 0) custom.checklists[idx] = { id:editingChecklistId, name, advanced, items }; }
-  else custom.checklists.push({ id:'cl_'+Date.now(), name, advanced, items });
+  const payload = { id: editingChecklistId || ('cl_'+Date.now()), name, advanced, items, scoreRules };
+  if (editingChecklistId) { const idx = custom.checklists.findIndex(c => c.id === editingChecklistId); if (idx >= 0) custom.checklists[idx] = payload; else custom.checklists.push(payload); }
+  else custom.checklists.push(payload);
   saveCustom(); closeChecklistEditor(); renderChecklistBoard(); fillChecklistSelects();
   try { renderTradeChecklistColumns(); } catch(e){}
   showToast('ذخیره شد');
