@@ -720,6 +720,26 @@ body.booting .today-strip{opacity:.4}
 .score-rule-row input[type=number]{width:64px;padding:8px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text)}
 .score-rule-row input[type=text]{flex:1;min-width:120px;padding:8px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg-card);color:var(--text)}
 
+
+.wl-group{margin-bottom:12px;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;background:var(--bg-card)}
+.wl-group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:var(--bg-subtle);border-bottom:1px solid var(--border)}
+.wl-group-title{font-weight:800;font-size:.88rem}
+.wl-group-w{font-size:.72rem;font-weight:800;color:var(--primary);background:var(--primary-soft);padding:3px 10px;border-radius:99px}
+.wl-opts{display:flex;flex-direction:column;gap:6px;padding:10px}
+.wl-opt{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-subtle);cursor:pointer;transition:.15s;user-select:none}
+.wl-opt:hover{border-color:rgba(99,102,241,.35)}
+.wl-opt.selected{border-color:var(--primary);background:var(--primary-soft)}
+.wl-opt.reject-opt.selected{border-color:#ef4444;background:rgba(239,68,68,.1)}
+.wl-opt-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border-strong);flex-shrink:0;display:grid;place-items:center}
+.wl-opt.selected .wl-opt-radio{border-color:var(--primary);background:var(--primary);box-shadow:inset 0 0 0 3px #fff}
+.wl-opt.reject-opt.selected .wl-opt-radio{border-color:#ef4444;background:#ef4444}
+.wl-opt-text{flex:1;font-size:.84rem;font-weight:600}
+.wl-opt-w{font-size:.72rem;font-weight:800;color:var(--text-muted);min-width:2.5em;text-align:center}
+.wl-opt-w.zero{color:#94a3b8}
+.wl-opt-w.reject{color:#dc2626;background:rgba(239,68,68,.1);padding:2px 8px;border-radius:8px}
+.wl-group-hint{font-size:.7rem;color:var(--text-muted);padding:0 12px 10px;line-height:1.5}
+.pretrade-gate-items .wl-group{margin-bottom:10px}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1897,7 +1917,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.27 (score<20 forbidden, ≥20 half risk)';
+const APP_BUILD = 'BUILD-v27.28 (nested watchlist options + fixed trade-forbidden)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -1936,7 +1956,7 @@ function getChecklistScoreRules(cl){
 }
 function mapScoreToSetup(score, blocked, checklist){
   if (blocked) {
-    return { key: null, cls: 'blocked', label: '🚫 ترید ممنوع', msg: 'یادآوری مسدودکننده — چیزی قفل نیست؛ در دیتا می‌ماند.', blocked: true };
+    return { key: 'ترید ممنوع', cls: 'blocked', label: '🚫 ترید ممنوع', msg: 'یادآوری مسدودکننده / رد — چیزی قفل نیست؛ در دیتا می‌ماند.', blocked: true };
   }
   const s = Number(score) || 0;
   const cl = checklist || (typeof getPretradeChecklist === 'function' ? getPretradeChecklist() : null);
@@ -1993,27 +2013,52 @@ function getPretradeChecklist(){
 }
 function computePretradeScore(){
   const cl = getPretradeChecklist();
-  if (!cl) return { score: 0, done: 0, total: 0, blocked: false, blockLabels: [] };
+  if (!cl) return { score: 0, done: 0, total: 0, blocked: false, blockLabels: [], selections: {} };
   const state = window._tradeClChecked || {};
   const items = cl.items || [];
   let done = 0, doneW = 0, totalW = 0;
   const blockLabels = [];
+  const selections = {};
   items.forEach(it => {
-    const checked = !!state[cl.id + '__' + it.id];
-    const w = Number(it.weight) || 0;
-    // مسدودکننده‌ها در امتیاز مثبت حساب نمی‌شوند
-    if (it.block) {
-      if (checked) blockLabels.push(it.text || 'مسدودکننده');
+    const key = cl.id + '__' + it.id;
+    const val = state[key];
+    // مسدودکننده ساده (چک‌باکس)
+    if (it.block && !(it.options && it.options.length)) {
+      if (val) blockLabels.push(it.text || 'مسدودکننده');
       return;
     }
+    // حالت زیر‌گزینه (رادیویی)
+    if (it.options && it.options.length) {
+      const maxW = Math.max.apply(null, it.options.map(o => Number(o.weight) || 0).concat([Number(it.weight) || 0]));
+      totalW += maxW > 0 ? maxW : (Number(it.weight) || 0);
+      if (val) {
+        const opt = it.options.find(o => o.id === val);
+        if (opt) {
+          selections[it.id] = opt;
+          if (opt.reject || opt.block) {
+            blockLabels.push(opt.text || it.text || 'رد');
+          } else {
+            done++;
+            doneW += Number(opt.weight) || 0;
+          }
+        }
+      }
+      return;
+    }
+    // ساده
+    const w = Number(it.weight) || 0;
     totalW += w;
-    if (checked) { done++; doneW += w; }
+    if (val) { done++; doneW += w; }
   });
-  const scoreItems = items.filter(it => !it.block);
-  const score = cl.advanced
-    ? (totalW ? Math.round(doneW / totalW * 100) : 0)
-    : (scoreItems.length ? Math.round(done / scoreItems.length * 100) : 0);
-  return { score, done, total: scoreItems.length, blocked: blockLabels.length > 0, blockLabels, checklistId: cl.id, name: cl.name };
+  const score = totalW ? Math.round(doneW / totalW * 100) : 0;
+  return {
+    score,
+    done,
+    total: items.filter(it => !it.block || (it.options && it.options.length)).length,
+    blocked: blockLabels.length > 0,
+    blockLabels,
+    selections
+  };
 }
 function updateSetupSuggestionUI(){
   const pctEl = document.getElementById('setupSuggestPct');
@@ -2022,7 +2067,7 @@ function updateSetupSuggestionUI(){
   const msg = document.getElementById('setupSuggestMsg');
   if (!pctEl || !badge) return;
   const info = computePretradeScore();
-  const sug = mapScoreToSetup(info.score, false, getPretradeChecklist());
+  const sug = mapScoreToSetup(info.score, !!info.blocked, getPretradeChecklist());
   window._suggestedSetup = sug.key;
   window._pretradeScore = info.score;
   window._pretradeBlocked = !!info.blocked;
@@ -6094,21 +6139,57 @@ function renderPretradeGate(){
   const items = cl.items || [];
   box.innerHTML = items.map((it, idx) => {
     const key = cl.id + '__' + it.id;
+    if (it.options && it.options.length) {
+      const maxW = Math.max.apply(null, it.options.map(o => Number(o.weight)||0).concat([Number(it.weight)||0]));
+      const cur = state[key] || '';
+      const optsHtml = it.options.map(opt => {
+        const sel = cur === opt.id;
+        const rej = !!(opt.reject || opt.block);
+        const wLabel = rej ? 'رد' : ((Number(opt.weight)||0) + '%');
+        return '<div class="wl-opt' + (sel?' selected':'') + (rej?' reject-opt':'') + '" data-clkey="' + escapeHtml(key) + '" data-opt="' + escapeHtml(opt.id) + '">'
+          + '<div class="wl-opt-radio"></div>'
+          + '<div class="wl-opt-text">' + escapeHtml(opt.text||'') + '</div>'
+          + '<span class="wl-opt-w' + (rej?' reject':((Number(opt.weight)||0)===0?' zero':'')) + '">' + wLabel + '</span>'
+          + '</div>';
+      }).join('');
+      return '<div class="wl-group" data-item="' + escapeHtml(it.id) + '">'
+        + '<div class="wl-group-head"><span class="wl-group-title">' + (idx+1) + '. ' + escapeHtml(it.text||'') + '</span>'
+        + '<span class="wl-group-w">' + (maxW||it.weight||0) + '%</span></div>'
+        + '<div class="wl-opts">' + optsHtml + '</div>'
+        + '<div class="wl-group-hint">فقط یک گزینه؛ امتیاز زیر‌گزینه‌ها با هم جمع نمی‌شود.</div>'
+        + '</div>';
+    }
+    // ساده / مسدودکننده
     const checked = !!state[key];
     const isBlock = !!it.block;
-    return '<div class="pretrade-gate-item' + (checked?' checked':'') + (isBlock?' is-block':'') + '" data-clkey="' + escapeHtml(key) + '">'
+    return '<div class="pretrade-gate-item' + (checked?' checked':'') + (isBlock?' is-block':'') + '" data-clkey="' + escapeHtml(key) + '" data-simple="1">'
       + '<div class="pretrade-gate-check">✓</div>'
-      + '<div class="pretrade-gate-text">' + escapeHtml(it.text || '') + (isBlock ? ' <span class="cl-block-tag">یادآوری</span>' : '') + '</div>'
+      + '<div class="pretrade-gate-text">' + escapeHtml(it.text || '') + (isBlock ? ' <span class="cl-block-tag">ترید ممنوع</span>' : '') + '</div>'
       + (!isBlock && cl.advanced ? '<span class="pretrade-gate-w">' + (it.weight||0) + '٪</span>' : '')
       + '</div>';
   }).join('');
-  box.querySelectorAll('.pretrade-gate-item').forEach(el => {
+
+  box.querySelectorAll('.pretrade-gate-item[data-simple]').forEach(el => {
     el.addEventListener('click', () => {
       const key = el.dataset.clkey;
       const st = window._tradeClChecked || {};
       st[key] = !st[key];
       window._tradeClChecked = st;
       el.classList.toggle('checked', !!st[key]);
+      updateGateSuggestionUI();
+      try { updateSetupSuggestionUI(); } catch(e){}
+    });
+  });
+  box.querySelectorAll('.wl-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.clkey;
+      const optId = el.dataset.opt;
+      const st = window._tradeClChecked || {};
+      // toggle same = deselect
+      st[key] = (st[key] === optId) ? '' : optId;
+      window._tradeClChecked = st;
+      const group = el.closest('.wl-group');
+      group.querySelectorAll('.wl-opt').forEach(o => o.classList.toggle('selected', st[key] === o.dataset.opt));
       updateGateSuggestionUI();
       try { updateSetupSuggestionUI(); } catch(e){}
     });
@@ -6123,7 +6204,7 @@ function updateGateSuggestionUI(){
   if (!pctEl || !badge) return;
   const info = computePretradeScore();
   // مسدودکننده چک‌باکس فقط یادآوری است؛ پیشنهاد از امتیاز می‌آید
-  const sug = mapScoreToSetup(info.score, false, getPretradeChecklist());
+  const sug = mapScoreToSetup(info.score, !!info.blocked, getPretradeChecklist());
   window._suggestedSetup = sug.key;
   window._pretradeScore = info.score;
   window._pretradeBlocked = !!info.blocked;
@@ -6456,48 +6537,116 @@ function renderTradeChecklistColumns(){
   const box = document.getElementById('tradeChecklistColumns'); if (!box) return;
   try { ensurePretradeChecklist(); } catch(e){}
   const checklists = custom.checklists || [];
-  if (!checklists.length) { box.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:20px;text-align:center;background:var(--bg-subtle);border-radius:12px">چک‌لیستی نیست</div>'; updateSetupSuggestionUI(); return; }
-  const checkedState = window._tradeClChecked || {};
+  if (!checklists.length) {
+    box.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:20px;text-align:center;background:var(--bg-subtle);border-radius:12px">چک‌لیستی نیست</div>';
+    try { updateSetupSuggestionUI(); } catch(e){}
+    return;
+  }
+  const state = window._tradeClChecked || {};
   box.innerHTML = checklists.map(cl => {
     const items = cl.items || [];
-    let score = 0, done = 0, totalW = 0, doneW = 0;
-    items.forEach(it => { totalW += Number(it.weight)||0; if (checkedState[cl.id+'__'+it.id]) { doneW += Number(it.weight)||0; done++; } });
-    score = cl.advanced ? (totalW?Math.round(doneW/totalW*100):0) : (items.length?Math.round(done/items.length*100):0);
-    const itemsHtml = items.map((it, idx) => {
+    // امتیاز این چک‌لیست
+    let score = 0;
+    if (cl.id === PRETRADE_CHECKLIST_ID || cl.name === 'واچ‌لیست پیش‌ترید') {
+      score = computePretradeScore().score;
+    } else {
+      let doneW = 0, totalW = 0, done = 0;
+      items.forEach(it => {
+        if (it.block && !(it.options && it.options.length)) return;
+        if (it.options && it.options.length) {
+          const maxW = Math.max.apply(null, it.options.map(o => Number(o.weight)||0).concat([Number(it.weight)||0]));
+          totalW += maxW || 0;
+          const val = state[cl.id + '__' + it.id];
+          if (val) {
+            const opt = it.options.find(o => o.id === val);
+            if (opt && !opt.reject && !opt.block) { doneW += Number(opt.weight)||0; done++; }
+          }
+        } else {
+          totalW += Number(it.weight)||0;
+          if (state[cl.id + '__' + it.id]) { doneW += Number(it.weight)||0; done++; }
+        }
+      });
+      score = cl.advanced ? (totalW ? Math.round(doneW/totalW*100) : 0) : (items.length ? Math.round(done/items.length*100) : 0);
+    }
+    const body = items.map((it, idx) => {
       const key = cl.id + '__' + it.id;
-      const checked = !!checkedState[key];
+      if (it.options && it.options.length) {
+        const maxW = Math.max.apply(null, it.options.map(o => Number(o.weight)||0).concat([Number(it.weight)||0]));
+        const cur = state[key] || '';
+        const optsHtml = it.options.map(opt => {
+          const sel = cur === opt.id;
+          const rej = !!(opt.reject || opt.block);
+          const wLabel = rej ? 'رد' : ((Number(opt.weight)||0) + '%');
+          return '<div class="wl-opt' + (sel?' selected':'') + (rej?' reject-opt':'') + '" data-clkey="' + escapeHtml(key) + '" data-opt="' + escapeHtml(opt.id) + '" data-clid="' + escapeHtml(cl.id) + '">'
+            + '<div class="wl-opt-radio"></div>'
+            + '<div class="wl-opt-text">' + escapeHtml(opt.text||'') + '</div>'
+            + '<span class="wl-opt-w' + (rej?' reject':'') + '">' + wLabel + '</span></div>';
+        }).join('');
+        return '<div class="wl-group"><div class="wl-group-head"><span class="wl-group-title">' + (idx+1) + '. ' + escapeHtml(it.text||'') + '</span><span class="wl-group-w">' + (maxW||0) + '%</span></div><div class="wl-opts">' + optsHtml + '</div><div class="wl-group-hint">یک گزینه</div></div>';
+      }
+      const checked = !!state[key];
       const isBlock = !!it.block;
-      return `<div class="cl-modern-item${checked?' checked':''}${isBlock?' is-block':''}" data-clkey="${escapeHtml(key)}" data-clid="${escapeHtml(cl.id)}">
-        <span class="cl-num">${idx+1}</span>
-        <span class="cl-text">${escapeHtml(it.text||'')}${isBlock?'<span class="cl-block-tag">مسدودکننده</span>':''}</span>
-        ${cl.advanced && !isBlock?`<span class="cl-weight-tag">${it.weight||0}%</span>`:''}
-        <span class="cl-check"></span>
-      </div>`;
+      return '<div class="cl-modern-item' + (checked?' checked':'') + (isBlock?' is-block':'') + '" data-clkey="' + escapeHtml(key) + '" data-clid="' + escapeHtml(cl.id) + '" data-simple="1">'
+        + '<span class="cl-num">' + (idx+1) + '</span>'
+        + '<span class="cl-text">' + escapeHtml(it.text||'') + (isBlock?'<span class="cl-block-tag">ترید ممنوع</span>':'') + '</span>'
+        + (cl.advanced && !isBlock ? '<span class="cl-weight-tag">' + (it.weight||0) + '%</span>' : '')
+        + '<span class="cl-check"></span></div>';
     }).join('');
-    return `<div class="cl-column" data-clid="${escapeHtml(cl.id)}">
-      <div class="cl-column-head"><h4>${escapeHtml(cl.name)}</h4><span>${score}%</span></div>
-      <div class="cl-progress-track"><div class="cl-progress-fill" style="width:${score}%"></div></div>
-      <div class="cl-modern-items">${itemsHtml}</div>
-    </div>`;
+    return '<div class="cl-column" data-clid="' + escapeHtml(cl.id) + '">'
+      + '<div class="cl-column-head"><h4>' + escapeHtml(cl.name) + '</h4><span class="cl-col-score">' + score + '%</span></div>'
+      + '<div class="cl-progress-track"><div class="cl-progress-fill" style="width:' + score + '%"></div></div>'
+      + '<div class="cl-modern-items">' + body + '</div></div>';
   }).join('');
-  box.querySelectorAll('.cl-modern-item').forEach(item => {
+
+  function refreshColScore(clId) {
+    const col = box.querySelector('.cl-column[data-clid="' + clId + '"]');
+    if (!col) return;
+    const cl = checklists.find(c => c.id === clId);
+    if (!cl) return;
+    let score = 0;
+    if (cl.id === PRETRADE_CHECKLIST_ID || cl.name === 'واچ‌لیست پیش‌ترید') score = computePretradeScore().score;
+    else {
+      const st = window._tradeClChecked || {};
+      let doneW=0,totalW=0,done=0;
+      (cl.items||[]).forEach(it => {
+        if (it.block && !(it.options&&it.options.length)) return;
+        if (it.options && it.options.length) {
+          const maxW = Math.max.apply(null, it.options.map(o => Number(o.weight)||0).concat([Number(it.weight)||0]));
+          totalW += maxW||0;
+          const val = st[cl.id+'__'+it.id];
+          if (val) { const opt = it.options.find(o=>o.id===val); if (opt && !opt.reject && !opt.block) { doneW+=Number(opt.weight)||0; done++; } }
+        } else {
+          totalW += Number(it.weight)||0;
+          if (st[cl.id+'__'+it.id]) { doneW += Number(it.weight)||0; done++; }
+        }
+      });
+      score = cl.advanced ? (totalW?Math.round(doneW/totalW*100):0) : ((cl.items||[]).length?Math.round(done/(cl.items||[]).length*100):0);
+    }
+    const se = col.querySelector('.cl-col-score'); if (se) se.textContent = score + '%';
+    const fill = col.querySelector('.cl-progress-fill'); if (fill) fill.style.width = score + '%';
+  }
+
+  box.querySelectorAll('.cl-modern-item[data-simple]').forEach(item => {
     item.addEventListener('click', () => {
       const key = item.dataset.clkey;
-      const state = window._tradeClChecked || {};
-      state[key] = !state[key];
-      window._tradeClChecked = state;
-      item.classList.toggle('checked', state[key]);
-      const col = item.closest('.cl-column');
-      const clId = col.dataset.clid;
-      const cl = checklists.find(c => c.id === clId);
-      if (cl) {
-        const items = cl.items || [];
-        let done = 0, doneW = 0, totalW = 0;
-        items.forEach(it => { totalW += Number(it.weight)||0; if (state[cl.id+'__'+it.id]) { doneW += Number(it.weight)||0; done++; } });
-        const score = cl.advanced ? (totalW?Math.round(doneW/totalW*100):0) : (items.length?Math.round(done/items.length*100):0);
-        col.querySelector('.cl-progress-fill').style.width = score + '%';
-        col.querySelector('.cl-column-head span').textContent = score + '%';
-      }
+      const st = window._tradeClChecked || {};
+      st[key] = !st[key];
+      window._tradeClChecked = st;
+      item.classList.toggle('checked', !!st[key]);
+      refreshColScore(item.dataset.clid);
+      try { updateSetupSuggestionUI(); } catch(e){}
+    });
+  });
+  box.querySelectorAll('.wl-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.clkey;
+      const optId = el.dataset.opt;
+      const st = window._tradeClChecked || {};
+      st[key] = (st[key] === optId) ? '' : optId;
+      window._tradeClChecked = st;
+      const group = el.closest('.wl-group');
+      group.querySelectorAll('.wl-opt').forEach(o => o.classList.toggle('selected', st[key] === o.dataset.opt));
+      refreshColScore(el.dataset.clid);
       try { updateSetupSuggestionUI(); } catch(e){}
     });
   });
@@ -6509,26 +6658,43 @@ function getTradeChecklistsData(){
   const result = [];
   checklists.forEach(cl => {
     const items = cl.items || [];
-    const checkedObj = {}; let done = 0, doneW = 0, totalW = 0;
+    const checkedObj = {};
+    let done = 0, doneW = 0, totalW = 0;
+    let any = false;
     items.forEach(it => {
       const key = cl.id + '__' + it.id;
-      if (state[key]) { checkedObj[it.id] = true; done++; doneW += Number(it.weight)||0; }
-      totalW += Number(it.weight)||0;
+      const val = state[key];
+      if (it.options && it.options.length) {
+        const maxW = Math.max.apply(null, it.options.map(o => Number(o.weight)||0).concat([Number(it.weight)||0]));
+        totalW += maxW || 0;
+        if (val) {
+          any = true;
+          checkedObj[it.id] = val;
+          const opt = it.options.find(o => o.id === val);
+          if (opt && !opt.reject && !opt.block) { done++; doneW += Number(opt.weight)||0; }
+        }
+      } else if (it.block) {
+        if (val) { any = true; checkedObj[it.id] = true; }
+      } else {
+        totalW += Number(it.weight)||0;
+        if (val) { any = true; checkedObj[it.id] = true; done++; doneW += Number(it.weight)||0; }
+      }
     });
-    const score = cl.advanced ? (totalW?Math.round(doneW/totalW*100):0) : (items.length?Math.round(done/items.length*100):0);
-    if (done > 0 || (cl.id === PRETRADE_CHECKLIST_ID || cl.name === 'واچ‌لیست پیش‌ترید')) {
+    const score = cl.advanced ? (totalW ? Math.round(doneW/totalW*100) : 0) : (items.length ? Math.round(done/Math.max(1,items.filter(i=>!i.block||(i.options&&i.options.length)).length)*100) : 0);
+    const isPre = cl.id === PRETRADE_CHECKLIST_ID || cl.name === 'واچ‌لیست پیش‌ترید';
+    if (any || isPre) {
       const row = { checklistId: cl.id, name: cl.name, checked: checkedObj, score, done, total: items.length };
-      if (cl.id === PRETRADE_CHECKLIST_ID || cl.name === 'واچ‌لیست پیش‌ترید') {
+      if (isPre) {
         const info = computePretradeScore();
         row.score = info.score;
         row.blocked = info.blocked;
         row.blockLabels = info.blockLabels || [];
-        const sug = mapScoreToSetup(info.score, info.blocked, getPretradeChecklist());
+        const sug = mapScoreToSetup(info.score, info.blocked, cl);
         row.suggestedSetup = sug.key;
         row.isPretrade = true;
         if (info.blocked) row.tradeForbidden = true;
       }
-      if (done > 0 || row.isPretrade) result.push(row);
+      result.push(row);
     }
   });
   return result.length ? result : null;
@@ -7240,16 +7406,47 @@ function addScoreRuleRow(){
   renderScoreRulesEditor();
 }
 function closeChecklistEditor(){ document.getElementById('checklistModal').classList.remove('show'); unlockScroll(); editingChecklistId = null; }
-function addClItem(){ clEditorItems.push({ id:'i_'+Date.now()+Math.random().toString(36).slice(2,6), text:'', weight:0, block:false }); if (document.getElementById('clAdvanced').checked) redistributeWeights(); renderClItemsEditor(); }
+function addClItem(){
+  clEditorItems.push({ id:'i_'+Date.now()+Math.random().toString(36).slice(2,6), text:'', weight:0, block:false, options:null });
+  if (document.getElementById('clAdvanced').checked) redistributeWeights();
+  renderClItemsEditor();
+}
 function removeClItem(idx){ clEditorItems.splice(idx, 1); if (document.getElementById('clAdvanced').checked) redistributeWeights(); renderClItemsEditor(); }
 function redistributeWeights(){
-  const scored = clEditorItems.filter(it => !it.block);
-  const n = scored.length; if (!n) return;
+  const scored = clEditorItems.filter(it => !it.block || (it.options && it.options.length));
+  const simple = scored.filter(it => !(it.options && it.options.length) && !it.block);
+  const n = simple.length; if (!n) return;
+  // فقط آیتم‌های ساده بدون زیر‌گزینه را یکنواخت کن — زیر‌گزینه‌ها وزن خودشان را دارند
   const w = Math.floor(100/n); let r = 100-w*n;
-  scored.forEach((it, i) => { it.weight = w + (i<r?1:0); });
-  clEditorItems.forEach(it => { if (it.block) it.weight = 0; });
+  simple.forEach((it, i) => { it.weight = w + (i<r?1:0); });
+  clEditorItems.forEach(it => { if (it.block && !(it.options&&it.options.length)) it.weight = 0; });
 }
 function onClAdvancedToggle(){ if (document.getElementById('clAdvanced').checked) redistributeWeights(); renderClItemsEditor(); }
+function toggleItemOptions(idx){
+  const it = clEditorItems[idx];
+  if (it.options && it.options.length) {
+    it.options = null;
+  } else {
+    it.block = false;
+    it.options = [
+      { id: 'o_'+Date.now()+'_1', text: 'گزینه ۱', weight: Math.round((Number(it.weight)||25)*0.6), reject: false },
+      { id: 'o_'+Date.now()+'_2', text: 'گزینه ۲', weight: Math.round((Number(it.weight)||25)*0.3), reject: false },
+      { id: 'o_'+Date.now()+'_3', text: 'رد / بدون مورد', weight: 0, reject: true }
+    ];
+  }
+  renderClItemsEditor();
+}
+function addClOption(itemIdx){
+  const it = clEditorItems[itemIdx];
+  if (!it.options) it.options = [];
+  it.options.push({ id: 'o_'+Date.now()+Math.random().toString(36).slice(2,5), text: '', weight: 0, reject: false });
+  renderClItemsEditor();
+}
+function removeClOption(itemIdx, optIdx){
+  clEditorItems[itemIdx].options.splice(optIdx, 1);
+  if (!clEditorItems[itemIdx].options.length) clEditorItems[itemIdx].options = null;
+  renderClItemsEditor();
+}
 function renderClItemsEditor(){
   const el = document.getElementById('clItemsEditor');
   const adv = document.getElementById('clAdvanced') && document.getElementById('clAdvanced').checked;
@@ -7257,22 +7454,59 @@ function renderClItemsEditor(){
   clEditorItems.forEach((it, i) => {
     const wrap = document.createElement('div'); wrap.className = 'cl-edit-item';
     const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;align-items:center';
-    const inp = document.createElement('input'); inp.type = 'text'; inp.value = it.text || ''; inp.placeholder = 'متن';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = it.text || ''; inp.placeholder = 'عنوان گروه یا سؤال';
     inp.addEventListener('input', () => { clEditorItems[i].text = inp.value; });
     const del = document.createElement('button'); del.type = 'button'; del.className = 'btn btn-outline btn-sm'; del.style.color = 'var(--danger)'; del.textContent = '🗑️'; del.onclick = () => removeClItem(i);
     row.appendChild(inp); row.appendChild(del); wrap.appendChild(row);
-    const blk = document.createElement('label'); blk.className = 'cl-edit-block';
-    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!it.block;
-    cb.addEventListener('change', () => {
-      clEditorItems[i].block = cb.checked;
-      if (cb.checked) clEditorItems[i].weight = 0;
-      else if (document.getElementById('clAdvanced').checked) redistributeWeights();
-      renderClItemsEditor();
-    });
-    blk.appendChild(cb);
-    blk.appendChild(document.createTextNode(' مسدودکننده / یادآوری ترید ممنوع (قفل نمی‌کند)'));
-    wrap.appendChild(blk);
-    if (adv && !it.block) {
+
+    // حالت زیر‌گزینه
+    const modeRow = document.createElement('div'); modeRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;align-items:center';
+    const optBtn = document.createElement('button'); optBtn.type = 'button'; optBtn.className = 'btn btn-outline btn-sm';
+    optBtn.textContent = (it.options && it.options.length) ? '✕ حذف زیر‌گزینه‌ها (ساده شود)' : '⊞ زیر‌گزینه (مثل ناحیه/تریگر)';
+    optBtn.onclick = () => toggleItemOptions(i);
+    modeRow.appendChild(optBtn);
+
+    if (!(it.options && it.options.length)) {
+      const blk = document.createElement('label'); blk.className = 'cl-edit-block';
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!it.block;
+      cb.addEventListener('change', () => {
+        clEditorItems[i].block = cb.checked;
+        if (cb.checked) clEditorItems[i].weight = 0;
+        else if (document.getElementById('clAdvanced').checked) redistributeWeights();
+        renderClItemsEditor();
+      });
+      blk.appendChild(cb);
+      blk.appendChild(document.createTextNode(' ترید ممنوع اگر تیک بخورد'));
+      modeRow.appendChild(blk);
+    }
+    wrap.appendChild(modeRow);
+
+    if (it.options && it.options.length) {
+      const optsBox = document.createElement('div'); optsBox.style.cssText = 'margin-top:10px;padding:10px;background:var(--bg-subtle);border-radius:12px;border:1px solid var(--border)';
+      it.options.forEach((opt, oi) => {
+        const orow = document.createElement('div'); orow.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
+        const oinp = document.createElement('input'); oinp.type = 'text'; oinp.value = opt.text || ''; oinp.placeholder = 'متن گزینه'; oinp.style.flex = '1';
+        oinp.addEventListener('input', () => { clEditorItems[i].options[oi].text = oinp.value; });
+        const ow = document.createElement('input'); ow.type = 'number'; ow.min = 0; ow.max = 100; ow.value = opt.weight || 0; ow.style.width = '64px';
+        ow.title = 'درصد'; ow.addEventListener('input', () => { clEditorItems[i].options[oi].weight = +ow.value; });
+        const rej = document.createElement('label'); rej.style.cssText = 'font-size:.72rem;display:flex;gap:4px;align-items:center;white-space:nowrap';
+        const rcb = document.createElement('input'); rcb.type = 'checkbox'; rcb.checked = !!opt.reject;
+        rcb.addEventListener('change', () => {
+          clEditorItems[i].options[oi].reject = rcb.checked;
+          if (rcb.checked) clEditorItems[i].options[oi].weight = 0;
+        });
+        rej.appendChild(rcb); rej.appendChild(document.createTextNode('رد/ممنوع'));
+        const od = document.createElement('button'); od.type = 'button'; od.className = 'btn btn-outline btn-sm'; od.textContent = '×'; od.onclick = () => removeClOption(i, oi);
+        orow.appendChild(oinp); orow.appendChild(ow); orow.appendChild(rej); orow.appendChild(od);
+        optsBox.appendChild(orow);
+      });
+      const addO = document.createElement('button'); addO.type = 'button'; addO.className = 'btn btn-outline btn-sm'; addO.textContent = '+ گزینه'; addO.onclick = () => addClOption(i);
+      optsBox.appendChild(addO);
+      const hint = document.createElement('div'); hint.style.cssText = 'font-size:.7rem;color:var(--text-muted);margin-top:6px';
+      hint.textContent = 'حداکثر امتیاز این گروه = بیشترین درصد گزینه‌ها. فقط یک گزینه انتخاب می‌شود.';
+      optsBox.appendChild(hint);
+      wrap.appendChild(optsBox);
+    } else if (adv && !it.block) {
       const pr = document.createElement('div'); pr.className = 'cl-priority-row'; pr.innerHTML = '<span>وزن٪</span>';
       const range = document.createElement('input'); range.type = 'range'; range.min = 0; range.max = 100; range.value = it.weight || 0;
       const badge = document.createElement('span'); badge.className = 'cl-weight'; badge.textContent = (it.weight||0) + '%';
@@ -7292,12 +7526,27 @@ function updateClWeightSum(){
 function saveChecklistEditor(){
   const name = (document.getElementById('clName').value || '').trim();
   if (!name) { showToast('نام لازم'); return; }
-  const items = clEditorItems.filter(it => (it.text||'').trim()).map(it => ({
-    id: it.id,
-    text: it.text.trim(),
-    weight: it.block ? 0 : (Number(it.weight)||0),
-    block: !!it.block
-  }));
+  const items = clEditorItems.filter(it => (it.text||'').trim()).map(it => {
+    const row = {
+      id: it.id,
+      text: it.text.trim(),
+      weight: it.block && !(it.options && it.options.length) ? 0 : (Number(it.weight)||0),
+      block: !!it.block
+    };
+    if (it.options && it.options.length) {
+      row.options = it.options.filter(o => (o.text||'').trim()).map(o => ({
+        id: o.id,
+        text: (o.text||'').trim(),
+        weight: o.reject ? 0 : (Number(o.weight)||0),
+        reject: !!o.reject
+      }));
+      row.block = false;
+      if (row.options.length) {
+        row.weight = Math.max.apply(null, row.options.map(o => Number(o.weight)||0));
+      }
+    }
+    return row;
+  });
   if (!items.length) { showToast('حداقل ۱ آیتم'); return; }
   const advanced = document.getElementById('clAdvanced').checked;
   const scoreRules = (clEditorScoreRules || []).map(r => ({
