@@ -1917,7 +1917,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.28 (nested watchlist options + fixed trade-forbidden)';
+const APP_BUILD = 'BUILD-v27.29 (max 100% weights + clear forbid banner)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -2050,11 +2050,13 @@ function computePretradeScore(){
     totalW += w;
     if (val) { done++; doneW += w; }
   });
-  const score = totalW ? Math.round(doneW / totalW * 100) : 0;
+  // وزن‌ها از قبل درصد هستند (مثلاً ۱۵٪) — امتیاز = جمع مطلق، نه نسبت به total
+  const score = Math.min(100, Math.max(0, Math.round(doneW)));
   return {
     score,
     done,
     total: items.filter(it => !it.block || (it.options && it.options.length)).length,
+    totalWeight: totalW,
     blocked: blockLabels.length > 0,
     blockLabels,
     selections
@@ -6136,7 +6138,11 @@ function renderPretradeGate(){
   const cl = getPretradeChecklist();
   if (!cl) { box.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted)">واچ‌لیست تعریف نشده</div>'; return; }
   const state = window._tradeClChecked || {};
-  const items = cl.items || [];
+  const items = (cl.items || []).slice().sort((a, b) => {
+    const ab = (a.block && !(a.options && a.options.length)) ? 1 : 0;
+    const bb = (b.block && !(b.options && b.options.length)) ? 1 : 0;
+    return ab - bb;
+  });
   box.innerHTML = items.map((it, idx) => {
     const key = cl.id + '__' + it.id;
     if (it.options && it.options.length) {
@@ -6203,19 +6209,19 @@ function updateGateSuggestionUI(){
   const msg = document.getElementById('gateSuggestMsg');
   if (!pctEl || !badge) return;
   const info = computePretradeScore();
-  // مسدودکننده چک‌باکس فقط یادآوری است؛ پیشنهاد از امتیاز می‌آید
   const sug = mapScoreToSetup(info.score, !!info.blocked, getPretradeChecklist());
   window._suggestedSetup = sug.key;
   window._pretradeScore = info.score;
   window._pretradeBlocked = !!info.blocked;
   const scoreForbidden = (sug.cls === 'blocked') || ((sug.key || '').includes('ممنوع'));
+  const showForbid = !!(info.blocked || scoreForbidden);
   pctEl.textContent = info.score + '%';
   if (fill) {
     fill.style.width = Math.max(0, Math.min(100, info.score)) + '%';
     const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b', bad: '#ef4444', blocked: '#dc2626' };
-    fill.style.background = (info.blocked || scoreForbidden) ? colors.blocked : (colors[sug.cls] || '#94a3b8');
+    fill.style.background = showForbid ? colors.blocked : (colors[sug.cls] || '#94a3b8');
   }
-  if (info.blocked || scoreForbidden) {
+  if (showForbid) {
     badge.className = 'setup-suggest-badge blocked';
     badge.textContent = scoreForbidden ? (sug.label || '🚫 ترید ممنوع') : '🚫 ترید ممنوع';
   } else {
@@ -6225,9 +6231,28 @@ function updateGateSuggestionUI(){
   if (msg) {
     let t = sug.msg || '';
     if (info.blocked && info.blockLabels && info.blockLabels.length) {
-      t = 'یادآوری: «' + info.blockLabels.join(' · ') + '» — چیزی قفل نیست. ' + t;
+      t = 'یادآوری: «' + info.blockLabels.join(' · ') + '» — قفل نیست. ' + t;
     }
     msg.textContent = t;
+  }
+  // بنر واضح در انتهای لیست
+  const box = document.getElementById('pretradeGateItems');
+  if (box) {
+    let ban = box.querySelector('.wl-forbid-banner');
+    if (showForbid) {
+      const why = (info.blockLabels && info.blockLabels.length)
+        ? info.blockLabels.join(' · ')
+        : ('امتیاز ' + info.score + '٪ زیر حد مجاز');
+      if (!ban) {
+        ban = document.createElement('div');
+        ban.className = 'wl-forbid-banner';
+        box.appendChild(ban);
+      }
+      ban.innerHTML = '<div class="wl-forbid-icon">🚫</div><div><div class="wl-forbid-title">ترید ممنوع — ورود توصیه نمی‌شود</div>'
+        + '<div class="wl-forbid-msg">' + escapeHtml(why) + '<br>قفل نیست؛ فقط یادآوری. می‌توانی رد کنی یا ادامه بدهی.</div></div>';
+    } else if (ban) {
+      ban.remove();
+    }
   }
 }
 
@@ -6566,7 +6591,7 @@ function renderTradeChecklistColumns(){
           if (state[cl.id + '__' + it.id]) { doneW += Number(it.weight)||0; done++; }
         }
       });
-      score = cl.advanced ? (totalW ? Math.round(doneW/totalW*100) : 0) : (items.length ? Math.round(done/items.length*100) : 0);
+      score = cl.advanced ? Math.min(100, Math.round(doneW)) : (items.length ? Math.round(done/items.length*100) : 0);
     }
     const body = items.map((it, idx) => {
       const key = cl.id + '__' + it.id;
@@ -6620,7 +6645,7 @@ function renderTradeChecklistColumns(){
           if (st[cl.id+'__'+it.id]) { doneW += Number(it.weight)||0; done++; }
         }
       });
-      score = cl.advanced ? (totalW?Math.round(doneW/totalW*100):0) : ((cl.items||[]).length?Math.round(done/(cl.items||[]).length*100):0);
+      score = cl.advanced ? Math.min(100, Math.round(doneW)) : ((cl.items||[]).length?Math.round(done/(cl.items||[]).length*100):0);
     }
     const se = col.querySelector('.cl-col-score'); if (se) se.textContent = score + '%';
     const fill = col.querySelector('.cl-progress-fill'); if (fill) fill.style.width = score + '%';
@@ -6680,7 +6705,7 @@ function getTradeChecklistsData(){
         if (val) { any = true; checkedObj[it.id] = true; done++; doneW += Number(it.weight)||0; }
       }
     });
-    const score = cl.advanced ? (totalW ? Math.round(doneW/totalW*100) : 0) : (items.length ? Math.round(done/Math.max(1,items.filter(i=>!i.block||(i.options&&i.options.length)).length)*100) : 0);
+    const score = cl.advanced ? Math.min(100, Math.round(doneW)) : (items.length ? Math.round(done/Math.max(1,items.filter(i=>!i.block||(i.options&&i.options.length)).length)*100) : 0);
     const isPre = cl.id === PRETRADE_CHECKLIST_ID || cl.name === 'واچ‌لیست پیش‌ترید';
     if (any || isPre) {
       const row = { checklistId: cl.id, name: cl.name, checked: checkedObj, score, done, total: items.length };
