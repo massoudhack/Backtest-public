@@ -1917,7 +1917,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.29 (max 100% weights + clear forbid banner)';
+const APP_BUILD = 'BUILD-v27.30 (fix option % save + max 100 error)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
@@ -7509,20 +7509,51 @@ function renderClItemsEditor(){
     if (it.options && it.options.length) {
       const optsBox = document.createElement('div'); optsBox.style.cssText = 'margin-top:10px;padding:10px;background:var(--bg-subtle);border-radius:12px;border:1px solid var(--border)';
       it.options.forEach((opt, oi) => {
-        const orow = document.createElement('div'); orow.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
-        const oinp = document.createElement('input'); oinp.type = 'text'; oinp.value = opt.text || ''; oinp.placeholder = 'متن گزینه'; oinp.style.flex = '1';
+        const orow = document.createElement('div');
+        orow.className = 'cl-opt-edit-row';
+        orow.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;padding:8px;background:var(--bg-card);border-radius:10px;border:1px solid var(--border)';
+        const oinp = document.createElement('input');
+        oinp.type = 'text'; oinp.className = 'cl-opt-text';
+        oinp.value = opt.text || ''; oinp.placeholder = 'متن گزینه';
+        oinp.style.cssText = 'flex:1;min-width:100px';
         oinp.addEventListener('input', () => { clEditorItems[i].options[oi].text = oinp.value; });
-        const ow = document.createElement('input'); ow.type = 'number'; ow.min = 0; ow.max = 100; ow.value = opt.weight || 0; ow.style.width = '64px';
-        ow.title = 'درصد'; ow.addEventListener('input', () => { clEditorItems[i].options[oi].weight = +ow.value; });
-        const rej = document.createElement('label'); rej.style.cssText = 'font-size:.72rem;display:flex;gap:4px;align-items:center;white-space:nowrap';
-        const rcb = document.createElement('input'); rcb.type = 'checkbox'; rcb.checked = !!opt.reject;
+        const wWrap = document.createElement('div');
+        wWrap.style.cssText = 'display:flex;align-items:center;gap:4px';
+        const wLab = document.createElement('span'); wLab.textContent = '%'; wLab.style.cssText = 'font-size:.75rem;font-weight:700;color:var(--text-muted)';
+        const ow = document.createElement('input');
+        ow.type = 'number'; ow.className = 'cl-opt-weight';
+        ow.min = 0; ow.max = 100; ow.step = 1;
+        ow.value = (opt.weight != null && opt.weight !== '') ? Number(opt.weight) : 0;
+        ow.style.cssText = 'width:72px;text-align:center;font-weight:700';
+        const syncW = () => {
+          let v = Number(ow.value);
+          if (isNaN(v)) v = 0;
+          v = Math.max(0, Math.min(100, v));
+          clEditorItems[i].options[oi].weight = v;
+          updateClWeightSum();
+        };
+        ow.addEventListener('input', syncW);
+        ow.addEventListener('change', syncW);
+        ow.addEventListener('blur', syncW);
+        wWrap.appendChild(ow); wWrap.appendChild(wLab);
+        const rej = document.createElement('label');
+        rej.style.cssText = 'font-size:.72rem;display:flex;gap:4px;align-items:center;white-space:nowrap';
+        const rcb = document.createElement('input'); rcb.type = 'checkbox'; rcb.className = 'cl-opt-reject'; rcb.checked = !!opt.reject;
         rcb.addEventListener('change', () => {
           clEditorItems[i].options[oi].reject = rcb.checked;
-          if (rcb.checked) clEditorItems[i].options[oi].weight = 0;
+          if (rcb.checked) {
+            clEditorItems[i].options[oi].weight = 0;
+            ow.value = 0; ow.disabled = true;
+          } else {
+            ow.disabled = false;
+          }
+          updateClWeightSum();
         });
+        if (opt.reject) ow.disabled = true;
         rej.appendChild(rcb); rej.appendChild(document.createTextNode('رد/ممنوع'));
-        const od = document.createElement('button'); od.type = 'button'; od.className = 'btn btn-outline btn-sm'; od.textContent = '×'; od.onclick = () => removeClOption(i, oi);
-        orow.appendChild(oinp); orow.appendChild(ow); orow.appendChild(rej); orow.appendChild(od);
+        const od = document.createElement('button'); od.type = 'button'; od.className = 'btn btn-outline btn-sm'; od.textContent = '×';
+        od.onclick = () => removeClOption(i, oi);
+        orow.appendChild(oinp); orow.appendChild(wWrap); orow.appendChild(rej); orow.appendChild(od);
         optsBox.appendChild(orow);
       });
       const addO = document.createElement('button'); addO.type = 'button'; addO.className = 'btn btn-outline btn-sm'; addO.textContent = '+ گزینه'; addO.onclick = () => addClOption(i);
@@ -7542,57 +7573,133 @@ function renderClItemsEditor(){
   });
   updateClWeightSum();
 }
+function itemMaxWeight(it){
+  if (!it) return 0;
+  if (it.block && !(it.options && it.options.length)) return 0;
+  if (it.options && it.options.length) {
+    let m = 0;
+    it.options.forEach(o => {
+      if (o.reject || o.block) return;
+      m = Math.max(m, Number(o.weight) || 0);
+    });
+    return m;
+  }
+  return Number(it.weight) || 0;
+}
+function calcEditorWeightSum(){
+  return (clEditorItems || []).reduce((s, it) => s + itemMaxWeight(it), 0);
+}
 function updateClWeightSum(){
   const el = document.getElementById('clWeightSum'); if (!el) return;
-  if (!document.getElementById('clAdvanced').checked) { el.textContent = ''; return; }
-  const sum = clEditorItems.filter(it => !it.block).reduce((s, it) => s + (Number(it.weight)||0), 0);
-  el.innerHTML = 'مجموع وزن‌های امتیازده (بدون مسدودکننده): <strong style="color:' + (sum===100?'var(--success)':'var(--warning)') + '">' + sum + '%</strong>';
+  const advEl = document.getElementById('clAdvanced');
+  if (!advEl || !advEl.checked) { el.textContent = ''; el.className = ''; return; }
+  const sum = calcEditorWeightSum();
+  let color = 'var(--warning)', note = ' (بهتر است ۱۰۰٪ شود)';
+  if (sum > 100) { color = '#ef4444'; note = ' — بیش از ۱۰۰٪! ذخیره نمی‌شود'; }
+  else if (sum === 100) { color = 'var(--success)'; note = ' ✓'; }
+  el.innerHTML = 'سقف امتیاز (جمع بیشترین هر گروه): <strong style="color:' + color + '">' + sum + '%</strong>' + note;
 }
 function saveChecklistEditor(){
   const name = (document.getElementById('clName').value || '').trim();
   if (!name) { showToast('نام لازم'); return; }
-  const items = clEditorItems.filter(it => (it.text||'').trim()).map(it => {
+
+  // همگام‌سازی از DOM تا هیچ درصد تایپ‌شده از دست نرود
+  const editor = document.getElementById('clItemsEditor');
+  if (editor) {
+    const wraps = editor.querySelectorAll('.cl-edit-item');
+    wraps.forEach((wrap, i) => {
+      if (!clEditorItems[i]) return;
+      const titleInp = wrap.querySelector('input[type="text"]');
+      if (titleInp && !(clEditorItems[i].options && clEditorItems[i].options.length)) {
+        // first text may be title for simple; for options title is also first text in row
+      }
+      // عنوان گروه: اولین input متنی مستقیم در ردیف اول
+      const titleRow = wrap.querySelector(':scope > div input[type="text"]');
+      if (titleRow) clEditorItems[i].text = titleRow.value;
+
+      if (clEditorItems[i].options && clEditorItems[i].options.length) {
+        const optRows = wrap.querySelectorAll('.cl-opt-edit-row');
+        optRows.forEach((orow, oi) => {
+          if (!clEditorItems[i].options[oi]) return;
+          const t = orow.querySelector('input.cl-opt-text');
+          const w = orow.querySelector('input.cl-opt-weight');
+          const r = orow.querySelector('input.cl-opt-reject');
+          if (t) clEditorItems[i].options[oi].text = t.value;
+          if (w) clEditorItems[i].options[oi].weight = Math.max(0, Math.min(100, Number(w.value) || 0));
+          if (r) {
+            clEditorItems[i].options[oi].reject = !!r.checked;
+            if (r.checked) clEditorItems[i].options[oi].weight = 0;
+          }
+        });
+      } else {
+        const wr = wrap.querySelector('input[type="range"]');
+        if (wr) clEditorItems[i].weight = Number(wr.value) || 0;
+        const blk = wrap.querySelector('.cl-edit-block input[type="checkbox"]');
+        if (blk) {
+          clEditorItems[i].block = !!blk.checked;
+          if (blk.checked) clEditorItems[i].weight = 0;
+        }
+      }
+    });
+  }
+
+  const items = clEditorItems.filter(it => (it.text || '').trim()).map(it => {
     const row = {
       id: it.id,
-      text: it.text.trim(),
-      weight: it.block && !(it.options && it.options.length) ? 0 : (Number(it.weight)||0),
+      text: (it.text || '').trim(),
+      weight: it.block && !(it.options && it.options.length) ? 0 : (Number(it.weight) || 0),
       block: !!it.block
     };
     if (it.options && it.options.length) {
-      row.options = it.options.filter(o => (o.text||'').trim()).map(o => ({
-        id: o.id,
-        text: (o.text||'').trim(),
-        weight: o.reject ? 0 : (Number(o.weight)||0),
+      row.options = it.options.filter(o => (o.text || '').trim()).map(o => ({
+        id: o.id || ('o_' + Date.now() + Math.random().toString(36).slice(2, 5)),
+        text: (o.text || '').trim(),
+        weight: o.reject ? 0 : Math.max(0, Math.min(100, Number(o.weight) || 0)),
         reject: !!o.reject
       }));
       row.block = false;
       if (row.options.length) {
-        row.weight = Math.max.apply(null, row.options.map(o => Number(o.weight)||0));
+        row.weight = Math.max.apply(null, row.options.map(o => Number(o.weight) || 0));
       }
     }
     return row;
   });
   if (!items.length) { showToast('حداقل ۱ آیتم'); return; }
-  const advanced = document.getElementById('clAdvanced').checked;
+
+  const advanced = !!(document.getElementById('clAdvanced') && document.getElementById('clAdvanced').checked);
+  if (advanced) {
+    const sumMax = items.reduce((s, it) => s + itemMaxWeight(it), 0);
+    if (sumMax > 100) {
+      showToast('مجموع درصدها ' + sumMax + '٪ است — حداکثر ۱۰۰٪');
+      updateClWeightSum();
+      return;
+    }
+  }
+
   const scoreRules = (clEditorScoreRules || []).map(r => ({
     min: Number(r.min) || 0,
     key: (r.key || r.label || '').trim() || '—',
     label: (r.label || r.key || '').trim() || '—',
     cls: r.cls || 'b',
     msg: r.msg || ''
-  })).sort((a,b) => b.min - a.min);
-  // برچسب‌ها را به لیست ستاپ‌ها اضافه کن
+  })).sort((a, b) => b.min - a.min);
   scoreRules.forEach(r => {
     if (!custom.setups) custom.setups = [];
     if (r.key && !custom.setups.includes(r.key)) custom.setups.push(r.key);
   });
   if (!custom.checklists) custom.checklists = [];
-  const payload = { id: editingChecklistId || ('cl_'+Date.now()), name, advanced, items, scoreRules };
-  if (editingChecklistId) { const idx = custom.checklists.findIndex(c => c.id === editingChecklistId); if (idx >= 0) custom.checklists[idx] = payload; else custom.checklists.push(payload); }
-  else custom.checklists.push(payload);
-  saveCustom(); closeChecklistEditor(); renderChecklistBoard(); fillChecklistSelects();
-  try { renderTradeChecklistColumns(); } catch(e){}
-  showToast('ذخیره شد');
+  const payload = { id: editingChecklistId || ('cl_' + Date.now()), name, advanced, items, scoreRules };
+  if (editingChecklistId) {
+    const idx = custom.checklists.findIndex(c => c.id === editingChecklistId);
+    if (idx >= 0) custom.checklists[idx] = payload;
+    else custom.checklists.push(payload);
+  } else custom.checklists.push(payload);
+  saveCustom();
+  closeChecklistEditor();
+  renderChecklistBoard();
+  fillChecklistSelects();
+  try { renderTradeChecklistColumns(); } catch (e) {}
+  showToast('ذخیره شد · سقف ' + items.reduce((s, it) => s + itemMaxWeight(it), 0) + '٪');
 }
 function deleteChecklist(id){ if (!confirm('حذف شود؟')) return; custom.checklists = (custom.checklists || []).filter(c => c.id !== id); saveCustom(); renderChecklistBoard(); fillChecklistSelects(); showToast('حذف شد'); }
 function fillChecklistSelects(){
