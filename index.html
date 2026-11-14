@@ -1571,17 +1571,17 @@ body.booting .today-strip{opacity:.4}
     <div class="modal-body">
       <div id="pretradeGate" class="pretrade-gate hidden-for-form">
         <div class="pretrade-gate-title">⚡ واچ‌لیست سریع</div>
-        <div class="pretrade-gate-sub">۱۰–۱۵ ثانیه تیک بزن → پیشنهاد ستاپ می‌آید → برو ثبت. عادت بساز؛ بعداً می‌توانی رد کنی.</div>
+        <div class="pretrade-gate-sub">ناحیه، تریگر و نوع واگرایی را تیک بزن → همان لحظه می‌بینی A است یا B (و ریسک چقدر باشد) → برو ثبت.</div>
         <div class="setup-suggest-card" style="margin-bottom:8px">
           <div class="setup-suggest-top">
+            <div class="setup-suggest-badge none" id="gateSuggestBadge" style="font-size:1.2rem;min-width:150px;padding:14px 18px">—</div>
             <div class="setup-suggest-score-wrap">
-              <div class="setup-suggest-score-label">امتیاز</div>
+              <div class="setup-suggest-score-label">امتیاز ستاپ</div>
               <div class="setup-suggest-bar"><div class="setup-suggest-fill" id="gateSuggestFill" style="width:0%;background:#94a3b8"></div></div>
               <div style="margin-top:6px;font-size:.85rem;font-weight:800;direction:ltr" id="gateSuggestPct">0%</div>
             </div>
-            <div class="setup-suggest-badge none" id="gateSuggestBadge">—</div>
           </div>
-          <div class="setup-suggest-msg" id="gateSuggestMsg" style="margin-bottom:0">تیک بزن</div>
+          <div class="setup-suggest-msg" id="gateSuggestMsg" style="margin-bottom:0;font-weight:700;color:var(--text)">تیک بزن تا ببینی ستاپ چی می‌شود.</div>
         </div>
         <div class="pretrade-gate-items" id="pretradeGateItems"></div>
         <div class="pretrade-gate-actions">
@@ -2003,7 +2003,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.31 (auto setup score + exclude rules + combos)';
+const APP_BUILD = 'BUILD-v27.32 (setup from watchlist ticks + exclude rules + combos)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup'];
@@ -2021,6 +2021,11 @@ const DEFAULT_SCORE_RULES = [
   { min: 20, key: 'ریسک نصف', label: 'ریسک نصف', cls: 'half', msg: 'تیک‌ها کمتر است (زیر ۷۰، حداقل ۲۰) — اگر وارد می‌شوی ریسک را نصف کن.' },
   { min: 0, key: 'ترید ممنوع', label: '🚫 ترید ممنوع', cls: 'blocked', msg: 'امتیاز خیلی پایین (زیر ۲۰٪) — از نظر واچ‌لیست ورود توصیه نمی‌شود (قفل نیست؛ یادآوری است).' }
 ];
+const PT_DIV_OPTIONS = [
+  { id: 'pt_div_norm', text: 'واگرایی معمولی', weight: 40 },
+  { id: 'pt_div_hid', text: 'واگرایی مخفی', weight: 15 },
+  { id: 'pt_div_none', text: 'بدون واگرایی', weight: 0 }
+];
 const DEFAULT_PRETRADE_CHECKLIST = {
   id: PRETRADE_CHECKLIST_ID,
   name: 'واچ‌لیست پیش‌ترید',
@@ -2028,11 +2033,11 @@ const DEFAULT_PRETRADE_CHECKLIST = {
   scoreRules: JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES)),
   items: [
     { id: 'pt_zone', text: 'ناحیه مشخص داری؟ (نه No Zone)', weight: 25, block: false },
-    { id: 'pt_trigger', text: 'تریگر واضح داری؟', weight: 25, block: false },
-    { id: 'pt_div', text: 'واگرایی معمولی است؟ (مخفی = خیر)', weight: 20, block: false },
-    { id: 'pt_trend', text: 'با ساختار/روند هم‌خوان است؟', weight: 15, block: false },
-    { id: 'pt_emotion', text: 'از نظر احساسی آماده‌ای؟ (نه FOMO/انتقام/عجله)', weight: 10, block: false },
-    { id: 'pt_risk', text: 'ریسک و حد ضرر این ترید مشخص است؟', weight: 5, block: false },
+    { id: 'pt_trigger', text: 'تریگر واضح داری؟ (نه No Trigger)', weight: 35, block: false },
+    { id: 'pt_div', text: 'نوع واگرایی؟', weight: 40, block: false, options: JSON.parse(JSON.stringify(PT_DIV_OPTIONS)) },
+    { id: 'pt_trend', text: 'با ساختار/روند هم‌خوان است؟', weight: 0, block: false },
+    { id: 'pt_emotion', text: 'از نظر احساسی آماده‌ای؟ (نه FOMO/انتقام/عجله)', weight: 0, block: false },
+    { id: 'pt_risk', text: 'ریسک و حد ضرر این ترید مشخص است؟', weight: 0, block: false },
     { id: 'pt_daily_sl', text: 'حد ضرر روزانه خورده؟ (اگر بله → یادآوری ترید ممنوع)', weight: 0, block: true }
   ]
 };
@@ -2088,6 +2093,7 @@ function ensurePretradeChecklist(){
         cl.scoreRules = JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES));
       }
     }
+    try { alignPretradeItems(cl); } catch(e){}
     try { saveCustom(); } catch(e){}
   }
   if (!custom.setups) custom.setups = [];
@@ -2096,7 +2102,9 @@ function ensurePretradeChecklist(){
 }
 function getPretradeChecklist(){
   ensurePretradeChecklist();
-  return (custom.checklists || []).find(c => c.id === PRETRADE_CHECKLIST_ID || c.name === 'واچ‌لیست پیش‌ترید') || null;
+  const cl = (custom.checklists || []).find(c => c.id === PRETRADE_CHECKLIST_ID || c.name === 'واچ‌لیست پیش‌ترید') || null;
+  try { syncWatchlistWeights(cl); } catch(e){}
+  return cl;
 }
 /* ====== v27.31: ستاپ خودکار از دیتا · قوانین استثنا · جدول ترکیب‌ها · کیفیت داده ====== */
 const DEFAULT_AUTO_SCORE = { wDiv: 40, wHidden: 15, wTrig: 35, wZone: 25, aMin: 75, bMin: 50 };
@@ -2146,8 +2154,11 @@ function refreshAutoSetupHint(){
   const sel = document.getElementById('tfSetup');
   const f = readAutoFieldsFromForm();
   if (!f.div && !f.trigger && !f.zone) {
-    box.innerHTML = '<span class="ash-muted">Zone، تریگر و واگرایی را انتخاب کن تا ستاپ از روی دیتا ساخته شود.</span>';
-    window._suggestedSetup = '';
+    const gk = gateView().key;
+    box.innerHTML = gk
+      ? '<span class="ash-muted">از واچ‌لیست: <b>' + escapeHtml(gk) + '</b> — Zone، تریگر و واگرایی را انتخاب کن تا نهایی شود.</span>'
+      : '<span class="ash-muted">Zone، تریگر و واگرایی را انتخاب کن تا ستاپ از روی دیتا ساخته شود.</span>';
+    window._suggestedSetup = gk;
     return;
   }
   const r = computeAutoSetup(f);
@@ -2167,6 +2178,96 @@ function applyAutoSetupHint(){
   const sel = document.getElementById('tfSetup'); if (!sel) return;
   sel.dataset.manual = '';
   refreshAutoSetupHint();
+}
+
+
+/* ---- v27.32: ستاپ از همان تیک‌های واچ‌لیست (قبل از فرم) ---- */
+function alignPretradeItems(cl){
+  const items = cl.items || (cl.items = []);
+  const dv = items.find(it => it.id === 'pt_div');
+  if (dv && !(dv.options && dv.options.length)) {
+    dv.text = 'نوع واگرایی؟';
+    dv.options = JSON.parse(JSON.stringify(PT_DIV_OPTIONS));
+    dv.weight = 40;
+  }
+  if (!custom.wlMig2611) {
+    items.forEach(it => { if (['pt_trend','pt_emotion','pt_risk'].includes(it.id)) it.weight = 0; });
+    custom.wlMig2611 = true;
+  }
+}
+function syncWatchlistWeights(cl){
+  if (!cl) return;
+  const c = getAutoScoreCfg();
+  (cl.items || []).forEach(it => {
+    if (it.id === 'pt_zone') it.weight = c.wZone;
+    else if (it.id === 'pt_trigger') it.weight = c.wTrig;
+    else if (it.id === 'pt_div' && it.options) {
+      it.weight = c.wDiv;
+      it.options.forEach(o => { o.weight = o.id === 'pt_div_norm' ? c.wDiv : (o.id === 'pt_div_hid' ? c.wHidden : 0); });
+    }
+  });
+}
+function gateFieldsFromTicks(){
+  const out = { fields: { div: '', trigger: '', zone: '' }, touched: false };
+  const cl = getPretradeChecklist(); if (!cl) return out;
+  const st = window._tradeClChecked || {};
+  (cl.items || []).forEach(it => {
+    const val = st[cl.id + '__' + it.id]; const txt = String(it.text || '');
+    const kind = it.id === 'pt_zone' ? 'zone' : it.id === 'pt_trigger' ? 'trigger' : it.id === 'pt_div' ? 'div'
+      : /تریگر/.test(txt) ? 'trigger' : /واگرایی/.test(txt) ? 'div' : /ناحیه|zone/i.test(txt) ? 'zone' : '';
+    if (!kind || !val) return;
+    if (kind === 'div') {
+      if (it.options && it.options.length) {
+        const opt = it.options.find(o => o.id === val); if (!opt) return;
+        out.touched = true;
+        const t = String(opt.text || '');
+        out.fields.div = (opt.id === 'pt_div_hid' || /مخفی/.test(t)) ? 'مخفی' : (opt.id === 'pt_div_norm' || /معمولی/.test(t)) ? 'معمولی' : '';
+      } else { out.touched = true; out.fields.div = 'معمولی'; }
+    } else { out.touched = true; out.fields[kind] = '✓'; }
+  });
+  return out;
+}
+const GATE_SETUP_MSG = {
+  'A setup': { cls: 'a', msg: 'ستاپ قوی — ریسک عادی.' },
+  'B setup': { cls: 'b', msg: 'ستاپ قابل‌قبول — ریسک را کمتر کن (مثلاً نصف).' },
+  'حرکت اشتباه': { cls: 'half', msg: 'شرط‌ها ناقص است — ورود توصیه نمی‌شود.' },
+  'No setup': { cls: 'none', msg: 'بدون ستاپ — ورود توصیه نمی‌شود.' }
+};
+function gateView(){
+  const info = computePretradeScore();
+  const g = gateFieldsFromTicks();
+  const v = { info, blocked: !!info.blocked, touched: g.touched, key: '', score: 0, cls: 'none', label: '—', msg: 'تیک بزن تا ببینی ستاپ چی می‌شود.', weak: false };
+  if (g.touched) {
+    const r = computeAutoSetup(g.fields); const m = GATE_SETUP_MSG[r.key];
+    v.key = r.key; v.score = r.score; v.cls = m.cls; v.label = r.key; v.msg = m.msg;
+    v.weak = (r.key === 'حرکت اشتباه' || r.key === 'No setup');
+  }
+  v.showForbid = v.blocked || v.weak;
+  return v;
+}
+function currentSetupSuggestion(v){
+  const f = readAutoFieldsFromForm();
+  if (f.div || f.trigger || f.zone) return computeAutoSetup(f).key;
+  return (v || gateView()).key || '';
+}
+function paintSuggest(v, ids){
+  const g = id => document.getElementById(id);
+  const pctEl = g(ids.pct), fill = g(ids.fill), badge = g(ids.badge), msg = g(ids.msg);
+  if (!pctEl || !badge) return false;
+  pctEl.textContent = (v.touched ? v.score : 0) + '%';
+  if (fill) {
+    fill.style.width = (v.touched ? v.score : 0) + '%';
+    const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b', blocked: '#dc2626' };
+    fill.style.background = v.blocked ? colors.blocked : (v.touched ? (colors[v.cls] || '#94a3b8') : '#94a3b8');
+  }
+  if (v.blocked) { badge.className = 'setup-suggest-badge blocked'; badge.textContent = '🚫 ترید ممنوع'; }
+  else { badge.className = 'setup-suggest-badge ' + v.cls; badge.textContent = v.label; }
+  if (msg) {
+    let t = v.msg;
+    if (v.blocked && v.info.blockLabels && v.info.blockLabels.length) t = 'یادآوری: «' + v.info.blockLabels.join(' · ') + '» — قفل نیست. ' + t;
+    msg.textContent = t;
+  }
+  return true;
 }
 
 /* ---- مهاجرت یک‌باره: «ریسک نصف / ترید ممنوع» از دسته‌ی ستاپ حذف می‌شود ---- */
@@ -2469,43 +2570,19 @@ function computePretradeScore(){
   };
 }
 function updateSetupSuggestionUI(){
-  const pctEl = document.getElementById('setupSuggestPct');
-  const fill = document.getElementById('setupSuggestFill');
-  const badge = document.getElementById('setupSuggestBadge');
-  const msg = document.getElementById('setupSuggestMsg');
-  if (!pctEl || !badge) return;
-  const info = computePretradeScore();
-  const sug = mapScoreToSetup(info.score, !!info.blocked, getPretradeChecklist());
-  window._suggestedSetup = autoSetupKeyFromForm();
-  window._pretradeScore = info.score;
-  window._pretradeBlocked = !!info.blocked;
-  const scoreForbidden = (sug.cls === 'blocked') || ((sug.key || '').includes('ممنوع'));
-  pctEl.textContent = info.score + '%';
-  if (fill) {
-    fill.style.width = Math.max(0, Math.min(100, info.score)) + '%';
-    const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b', bad: '#ef4444', blocked: '#dc2626' };
-    fill.style.background = (info.blocked || scoreForbidden) ? colors.blocked : (colors[sug.cls] || '#94a3b8');
-  }
-  if (info.blocked || scoreForbidden) {
-    badge.className = 'setup-suggest-badge blocked';
-    badge.textContent = scoreForbidden ? (sug.label || '🚫 ترید ممنوع') : '🚫 ترید ممنوع';
-  } else {
-    badge.className = 'setup-suggest-badge ' + sug.cls;
-    badge.textContent = wlLabel(sug);
-  }
-  let message = sug.msg || '';
-  if (info.blocked && info.blockLabels && info.blockLabels.length) {
-    message = 'یادآوری: «' + info.blockLabels.join(' · ') + '» — قفل نیست. ' + message;
-  }
-  message += ' (امتیاز ' + info.score + '٪)';
-  if (msg) msg.textContent = message;
+  const v = gateView();
+  if (!paintSuggest(v, { pct: 'setupSuggestPct', fill: 'setupSuggestFill', badge: 'setupSuggestBadge', msg: 'setupSuggestMsg' })) return;
+  window._pretradeScore = v.info.score;
+  window._pretradeBlocked = v.blocked;
+  window._suggestedSetup = currentSetupSuggestion(v);
   const applyBtn = document.getElementById('btnApplySuggestedSetup');
   if (applyBtn) {
     applyBtn.disabled = false;
     applyBtn.textContent = 'اعمال روی فیلد ستاپ';
   }
   const auto = document.getElementById('autoApplySuggestedSetup');
-  if (auto && auto.checked && sug.key) applySuggestedSetup(true);
+  const ts = document.getElementById('tfSetup');
+  if (auto && auto.checked && window._suggestedSetup && !(ts && ts.dataset.manual === '1')) applySuggestedSetup(true);
 }
 
 function applySuggestedSetup(silent){
@@ -6585,7 +6662,7 @@ function renderPretradeGate(){
     return '<div class="pretrade-gate-item' + (checked?' checked':'') + (isBlock?' is-block':'') + '" data-clkey="' + escapeHtml(key) + '" data-simple="1">'
       + '<div class="pretrade-gate-check">✓</div>'
       + '<div class="pretrade-gate-text">' + escapeHtml(it.text || '') + (isBlock ? ' <span class="cl-block-tag">ترید ممنوع</span>' : '') + '</div>'
-      + (!isBlock && cl.advanced ? '<span class="pretrade-gate-w">' + (it.weight||0) + '٪</span>' : '')
+      + (!isBlock && cl.advanced ? '<span class="pretrade-gate-w">' + ((it.weight||0) > 0 ? (it.weight + '٪') : 'یادآوری') + '</span>' : '')
       + '</div>';
   }).join('');
 
@@ -6617,52 +6694,24 @@ function renderPretradeGate(){
   updateGateSuggestionUI();
 }
 function updateGateSuggestionUI(){
-  const pctEl = document.getElementById('gateSuggestPct');
-  const fill = document.getElementById('gateSuggestFill');
-  const badge = document.getElementById('gateSuggestBadge');
-  const msg = document.getElementById('gateSuggestMsg');
-  if (!pctEl || !badge) return;
-  const info = computePretradeScore();
-  const sug = mapScoreToSetup(info.score, !!info.blocked, getPretradeChecklist());
-  window._suggestedSetup = autoSetupKeyFromForm();
-  window._pretradeScore = info.score;
-  window._pretradeBlocked = !!info.blocked;
-  const scoreForbidden = (sug.cls === 'blocked') || ((sug.key || '').includes('ممنوع'));
-  const showForbid = !!(info.blocked || scoreForbidden);
-  pctEl.textContent = info.score + '%';
-  if (fill) {
-    fill.style.width = Math.max(0, Math.min(100, info.score)) + '%';
-    const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b', bad: '#ef4444', blocked: '#dc2626' };
-    fill.style.background = showForbid ? colors.blocked : (colors[sug.cls] || '#94a3b8');
-  }
-  if (showForbid) {
-    badge.className = 'setup-suggest-badge blocked';
-    badge.textContent = scoreForbidden ? (sug.label || '🚫 ترید ممنوع') : '🚫 ترید ممنوع';
-  } else {
-    badge.className = 'setup-suggest-badge ' + sug.cls;
-    badge.textContent = wlLabel(sug);
-  }
-  if (msg) {
-    let t = sug.msg || '';
-    if (info.blocked && info.blockLabels && info.blockLabels.length) {
-      t = 'یادآوری: «' + info.blockLabels.join(' · ') + '» — قفل نیست. ' + t;
-    }
-    msg.textContent = t;
-  }
-  // بنر واضح در انتهای لیست
+  const v = gateView();
+  if (!paintSuggest(v, { pct: 'gateSuggestPct', fill: 'gateSuggestFill', badge: 'gateSuggestBadge', msg: 'gateSuggestMsg' })) return;
+  window._pretradeScore = v.info.score;
+  window._pretradeBlocked = v.blocked;
+  window._suggestedSetup = currentSetupSuggestion(v);
   const box = document.getElementById('pretradeGateItems');
   if (box) {
     let ban = box.querySelector('.wl-forbid-banner');
-    if (showForbid) {
-      const why = (info.blockLabels && info.blockLabels.length)
-        ? info.blockLabels.join(' · ')
-        : ('امتیاز ' + info.score + '٪ زیر حد مجاز');
+    if (v.showForbid) {
+      const why = (v.info.blockLabels && v.info.blockLabels.length)
+        ? v.info.blockLabels.join(' · ')
+        : ('ستاپ: ' + v.key + ' (' + v.score + '٪)');
       if (!ban) {
         ban = document.createElement('div');
         ban.className = 'wl-forbid-banner';
         box.appendChild(ban);
       }
-      ban.innerHTML = '<div class="wl-forbid-icon">🚫</div><div><div class="wl-forbid-title">ترید ممنوع — ورود توصیه نمی‌شود</div>'
+      ban.innerHTML = '<div class="wl-forbid-icon">🚫</div><div><div class="wl-forbid-title">' + (v.blocked ? 'ترید ممنوع' : 'ستاپ ضعیف') + ' — ورود توصیه نمی‌شود</div>'
         + '<div class="wl-forbid-msg">' + escapeHtml(why) + '<br>قفل نیست؛ فقط یادآوری. می‌توانی رد کنی یا ادامه بدهی.</div></div>';
     } else if (ban) {
       ban.remove();
