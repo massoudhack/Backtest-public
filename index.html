@@ -740,6 +740,57 @@ body.booting .today-strip{opacity:.4}
 .wl-group-hint{font-size:.7rem;color:var(--text-muted);padding:0 12px 10px;line-height:1.5}
 .pretrade-gate-items .wl-group{margin-bottom:10px}
 
+/* ===== v27.31 additions ===== */
+:where(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.breakdown-card,.chart-card{transition:box-shadow .2s ease,border-color .2s ease}
+.breakdown-card:hover{box-shadow:var(--shadow)}
+.btn:active{transform:scale(.97)}
+.auto-setup-hint{margin-top:8px;padding:10px 12px;border:1px dashed var(--border-strong);border-radius:var(--radius-sm);background:var(--bg-subtle);font-size:.78rem}
+.ash-muted{color:var(--text-muted)}
+.ash-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ash-badge{padding:3px 10px;border-radius:999px;font-weight:800;font-size:.76rem;background:var(--bg-muted);color:var(--text)}
+.ash-badge.a{background:var(--success-soft);color:var(--success-strong)}
+.ash-badge.b{background:var(--primary-soft);color:var(--primary)}
+.ash-badge.bad{background:var(--danger-soft);color:var(--danger-strong)}
+.ash-score{direction:ltr;font-variant-numeric:tabular-nums}
+.ash-detail{margin-top:4px;color:var(--text-muted);font-size:.72rem}
+.ash-apply{margin-top:8px;width:100%}
+.ex-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;padding:9px 12px;border-radius:var(--radius-sm);background:var(--warning-soft);color:var(--text);font-size:.8rem;border:1px solid var(--border)}
+.ex-banner button{border:0;background:var(--primary);color:#fff;padding:5px 12px;font-size:.75rem;cursor:pointer;font-weight:700}
+.ex-box{margin-top:14px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;background:var(--bg-subtle)}
+.ex-box summary{cursor:pointer;font-size:.86rem;font-weight:700;color:var(--text)}
+.ex-help{font-size:.74rem;color:var(--text-muted);margin:8px 0;line-height:1.7}
+.ex-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.ex-form select{padding:8px;border:1px solid var(--border-strong);background:var(--bg-card);color:var(--text);font-size:.78rem}
+.ex-rule{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:6px;border-radius:var(--radius-sm);background:var(--bg-card);border:1px solid var(--border)}
+.ex-rule.off{opacity:.55}
+.ex-rule-txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.ex-rule-txt b{font-size:.8rem;overflow-wrap:anywhere}
+.ex-rule-txt small{color:var(--text-muted);font-size:.7rem}
+.ex-del{border:0;background:transparent;color:var(--danger);cursor:pointer;font-size:.9rem;padding:4px 8px}
+.ex-empty{font-size:.76rem;color:var(--text-muted);padding:6px 2px}
+.ex-sw{position:relative;width:38px;height:22px;flex:none;display:inline-block}
+.ex-sw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
+.ex-sw span{position:absolute;inset:0;background:var(--bg-muted);border-radius:999px;transition:background .2s}
+.ex-sw span::after{content:"";position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:var(--shadow-xs);transition:transform .2s}
+.ex-sw input:checked + span{background:var(--danger)}
+.ex-sw input:checked + span::after{transform:translateX(-16px)}
+#analysisExtra{display:grid;gap:14px;margin-top:14px}
+.combo-ctl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}
+.combo-ctl select{padding:7px 8px;border:1px solid var(--border-strong);background:var(--bg-card);color:var(--text);font-size:.76rem}
+.combo-tf{font-size:.76rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;cursor:pointer}
+.combo-row{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.combo-row.excl{opacity:.55}
+.combo-main{grid-column:1/2;font-size:.8rem;overflow-wrap:anywhere}
+.combo-low{margin-inline-start:6px;font-style:normal;font-size:.66rem;padding:1px 7px;border-radius:999px;background:var(--warning-soft);color:var(--warning)}
+.combo-stats{grid-column:1/2;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.74rem;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.combo-btn{grid-column:2/3;grid-row:1/3;white-space:nowrap}
+.dq-row{display:flex;justify-content:space-between;font-size:.78rem;margin-top:8px}
+.dq-bar{height:6px;border-radius:999px;background:var(--bg-muted);overflow:hidden;margin-top:4px}
+.dq-bar div{height:100%;border-radius:999px}
+.dq-note{margin-top:12px;padding:10px;border-radius:var(--radius-sm);background:var(--info-soft);color:var(--info-text);font-size:.74rem;line-height:1.7}
+.as-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+
 </style>
 <meta name="theme-color" content="#4f46e5">
 <meta name="mobile-web-app-capable" content="yes">
@@ -991,6 +1042,7 @@ body.booting .today-strip{opacity:.4}
       <button class="btn btn-sm" onclick="openAddModal()">+ معامله جدید</button>
       <button class="btn btn-outline btn-sm" onclick="resetFilters()">↻ ریست فیلتر</button>
     </div>
+    <div class="ex-banner" id="exBanner" style="display:none"></div>
     <div class="filters-panel" id="filtersPanel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <strong style="font-size:.92rem">فیلترها</strong>
@@ -1016,6 +1068,17 @@ body.booting .today-strip{opacity:.4}
         <div class="filter-group"><label>تریگر</label><select id="fTrigger"><option value="">همه</option></select></div>
       </div>
       <div class="filter-group" style="margin-top:12px"><label>برچسب‌ها</label><div class="chip-group" id="fTagChips"></div></div>
+      <details class="ex-box" id="exDetails">
+        <summary>🚫 استثنا — حذف یک ستاپ از نتایج</summary>
+        <p class="ex-help">یک ترکیب انتخاب کن (مثلاً XAUUSD + Div M5). تریدهای آن ترکیب از ژورنال و همه‌ی آمارها بیرون می‌روند، ولی پاک نمی‌شوند و هر وقت خواستی برمی‌گردند.</p>
+        <div class="ex-form">
+          <select id="exSymbol"></select><select id="exTf"></select><select id="exTrigger"></select>
+          <select id="exDiv"><option value="">واگرایی: همه</option><option value="معمولی">معمولی</option><option value="مخفی">مخفی</option><option value="__none__">بدون واگرایی</option></select>
+          <select id="exZone"></select><select id="exSetup"></select>
+          <button type="button" class="btn btn-sm" onclick="addExcludeRuleFromUI()">+ افزودن</button>
+        </div>
+        <div id="exList"></div>
+      </details>
       <div class="section-title" style="margin-top:16px">وضعیت</div>
       <div class="chip-filters" id="statusChips">
         <button type="button" class="chip-f" data-filter="result" data-val="Win">برد</button>
@@ -1205,6 +1268,10 @@ body.booting .today-strip{opacity:.4}
       <div class="breakdown-card" data-layout-group="analysis" data-layout-key="anTF" data-default-size="m"><h3>تحلیل تایم‌فریم</h3><div id="anTF"></div></div>
       <div class="breakdown-card" data-layout-group="analysis" data-layout-key="anZone" data-default-size="m"><h3>تحلیل Zone</h3><div id="anZone"></div></div>
       <div class="breakdown-card" data-layout-group="analysis" data-layout-key="anExitReason" data-default-size="m"><h3>تحلیل دلیل خروج</h3><div id="anExitReason"></div></div>
+    </div>
+    <div id="analysisExtra">
+      <div class="breakdown-card"><h3>🧩 جدول ترکیب‌ها</h3><div id="anCombo"></div></div>
+      <div class="breakdown-card"><h3>🧪 کیفیت داده</h3><div id="anQuality"></div></div>
     </div>
   </div>
 
@@ -1615,7 +1682,8 @@ body.booting .today-strip{opacity:.4}
 
         <div class="form-section" id="ftab-reasons">
           <div class="form-group"><label>کیفیت ستاپ</label>
-            <div class="select-with-add"><select id="tfSetup"></select><button type="button" class="select-add-btn" onclick="addCustomInline('setups','tfSetup')">+</button></div>
+            <select id="tfSetup"></select>
+            <div class="auto-setup-hint" id="autoSetupHint"></div>
           </div>
           <div class="form-group"><label>Zone</label>
             <div class="select-with-add"><select id="tfZone"><option value="">—</option></select><button type="button" class="select-add-btn" onclick="addCustomInline('zones','tfZone')">+</button></div>
@@ -1741,14 +1809,14 @@ body.booting .today-strip{opacity:.4}
               </div>
               <div class="setup-suggest-badge none" id="setupSuggestBadge">—</div>
             </div>
-            <div class="setup-suggest-msg" id="setupSuggestMsg">تیک‌های واچ‌لیست را بزن تا پیشنهاد کیفیت ستاپ ساخته شود. تصمیم نهایی ورود با خودت است.</div>
+            <div class="setup-suggest-msg" id="setupSuggestMsg">تیک‌های واچ‌لیست را بزن تا آمادگی ورود را ببینی. تصمیم نهایی ورود با خودت است.</div>
             <div class="setup-suggest-actions">
               <button type="button" class="btn btn-sm" id="btnApplySuggestedSetup" onclick="applySuggestedSetup()">اعمال روی فیلد ستاپ</button>
               <label style="display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--text-muted);cursor:pointer">
                 <input type="checkbox" id="autoApplySuggestedSetup" style="width:16px;height:16px"> اعمال خودکار
               </label>
             </div>
-            <div class="setup-suggest-hint">قوانین امتیاز→برچسب را از تب چک‌لیست ویرایش کن. پیش‌فرض: ۹۰+ A · ۷۰+ B · زیر آن ریسک نصف. مسدودکننده فقط یادآوری است.</div>
+            <div class="setup-suggest-hint">این امتیاز فقط یادآوری آمادگی است (ریسک نصف / ممنوع). ستاپ نهایی از روی Zone و تریگر و واگرایی ساخته می‌شود؛ درصدها: تنظیمات ← ستاپ خودکار.</div>
           </div>
           <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:12px">همه چک‌لیست‌ها کنار هم — واچ‌لیست پیش‌ترید امتیاز ستاپ را می‌سازد</p>
           <div class="cl-columns" id="tradeChecklistColumns"></div>
@@ -1777,6 +1845,7 @@ body.booting .today-strip{opacity:.4}
     <div class="modal-body">
       <div class="settings-tabs">
         <button class="active" data-stab="lists" onclick="switchSettingsTab('lists')">لیست‌ها</button>
+        <button data-stab="autoscore" onclick="switchSettingsTab('autoscore')">ستاپ خودکار</button>
         <button data-stab="analytics" onclick="switchSettingsTab('analytics')">آنالیز</button>
         <button data-stab="badges" onclick="switchSettingsTab('badges')">مدال‌ها</button>
         <button data-stab="sessions" onclick="switchSettingsTab('sessions')">سشن‌ها</button>
@@ -1786,8 +1855,8 @@ body.booting .today-strip{opacity:.4}
 
       <div class="settings-pane active" id="spane-lists">
         <div class="section-title">کیفیت ستاپ</div>
-        <div class="manage-row"><input type="text" id="newSetup" placeholder="کیفیت ستاپ جدید..."><button class="btn btn-sm" onclick="addCustom('setups','newSetup')">+</button></div>
-        <div class="manage-list" id="listSetups"></div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:12px;line-height:1.7">کیفیت ستاپ ثابت است: <b>A setup · B setup · حرکت اشتباه · No setup</b>. تعیین آن خودکار و از روی دیتاست (تب «ستاپ خودکار»).</p>
+        <div class="manage-list" id="listSetups" style="display:none"></div>
         <div class="section-title">تریگرهای ورود</div>
         <div class="manage-row"><input type="text" id="newTrigger" placeholder="تریگر جدید..."><button class="btn btn-sm" onclick="addCustom('triggers','newTrigger')">+</button></div>
         <div class="manage-list" id="listTriggers"></div>
@@ -1809,6 +1878,23 @@ body.booting .today-strip{opacity:.4}
         <div class="section-title">برچسب‌ها</div>
         <div class="manage-row"><input type="text" id="newTag" placeholder="برچسب جدید..."><button class="btn btn-sm" onclick="addCustom('tags','newTag')">+</button></div>
         <div class="manage-list" id="listTags"></div>
+      </div>
+
+      <div class="settings-pane" id="spane-autoscore">
+        <div class="section-title">امتیاز ستاپ خودکار</div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px;line-height:1.7">ستاپ هر ترید از روی سه فیلد ثبت‌شده ساخته می‌شود. درصدها را اینجا تنظیم کن؛ پیش‌نمایش پایین روی تریدهای قبلی خودت حساب می‌شود.</p>
+        <div class="as-grid">
+          <div class="form-group"><label>واگرایی معمولی</label><input type="number" id="asWDiv" min="0" max="100"></div>
+          <div class="form-group"><label>واگرایی مخفی</label><input type="number" id="asWHidden" min="0" max="100"></div>
+          <div class="form-group"><label>تریگر معتبر</label><input type="number" id="asWTrig" min="0" max="100"></div>
+          <div class="form-group"><label>Zone واقعی</label><input type="number" id="asWZone" min="0" max="100"></div>
+          <div class="form-group"><label>حداقل A setup</label><input type="number" id="asAMin" min="0" max="100"></div>
+          <div class="form-group"><label>حداقل B setup</label><input type="number" id="asBMin" min="0" max="100"></div>
+        </div>
+        <div class="form-help" id="asSum" style="margin-bottom:10px"></div>
+        <div class="form-help" style="margin-bottom:12px">زیر حداقل B: اگر Zone و تریگر هر دو ندارد → No setup، وگرنه → حرکت اشتباه.</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px"><button class="btn btn-sm" style="flex:1" onclick="saveAutoScoreSettings()">💾 ذخیره</button><button class="btn btn-sm btn-outline" onclick="resetAutoScoreSettings()">پیش‌فرض</button></div>
+        <div id="asPreview"></div>
       </div>
 
       <div class="settings-pane" id="spane-analytics">
@@ -1917,10 +2003,12 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.30 (fix option % save + max 100 error)';
+const APP_BUILD = 'BUILD-v27.31 (auto setup score + exclude rules + combos)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup','تحلیل لایو روندی'];
+const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup'];
+const CANON_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup'];
+const REMOVED_SETUPS = ['ریسک نصف','ترید ممنوع','تحلیل لایو روندی'];
 const DEFAULT_TRIGGERS = [];
 const DEFAULT_EXIT_REASONS = ['SL','TP','تریل استاپ'];
 const DEFAULT_EMOTIONS = ['آرام','مطمئن','مضطرب','ترسیده','طمع‌کار','هیجان‌زده','ناامید','خنثی','عصبان','خسته','راضی','پشیمان','خوشحال','ناراحت','بی‌تفاوت'];
@@ -2002,15 +2090,333 @@ function ensurePretradeChecklist(){
     }
     try { saveCustom(); } catch(e){}
   }
-  ['A setup','B setup','ریسک نصف','ترید ممنوع'].forEach(s => {
-    if (!custom.setups) custom.setups = [];
-    if (!custom.setups.includes(s)) custom.setups.push(s);
-  });
+  if (!custom.setups) custom.setups = [];
+  custom.setups = custom.setups.filter(s => !REMOVED_SETUPS.includes(s));
+  CANON_SETUPS.forEach(s => { if (!custom.setups.includes(s)) custom.setups.push(s); });
 }
 function getPretradeChecklist(){
   ensurePretradeChecklist();
   return (custom.checklists || []).find(c => c.id === PRETRADE_CHECKLIST_ID || c.name === 'واچ‌لیست پیش‌ترید') || null;
 }
+/* ====== v27.31: ستاپ خودکار از دیتا · قوانین استثنا · جدول ترکیب‌ها · کیفیت داده ====== */
+const DEFAULT_AUTO_SCORE = { wDiv: 40, wHidden: 15, wTrig: 35, wZone: 25, aMin: 75, bMin: 50 };
+function ensureNewCustomKeys(){
+  if (!Array.isArray(custom.excludeRules)) custom.excludeRules = [];
+  if (!custom.autoScore || typeof custom.autoScore !== 'object') custom.autoScore = Object.assign({}, DEFAULT_AUTO_SCORE);
+}
+function wlLabel(sug){
+  if (!sug) return '—';
+  if (sug.key === 'A setup') return '✅ واچ‌لیست قوی';
+  if (sug.key === 'B setup') return '✅ واچ‌لیست خوب';
+  return sug.label;
+}
+function getAutoScoreCfg(){
+  const c = Object.assign({}, DEFAULT_AUTO_SCORE, (custom && custom.autoScore) || {});
+  Object.keys(DEFAULT_AUTO_SCORE).forEach(k => { const n = Number(c[k]); c[k] = isNaN(n) ? DEFAULT_AUTO_SCORE[k] : n; });
+  return c;
+}
+function isValidZoneVal(z){ z = String(z == null ? '' : z).trim(); return !!z && !/^no\s*zone$/i.test(z); }
+function isValidTriggerVal(t){ t = String(t == null ? '' : t).trim(); return !!t && !/^no\s*trigger$/i.test(t) && !/^pending$/i.test(t); }
+function computeAutoSetup(f, cfg){
+  cfg = cfg || getAutoScoreCfg();
+  const hasZ = isValidZoneVal(f.zone), hasT = isValidTriggerVal(f.trigger);
+  const dv = f.div || '';
+  const pDiv = dv === 'معمولی' ? cfg.wDiv : (dv === 'مخفی' ? cfg.wHidden : 0);
+  const pTrig = hasT ? cfg.wTrig : 0, pZone = hasZ ? cfg.wZone : 0;
+  const score = Math.max(0, Math.min(100, Math.round(pDiv + pTrig + pZone)));
+  let key;
+  if (score >= cfg.aMin) key = 'A setup';
+  else if (score >= cfg.bMin) key = 'B setup';
+  else if (!hasZ && !hasT) key = 'No setup';
+  else key = 'حرکت اشتباه';
+  return { score, key, hasZ, hasT, pDiv, pTrig, pZone };
+}
+function tradeToAutoFields(t){ return { div: t.divergence_type || '', trigger: t.entry_trigger || '', zone: t.zone || '' }; }
+function readAutoFieldsFromForm(){
+  const g = id => { const el = document.getElementById(id); return el ? (el.value || '') : ''; };
+  return { div: g('tfDivergence'), trigger: g('tfTrigger'), zone: g('tfZone') };
+}
+function autoSetupKeyFromForm(){
+  const f = readAutoFieldsFromForm();
+  if (!f.div && !f.trigger && !f.zone) return '';
+  return computeAutoSetup(f).key;
+}
+function refreshAutoSetupHint(){
+  const box = document.getElementById('autoSetupHint'); if (!box) return;
+  const sel = document.getElementById('tfSetup');
+  const f = readAutoFieldsFromForm();
+  if (!f.div && !f.trigger && !f.zone) {
+    box.innerHTML = '<span class="ash-muted">Zone، تریگر و واگرایی را انتخاب کن تا ستاپ از روی دیتا ساخته شود.</span>';
+    window._suggestedSetup = '';
+    return;
+  }
+  const r = computeAutoSetup(f);
+  window._suggestedSetup = r.key;
+  const cls = r.key === 'A setup' ? 'a' : r.key === 'B setup' ? 'b' : 'bad';
+  let html = '<div class="ash-row"><span class="ash-badge ' + cls + '">' + escapeHtml(r.key) + '</span><b class="ash-score">' + r.score + '٪</b></div>'
+    + '<div class="ash-detail">واگرایی ' + r.pDiv + ' + تریگر ' + r.pTrig + ' + Zone ' + r.pZone + '</div>';
+  if (sel && sel.dataset.manual !== '1') {
+    if (![...sel.options].some(o => o.value === r.key)) { const o = document.createElement('option'); o.value = r.key; o.textContent = r.key; sel.appendChild(o); }
+    sel.value = r.key;
+  } else if (sel && sel.value !== r.key) {
+    html += '<button type="button" class="btn btn-sm btn-outline ash-apply" onclick="applyAutoSetupHint()">اعمال «' + escapeHtml(r.key) + '»</button>';
+  }
+  box.innerHTML = html;
+}
+function applyAutoSetupHint(){
+  const sel = document.getElementById('tfSetup'); if (!sel) return;
+  sel.dataset.manual = '';
+  refreshAutoSetupHint();
+}
+
+/* ---- مهاجرت یک‌باره: «ریسک نصف / ترید ممنوع» از دسته‌ی ستاپ حذف می‌شود ---- */
+async function migrateSetupsOnce(){
+  ensureNewCustomKeys();
+  let changed = 0, failed = 0;
+  if (!custom.setupMig2611) {
+    for (const t of allTrades) {
+      if (REMOVED_SETUPS.includes(t.Setup)) {
+        const old = t.Setup;
+        t.Setup = computeAutoSetup(tradeToAutoFields(t)).key;
+        let ok = false;
+        try { ok = await upsertTradeRemote(t); } catch(e){ ok = false; }
+        if (ok) changed++; else { failed++; t.Setup = old; }
+      }
+    }
+    if (!failed) custom.setupMig2611 = true;
+  }
+  const used = new Set(allTrades.map(t => t.Setup).filter(Boolean));
+  const extras = (custom.setups || []).filter(s => !CANON_SETUPS.includes(s) && !REMOVED_SETUPS.includes(s) && used.has(s));
+  custom.setups = [...CANON_SETUPS, ...extras];
+  saveCustom();
+  if (changed) showToast(changed + ' ترید قدیمی به یکی از ۴ ستاپ منتقل شد');
+}
+
+/* ---- قوانین استثنا ---- */
+function ruleIsEmpty(r){ return !(r.symbol || r.tf || r.trigger || r.div || r.zone || r.setup); }
+function tradeMatchesRule(t, r){
+  if (r.symbol && String(t.Symbol || '').toUpperCase() !== String(r.symbol).toUpperCase()) return false;
+  if (r.tf && (t.Timeframe || '') !== r.tf) return false;
+  const chk = (rv, tv) => { if (!rv) return true; if (rv === '__none__') return !tv; return String(tv || '') === rv; };
+  if (!chk(r.trigger, t.entry_trigger)) return false;
+  if (!chk(r.div, t.divergence_type)) return false;
+  if (!chk(r.zone, t.zone)) return false;
+  if (!chk(r.setup, t.Setup)) return false;
+  return true;
+}
+function isExcludedTrade(t){
+  const rs = (custom && custom.excludeRules) || [];
+  for (let i = 0; i < rs.length; i++) {
+    const r = rs[i];
+    if (r && r.on !== false && !ruleIsEmpty(r) && tradeMatchesRule(t, r)) return true;
+  }
+  return false;
+}
+function ruleLabel(r){
+  const p = [];
+  if (r.symbol) p.push(String(r.symbol).toUpperCase());
+  if (r.tf) p.push(r.tf);
+  if (r.trigger) p.push(r.trigger === '__none__' ? 'بدون تریگر' : r.trigger);
+  if (r.div) p.push(r.div === '__none__' ? 'بدون واگرایی' : 'واگرایی ' + r.div);
+  if (r.zone) p.push(r.zone === '__none__' ? 'بدون Zone' : 'Zone ' + r.zone);
+  if (r.setup) p.push(r.setup);
+  return p.join(' + ') || '—';
+}
+function ruleKey(r){ return [String(r.symbol || '').toUpperCase(), r.tf || '', r.trigger || '', r.div || '', r.zone || '', r.setup || ''].join('|'); }
+function addExcludeRuleObj(r){
+  ensureNewCustomKeys();
+  if (ruleIsEmpty(r)) { showToast('حداقل یک شرط انتخاب کن'); return false; }
+  const k = ruleKey(r);
+  const ex = custom.excludeRules.find(x => ruleKey(x) === k);
+  if (ex) ex.on = true;
+  else custom.excludeRules.push({ id: 'ex' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), on: true, symbol: r.symbol || '', tf: r.tf || '', trigger: r.trigger || '', div: r.div || '', zone: r.zone || '', setup: r.setup || '' });
+  saveCustom();
+  return true;
+}
+function addExcludeRuleFromUI(){
+  const v = id => (document.getElementById(id) || {}).value || '';
+  const r = { symbol: v('exSymbol'), tf: v('exTf'), trigger: v('exTrigger'), div: v('exDiv'), zone: v('exZone'), setup: v('exSetup') };
+  if (addExcludeRuleObj(r)) {
+    ['exSymbol','exTf','exTrigger','exDiv','exZone','exSetup'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    applyFilters();
+    showToast('قانون استثنا اضافه شد');
+  }
+}
+function toggleExcludeRule(id){
+  const r = (custom.excludeRules || []).find(x => x.id === id); if (!r) return;
+  r.on = (r.on === false);
+  saveCustom(); applyFilters();
+}
+function deleteExcludeRule(id){
+  custom.excludeRules = (custom.excludeRules || []).filter(x => x.id !== id);
+  saveCustom(); applyFilters();
+}
+function fillExcludeSelects(){
+  const fill = (id, html) => { const el = document.getElementById(id); if (!el) return; const cur = el.value; el.innerHTML = html; if (cur && [...el.options].some(o => o.value === cur)) el.value = cur; };
+  const opts = (arr, first, extra) => '<option value="">' + first + '</option>' + (extra || '') + arr.map(x => '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>').join('');
+  const syms = [...new Set(allTrades.map(t => String(t.Symbol || '').toUpperCase()).filter(Boolean))].sort();
+  const tfs = [...new Set(allTrades.map(t => t.Timeframe).filter(Boolean))].sort();
+  const trigs = [...new Set([...(custom.triggers || []), ...allTrades.map(t => t.entry_trigger).filter(Boolean)])].sort();
+  const zones = [...new Set([...(custom.zones || []), ...allTrades.map(t => t.zone).filter(Boolean)])].sort();
+  fill('exSymbol', opts(syms, 'نماد: همه'));
+  fill('exTf', opts(tfs, 'TF: همه'));
+  fill('exTrigger', opts(trigs, 'تریگر: همه', '<option value="__none__">بدون تریگر</option>'));
+  fill('exZone', opts(zones, 'Zone: همه', '<option value="__none__">بدون Zone</option>'));
+  fill('exSetup', opts(CANON_SETUPS, 'ستاپ: همه'));
+}
+function renderExcludeUI(){
+  const rules = (custom && custom.excludeRules) || [];
+  const list = document.getElementById('exList');
+  if (list) {
+    list.innerHTML = rules.length ? rules.map(r => {
+      const n = allTrades.filter(t => tradeMatchesRule(t, r)).length;
+      const on = r.on !== false;
+      return '<div class="ex-rule' + (on ? '' : ' off') + '"><label class="ex-sw"><input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="toggleExcludeRule(\'' + r.id + '\')"><span></span></label>'
+        + '<div class="ex-rule-txt"><b>' + escapeHtml(ruleLabel(r)) + '</b><small>' + n + ' ترید</small></div>'
+        + '<button type="button" class="ex-del" onclick="deleteExcludeRule(\'' + r.id + '\')" aria-label="حذف">✕</button></div>';
+    }).join('') : '<div class="ex-empty">هنوز قانونی نداری. یک ترکیب انتخاب کن و «افزودن» بزن.</div>';
+  }
+  const hidden = allTrades.filter(isExcludedTrade).length;
+  const ban = document.getElementById('exBanner');
+  if (ban) {
+    ban.style.display = hidden ? 'flex' : 'none';
+    ban.innerHTML = '<span>🚫 ' + hidden + ' ترید با قوانین استثنا از نتایج حذف شده</span><button type="button" onclick="openExcludePanel()">مدیریت</button>';
+  }
+}
+function openExcludePanel(){
+  const p = document.getElementById('filtersPanel'); if (p) p.classList.add('show');
+  const d = document.getElementById('exDetails'); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+/* ---- جدول ترکیب‌ها (روی همه‌ی تریدهای بسته، مستقل از فیلتر/استثنا) ---- */
+let _comboSort = 'n', _comboTF = false, _comboMin = 5;
+function setComboOpt(k, v){
+  if (k === 'sort') _comboSort = v; else if (k === 'tf') _comboTF = !!v; else if (k === 'min') _comboMin = Number(v) || 1;
+  renderComboTable();
+}
+function comboRuleFromRow(o){
+  const r = { symbol: o.sym === '—' ? '' : o.sym, tf: o.tf || '', trigger: o.trg || '__none__', div: o.dv || '__none__', zone: '', setup: '' };
+  return r;
+}
+function toggleComboExclude(i){
+  const o = (window._comboShown || [])[i]; if (!o) return;
+  const rule = comboRuleFromRow(o);
+  const ex = (custom.excludeRules || []).find(x => ruleKey(x) === ruleKey(rule));
+  if (ex && ex.on !== false) { ex.on = false; saveCustom(); applyFilters(); showToast('ترکیب به نتایج برگشت'); }
+  else if (addExcludeRuleObj(rule)) { applyFilters(); showToast('ترکیب از نتایج حذف شد'); }
+}
+function renderComboTable(){
+  const el = document.getElementById('anCombo'); if (!el) return;
+  const m = {};
+  allTrades.forEach(t => {
+    if (isOpenTrade(t)) return;
+    const sym = String(t.Symbol || '—').toUpperCase();
+    const trg = t.entry_trigger || '', dv = t.divergence_type || '', tf = _comboTF ? (t.Timeframe || '') : '';
+    const key = [sym, trg, dv, tf].join('|');
+    const o = m[key] || (m[key] = { sym, trg, dv, tf, n: 0, w: 0, l: 0, pnl: 0, rS: 0, rN: 0 });
+    o.n++;
+    if (isModeWin(t)) o.w++; else if (isModeLoss(t)) o.l++;
+    const p = calcPnL(t); o.pnl += p;
+    const st = Number(t.stop_usd) || 0; if (st > 0) { o.rS += p / st; o.rN++; }
+  });
+  let rows = Object.values(m).filter(o => o.n >= _comboMin);
+  rows.forEach(o => { o.wr = (o.w + o.l) ? o.w / (o.w + o.l) * 100 : 0; o.avgR = o.rN ? o.rS / o.rN : 0; });
+  rows.sort((a, b) => _comboSort === 'r' ? b.avgR - a.avgR : _comboSort === 'pnl' ? b.pnl - a.pnl : _comboSort === 'wr' ? b.wr - a.wr : b.n - a.n);
+  rows = rows.slice(0, 40);
+  window._comboShown = rows;
+  const sel = (v, cur) => v === cur ? ' selected' : '';
+  let html = '<div class="combo-ctl">'
+    + '<select onchange="setComboOpt(\'sort\',this.value)"><option value="n"' + sel('n', _comboSort) + '>مرتب: تعداد</option><option value="r"' + sel('r', _comboSort) + '>مرتب: میانگین R</option><option value="pnl"' + sel('pnl', _comboSort) + '>مرتب: سود $</option><option value="wr"' + sel('wr', _comboSort) + '>مرتب: وین‌ریت</option></select>'
+    + '<select onchange="setComboOpt(\'min\',this.value)">' + [1, 5, 10, 20].map(n => '<option value="' + n + '"' + (n === _comboMin ? ' selected' : '') + '>حداقل ' + n + ' ترید</option>').join('') + '</select>'
+    + '<label class="combo-tf"><input type="checkbox" ' + (_comboTF ? 'checked' : '') + ' onchange="setComboOpt(\'tf\',this.checked)"> با تایم‌فریم</label></div>';
+  if (!rows.length) { el.innerHTML = html + '<div class="empty-state">ترکیبی با این تعداد ترید نیست</div>'; return; }
+  html += rows.map((o, i) => {
+    const rule = comboRuleFromRow(o);
+    const ex = (custom.excludeRules || []).find(x => ruleKey(x) === ruleKey(rule));
+    const isEx = !!(ex && ex.on !== false);
+    const rc = o.avgR >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const label = [o.sym, o.trg || 'بدون تریگر', o.dv ? 'واگرایی ' + o.dv : 'بدون واگرایی'].concat(o.tf ? [o.tf] : []).join(' · ');
+    return '<div class="combo-row' + (isEx ? ' excl' : '') + '"><div class="combo-main"><b>' + escapeHtml(label) + '</b>' + (o.n < 20 ? '<em class="combo-low">نمونه کم</em>' : '') + '</div>'
+      + '<div class="combo-stats"><span>' + o.n + ' ترید</span><span>' + o.wr.toFixed(0) + '٪ برد</span><span class="' + rc + '">' + (o.avgR >= 0 ? '+' : '') + o.avgR.toFixed(2) + 'R</span><span class="' + (o.pnl >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (o.pnl >= 0 ? '+' : '') + o.pnl.toFixed(0) + '$</span></div>'
+      + '<button type="button" class="btn btn-sm btn-outline combo-btn" onclick="toggleComboExclude(' + i + ')">' + (isEx ? '↩ برگردان' : '🚫 استثنا کن') + '</button></div>';
+  }).join('');
+  el.innerHTML = html;
+}
+
+/* ---- کیفیت داده ---- */
+function renderDataQuality(){
+  const el = document.getElementById('anQuality'); if (!el) return;
+  const T = allTrades.filter(t => !isOpenTrade(t)); const n = T.length;
+  if (!n) { el.innerHTML = '<div class="empty-state">داده‌ای نیست</div>'; return; }
+  const items = [
+    ['Zone', t => !t.zone], ['تریگر', t => !t.entry_trigger], ['واگرایی', t => !t.divergence_type],
+    ['کیفیت ستاپ', t => !t.Setup], ['حد ضرر ($)', t => !(Number(t.stop_usd) > 0)], ['دلیل خروج', t => !t.exit_reason]
+  ];
+  let html = items.map(([lab, fn]) => {
+    const c = T.filter(fn).length; const pc = c / n * 100;
+    const col = pc < 10 ? 'var(--success)' : pc < 30 ? 'var(--warning)' : 'var(--danger)';
+    return '<div class="dq-row"><span>' + lab + '</span><span>' + c + ' از ' + n + ' خالی · ' + pc.toFixed(0) + '٪</span></div><div class="dq-bar"><div style="width:' + Math.min(100, pc) + '%;background:' + col + '"></div></div>';
+  }).join('');
+  const full = T.filter(t => t.zone && t.entry_trigger && t.divergence_type).length;
+  html += '<div class="dq-note">' + full + ' از ' + n + ' ترید هر سه فیلد امتیاز (Zone، تریگر، واگرایی) را دارند؛ بقیه در امتیاز خودکار کم‌دقت‌اند.</div>';
+  el.innerHTML = html;
+}
+
+/* ---- تنظیمات ستاپ خودکار ---- */
+const AS_FIELDS = [['asWDiv','wDiv'],['asWHidden','wHidden'],['asWTrig','wTrig'],['asWZone','wZone'],['asAMin','aMin'],['asBMin','bMin']];
+function readAutoScoreInputs(){
+  const cfg = {};
+  AS_FIELDS.forEach(([id, k]) => { const el = document.getElementById(id); const n = el ? Number(el.value) : NaN; cfg[k] = isNaN(n) ? DEFAULT_AUTO_SCORE[k] : Math.max(0, Math.min(100, n)); });
+  return cfg;
+}
+function renderAutoScoreSettings(){
+  const cfg = getAutoScoreCfg();
+  AS_FIELDS.forEach(([id, k]) => {
+    const el = document.getElementById(id); if (!el) return;
+    el.value = cfg[k];
+    el.oninput = () => renderAutoScorePreview(readAutoScoreInputs());
+  });
+  renderAutoScorePreview(cfg);
+}
+function renderAutoScorePreview(cfg){
+  const sum = document.getElementById('asSum');
+  if (sum) { const tot = cfg.wDiv + cfg.wTrig + cfg.wZone; sum.textContent = 'جمع بیشترین امتیاز: ' + tot + '٪' + (tot === 100 ? ' ✓' : ' (بهتر است ۱۰۰ باشد)') + (cfg.aMin <= cfg.bMin ? ' — حداقل A باید از B بزرگ‌تر باشد' : ''); }
+  const box = document.getElementById('asPreview'); if (!box) return;
+  const tiers = {}; CANON_SETUPS.forEach(k => tiers[k] = { n: 0, w: 0, l: 0, rS: 0, rN: 0, pnl: 0 });
+  let skipped = 0, diff = 0;
+  allTrades.forEach(t => {
+    if (isOpenTrade(t)) return;
+    const f = tradeToAutoFields(t);
+    if (!f.div && !f.trigger && !f.zone) { skipped++; return; }
+    const r = computeAutoSetup(f, cfg); const o = tiers[r.key];
+    o.n++;
+    if (isModeWin(t)) o.w++; else if (isModeLoss(t)) o.l++;
+    const p = calcPnL(t); o.pnl += p;
+    const st = Number(t.stop_usd) || 0; if (st > 0) { o.rS += p / st; o.rN++; }
+    if ((t.Setup || '') !== r.key) diff++;
+  });
+  let html = '<div class="section-title">پیش‌نمایش روی تریدهای قبلی</div>';
+  html += CANON_SETUPS.map(k => {
+    const o = tiers[k]; const wr = (o.w + o.l) ? (o.w / (o.w + o.l) * 100).toFixed(0) : 0; const r = o.rN ? o.rS / o.rN : 0;
+    return '<div class="breakdown-row"><span>' + k + '</span><span>' + o.n + ' ترید · ' + wr + '٪ · <span class="' + (r >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (r >= 0 ? '+' : '') + r.toFixed(2) + 'R</span> · <span class="' + (o.pnl >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (o.pnl >= 0 ? '+' : '') + o.pnl.toFixed(0) + '$</span></span></div>';
+  }).join('');
+  html += '<div class="form-help" style="margin-top:8px">' + skipped + ' ترید قدیمی هر سه فیلد خالی دارند و حساب نشدند. ' + diff + ' ترید برچسب فعلی‌شان با پیشنهاد فرق دارد (برچسب‌های قدیمی تغییر نمی‌کنند).</div>';
+  box.innerHTML = html;
+}
+function saveAutoScoreSettings(){
+  const cfg = readAutoScoreInputs();
+  if (cfg.aMin <= cfg.bMin) { showToast('حداقل A باید از حداقل B بزرگ‌تر باشد'); return; }
+  custom.autoScore = cfg; saveCustom();
+  try { refreshAutoSetupHint(); } catch(e){}
+  showToast('تنظیمات ستاپ خودکار ذخیره شد');
+}
+function resetAutoScoreSettings(){
+  custom.autoScore = Object.assign({}, DEFAULT_AUTO_SCORE); saveCustom();
+  renderAutoScoreSettings();
+  try { refreshAutoSetupHint(); } catch(e){}
+  showToast('به پیش‌فرض برگشت');
+}
+
 function computePretradeScore(){
   const cl = getPretradeChecklist();
   if (!cl) return { score: 0, done: 0, total: 0, blocked: false, blockLabels: [], selections: {} };
@@ -2070,7 +2476,7 @@ function updateSetupSuggestionUI(){
   if (!pctEl || !badge) return;
   const info = computePretradeScore();
   const sug = mapScoreToSetup(info.score, !!info.blocked, getPretradeChecklist());
-  window._suggestedSetup = sug.key;
+  window._suggestedSetup = autoSetupKeyFromForm();
   window._pretradeScore = info.score;
   window._pretradeBlocked = !!info.blocked;
   const scoreForbidden = (sug.cls === 'blocked') || ((sug.key || '').includes('ممنوع'));
@@ -2085,7 +2491,7 @@ function updateSetupSuggestionUI(){
     badge.textContent = scoreForbidden ? (sug.label || '🚫 ترید ممنوع') : '🚫 ترید ممنوع';
   } else {
     badge.className = 'setup-suggest-badge ' + sug.cls;
-    badge.textContent = sug.label;
+    badge.textContent = wlLabel(sug);
   }
   let message = sug.msg || '';
   if (info.blocked && info.blockLabels && info.blockLabels.length) {
@@ -2115,7 +2521,7 @@ function applySuggestedSetup(silent){
   sel.value = key;
   if (!custom.setups) custom.setups = [];
   if (!custom.setups.includes(key)) { custom.setups.push(key); try { saveCustom(); } catch(e){} }
-  if (!silent) showToast('ستاپ ← ' + key + ' (از واچ‌لیست)');
+  if (!silent) showToast('ستاپ ← ' + key + ' (از روی دیتا)');
 }
 
 
@@ -2666,6 +3072,7 @@ async function bootApp(){
   await loadCustomFromSupabase();
   await loadTradesFromSupabase();
   ensureUniqueIds();
+  try { await migrateSetupsOnce(); } catch(e){ console.warn('migrateSetupsOnce', e); }
   hmYear = null; hmMonth = null;
   if (allTrades.length) showToast(allTrades.length + ' معامله بارگذاری شد');
   try { document.getElementById('tfDate').value = new Date().toISOString().slice(0,10); } catch(e){}
@@ -2715,6 +3122,7 @@ async function loadCustomFromSupabase(){
         });
       });
       if (!custom.badgeTargets) custom.badgeTargets = { profit500: 500, profit1000: 1000, profit5000: 5000 };
+      try { ensureNewCustomKeys(); } catch(e){}
       localStorage.setItem(CUSTOM_KEY, JSON.stringify(custom));
     } else await saveCustomToSupabase();
   } catch(e){ console.error(e); }
@@ -2794,6 +3202,7 @@ function switchSettingsTab(name){
   if (name === 'sessions') renderSessionsEditor();
   if (name === 'layout') renderLayoutManager();
   if (name === 'analytics') renderAnalyticsSettings();
+  if (name === 'autoscore') renderAutoScoreSettings();
   if (name === 'badges') renderBadgeTargetsSettings();
 }
 function renderBadgeTargetsSettings(){
@@ -2933,6 +3342,7 @@ function loadCustom(){
   if (!custom.tags) custom.tags = [];
   if (!custom.tagColors) custom.tagColors = {};
   if (!custom.checklists) custom.checklists = [];
+  try { ensureNewCustomKeys(); } catch(e){}
   try { ensurePretradeChecklist(); } catch(e){}
   if (!custom.sessions || !custom.sessions.length) custom.sessions = JSON.parse(JSON.stringify(DEFAULT_SESSIONS));
   if (!custom.layout) custom.layout = JSON.parse(JSON.stringify(DEFAULT_LAYOUT));
@@ -3625,6 +4035,7 @@ function setupFilters(){
   fillSelect('fMotive', [...mots].filter(Boolean).sort());
   fillSelect('fMistake', [...mists].filter(Boolean).sort());
   const sl = document.getElementById('symbolList'); if (sl) sl.innerHTML = symbols.map(s => '<option value="'+escapeHtml(s)+'">').join('');
+  try { fillExcludeSelects(); } catch(e){}
   fillChecklistSelects();
 }
 function fillSelect(id, items){
@@ -3713,6 +4124,7 @@ function getFiltered(){
   const maxStop = parseFloat(document.getElementById('fMaxStop')?.value);
   const minR = document.getElementById('fMinR')?.value || '';
   return allTrades.filter(t => {
+    if (isExcludedTrade(t)) return false;
     if (globalSearchQuery && !matchesGlobalSearch(t)) return false;
     if (symbol && t.Symbol !== symbol) return false;
     if (dir && t.Direction !== dir) return false;
@@ -4610,6 +5022,7 @@ function actualR(t){
 
 function applyFilters(){
   filtered = getFiltered();
+  try { renderExcludeUI(); } catch(e){}
   filteredForAnalysis = filtered.filter(passesAnalyticsThreshold);
   const info = document.getElementById('globalSearchResultsInfo');
   const countEl = document.getElementById('globalSearchCount');
@@ -5843,6 +6256,7 @@ function renderAnalysis(){
   set('anSetup', groupBy(t => t.Setup || '—'));
   set('anTF', groupBy(t => t.Timeframe || '—'));
   set('anZone', groupBy(t => t.zone || '—'));
+  try { renderComboTable(); renderDataQuality(); } catch(e){ console.warn(e); }
   const erEl = document.getElementById('anExitReason');
   if (erEl) {
     const trades = (filteredForAnalysis && filteredForAnalysis.length) ? filteredForAnalysis : (filtered || []).filter(t => !isOpenTrade(t));
@@ -6210,7 +6624,7 @@ function updateGateSuggestionUI(){
   if (!pctEl || !badge) return;
   const info = computePretradeScore();
   const sug = mapScoreToSetup(info.score, !!info.blocked, getPretradeChecklist());
-  window._suggestedSetup = sug.key;
+  window._suggestedSetup = autoSetupKeyFromForm();
   window._pretradeScore = info.score;
   window._pretradeBlocked = !!info.blocked;
   const scoreForbidden = (sug.cls === 'blocked') || ((sug.key || '').includes('ممنوع'));
@@ -6226,7 +6640,7 @@ function updateGateSuggestionUI(){
     badge.textContent = scoreForbidden ? (sug.label || '🚫 ترید ممنوع') : '🚫 ترید ممنوع';
   } else {
     badge.className = 'setup-suggest-badge ' + sug.cls;
-    badge.textContent = sug.label;
+    badge.textContent = wlLabel(sug);
   }
   if (msg) {
     let t = sug.msg || '';
@@ -6273,6 +6687,8 @@ function skipPretradeGate(){
 
 function openAddModal(editTrade){
   editingId = editTrade ? editTrade.id : null;
+  { const _ts = document.getElementById('tfSetup'); if (_ts) _ts.dataset.manual = editTrade ? '1' : ''; }
+  setTimeout(() => { try { refreshAutoSetupHint(); } catch(e){} }, 0);
   const title = document.querySelector('#addModal .modal-header h2');
   if (title) title.textContent = editingId ? 'ویرایش معامله' : 'ثبت معامله جدید';
   const form = document.getElementById('tradeForm'); if (form) form.reset();
@@ -6454,6 +6870,7 @@ function selectChip(btn, hiddenId){
   btn.classList.add('selected');
   const hid = document.getElementById(hiddenId);
   if (hid) hid.value = btn.dataset.v || '';
+  if (hiddenId === 'tfDivergence') { try { refreshAutoSetupHint(); } catch(e){} }
 }
 
 function syncFinalStopFromSL(force){
@@ -7721,6 +8138,8 @@ function bindEvents(){
   });
 
   ['fSymbol','fDirection','fResult','fTimeframe','fSetup','fZone','fTrigger','fExitReason','fFrom','fTo','fSession','fDow'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', applyFilters); });
+  ['tfZone','tfTrigger'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', () => { try { refreshAutoSetupHint(); } catch(e){} }); });
+  { const _tfs = document.getElementById('tfSetup'); if (_tfs) _tfs.addEventListener('change', () => { _tfs.dataset.manual = '1'; try { refreshAutoSetupHint(); } catch(e){} }); }
   document.querySelectorAll('.equity-mode button').forEach(btn => {
     btn.addEventListener('click', () => { document.querySelectorAll('.equity-mode button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); equityMode = btn.dataset.mode; applyFilters(); });
   });
