@@ -741,6 +741,7 @@ body.booting .today-strip{opacity:.4}
 .pretrade-gate-items .wl-group{margin-bottom:10px}
 
 /* ===== v27.31 additions ===== */
+#checklistModal.pre-mode .score-rules-box,#checklistModal.pre-mode .cl-edit-block,#checklistModal.pre-mode .cl-edit-reject{display:none!important}
 :where(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 .breakdown-card,.chart-card{transition:box-shadow .2s ease,border-color .2s ease}
 .breakdown-card:hover{box-shadow:var(--shadow)}
@@ -1816,7 +1817,7 @@ body.booting .today-strip{opacity:.4}
                 <input type="checkbox" id="autoApplySuggestedSetup" style="width:16px;height:16px"> اعمال خودکار
               </label>
             </div>
-            <div class="setup-suggest-hint">این امتیاز فقط یادآوری آمادگی است (ریسک نصف / ممنوع). ستاپ نهایی از روی Zone و تریگر و واگرایی ساخته می‌شود؛ درصدها: تنظیمات ← ستاپ خودکار.</div>
+            <div class="setup-suggest-hint">ستاپ از روی تیک‌های واچ‌لیست و Zone و نوع تریگر ساخته می‌شود. آیتم‌ها و درصدها: تنظیمات ← ستاپ خودکار.</div>
           </div>
           <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:12px">همه چک‌لیست‌ها کنار هم — واچ‌لیست پیش‌ترید امتیاز ستاپ را می‌سازد</p>
           <div class="cl-columns" id="tradeChecklistColumns"></div>
@@ -1881,18 +1882,16 @@ body.booting .today-strip{opacity:.4}
       </div>
 
       <div class="settings-pane" id="spane-autoscore">
-        <div class="section-title">امتیاز ستاپ خودکار</div>
-        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:14px;line-height:1.7">ستاپ هر ترید از روی سه فیلد ثبت‌شده ساخته می‌شود. درصدها را اینجا تنظیم کن؛ پیش‌نمایش پایین روی تریدهای قبلی خودت حساب می‌شود.</p>
+        <div class="section-title">ستاپ خودکار</div>
+        <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:12px;line-height:1.7">امتیاز ستاپ از جمع درصد آیتم‌های واچ‌لیست ساخته می‌شود. آیتم، متن و درصدها را خودت اضافه/کم/ویرایش کن؛ حداقل امتیاز A و B را هم اینجا بگذار.</p>
+        <button class="btn btn-sm" style="width:100%;margin-bottom:12px" onclick="openPretradeEditor()">✏️ ویرایش آیتم‌ها، متن و درصدها</button>
+        <div id="asItems" style="margin-bottom:14px"></div>
         <div class="as-grid">
-          <div class="form-group"><label>واگرایی معمولی</label><input type="number" id="asWDiv" min="0" max="100"></div>
-          <div class="form-group"><label>واگرایی مخفی</label><input type="number" id="asWHidden" min="0" max="100"></div>
-          <div class="form-group"><label>تریگر معتبر</label><input type="number" id="asWTrig" min="0" max="100"></div>
-          <div class="form-group"><label>Zone واقعی</label><input type="number" id="asWZone" min="0" max="100"></div>
-          <div class="form-group"><label>حداقل A setup</label><input type="number" id="asAMin" min="0" max="100"></div>
-          <div class="form-group"><label>حداقل B setup</label><input type="number" id="asBMin" min="0" max="100"></div>
+          <div class="form-group"><label>حداقل امتیاز A setup</label><input type="number" id="asAMin" min="0" max="100"></div>
+          <div class="form-group"><label>حداقل امتیاز B setup</label><input type="number" id="asBMin" min="0" max="100"></div>
         </div>
         <div class="form-help" id="asSum" style="margin-bottom:10px"></div>
-        <div class="form-help" style="margin-bottom:12px">زیر حداقل B: اگر Zone و تریگر هر دو ندارد → No setup، وگرنه → حرکت اشتباه.</div>
+        <div class="form-help" style="margin-bottom:12px">زیر حداقل B: اگر امتیاز بیشتر از صفر باشد → حرکت اشتباه، اگر صفر → No setup.</div>
         <div style="display:flex;gap:8px;margin-bottom:14px"><button class="btn btn-sm" style="flex:1" onclick="saveAutoScoreSettings()">💾 ذخیره</button><button class="btn btn-sm btn-outline" onclick="resetAutoScoreSettings()">پیش‌فرض</button></div>
         <div id="asPreview"></div>
       </div>
@@ -2003,7 +2002,7 @@ const APP_LOGIN_EMAIL = 'massoud.fe@gmail.com';
 const VOICE_BUCKET = 'journal-voices';
 const IMG_MARK = '@sbimg:';
 const VOICE_EXT = '.webm';
-const APP_BUILD = 'BUILD-v27.32 (setup from watchlist ticks + exclude rules + combos)';
+const APP_BUILD = 'BUILD-v27.35 (normal trigger 50, trend 25, B>=70)';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const DEFAULT_SETUPS = ['A setup','B setup','حرکت اشتباه','No setup'];
@@ -2022,9 +2021,9 @@ const DEFAULT_SCORE_RULES = [
   { min: 0, key: 'ترید ممنوع', label: '🚫 ترید ممنوع', cls: 'blocked', msg: 'امتیاز خیلی پایین (زیر ۲۰٪) — از نظر واچ‌لیست ورود توصیه نمی‌شود (قفل نیست؛ یادآوری است).' }
 ];
 const PT_DIV_OPTIONS = [
-  { id: 'pt_div_norm', text: 'واگرایی معمولی', weight: 40 },
-  { id: 'pt_div_hid', text: 'واگرایی مخفی', weight: 15 },
-  { id: 'pt_div_none', text: 'بدون واگرایی', weight: 0 }
+  { id: 'pt_div_norm', text: 'تریگر معمولی', weight: 50 },
+  { id: 'pt_div_hid', text: 'تریگر مخفی', weight: 15 },
+  { id: 'pt_div_none', text: 'بدون تریگر', weight: 0 }
 ];
 const DEFAULT_PRETRADE_CHECKLIST = {
   id: PRETRADE_CHECKLIST_ID,
@@ -2033,12 +2032,10 @@ const DEFAULT_PRETRADE_CHECKLIST = {
   scoreRules: JSON.parse(JSON.stringify(DEFAULT_SCORE_RULES)),
   items: [
     { id: 'pt_zone', text: 'ناحیه مشخص داری؟ (نه No Zone)', weight: 25, block: false },
-    { id: 'pt_trigger', text: 'تریگر واضح داری؟ (نه No Trigger)', weight: 35, block: false },
-    { id: 'pt_div', text: 'نوع واگرایی؟', weight: 40, block: false, options: JSON.parse(JSON.stringify(PT_DIV_OPTIONS)) },
-    { id: 'pt_trend', text: 'با ساختار/روند هم‌خوان است؟', weight: 0, block: false },
+    { id: 'pt_div', text: 'نوع تریگر؟ (واگرایی)', weight: 50, block: false, options: JSON.parse(JSON.stringify(PT_DIV_OPTIONS)) },
+    { id: 'pt_trend', text: 'با روند هم‌خوان است؟', weight: 25, block: false },
     { id: 'pt_emotion', text: 'از نظر احساسی آماده‌ای؟ (نه FOMO/انتقام/عجله)', weight: 0, block: false },
-    { id: 'pt_risk', text: 'ریسک و حد ضرر این ترید مشخص است؟', weight: 0, block: false },
-    { id: 'pt_daily_sl', text: 'حد ضرر روزانه خورده؟ (اگر بله → یادآوری ترید ممنوع)', weight: 0, block: true }
+    { id: 'pt_risk', text: 'ریسک و حد ضرر این ترید مشخص است؟', weight: 0, block: false }
   ]
 };
 function getChecklistScoreRules(cl){
@@ -2103,14 +2100,14 @@ function ensurePretradeChecklist(){
 function getPretradeChecklist(){
   ensurePretradeChecklist();
   const cl = (custom.checklists || []).find(c => c.id === PRETRADE_CHECKLIST_ID || c.name === 'واچ‌لیست پیش‌ترید') || null;
-  try { syncWatchlistWeights(cl); } catch(e){}
   return cl;
 }
 /* ====== v27.31: ستاپ خودکار از دیتا · قوانین استثنا · جدول ترکیب‌ها · کیفیت داده ====== */
-const DEFAULT_AUTO_SCORE = { wDiv: 40, wHidden: 15, wTrig: 35, wZone: 25, aMin: 75, bMin: 50 };
+const DEFAULT_AUTO_SCORE = { aMin: 90, bMin: 70 };
 function ensureNewCustomKeys(){
   if (!Array.isArray(custom.excludeRules)) custom.excludeRules = [];
   if (!custom.autoScore || typeof custom.autoScore !== 'object') custom.autoScore = Object.assign({}, DEFAULT_AUTO_SCORE);
+  if (!custom.asMig2611d) { custom.autoScore = Object.assign({}, DEFAULT_AUTO_SCORE); custom.asMig2611d = true; }
 }
 function wlLabel(sug){
   if (!sug) return '—';
@@ -2125,47 +2122,108 @@ function getAutoScoreCfg(){
 }
 function isValidZoneVal(z){ z = String(z == null ? '' : z).trim(); return !!z && !/^no\s*zone$/i.test(z); }
 function isValidTriggerVal(t){ t = String(t == null ? '' : t).trim(); return !!t && !/^no\s*trigger$/i.test(t) && !/^pending$/i.test(t); }
-function computeAutoSetup(f, cfg){
-  cfg = cfg || getAutoScoreCfg();
-  const hasZ = isValidZoneVal(f.zone), hasT = isValidTriggerVal(f.trigger);
-  const dv = f.div || '';
-  const pDiv = dv === 'معمولی' ? cfg.wDiv : (dv === 'مخفی' ? cfg.wHidden : 0);
-  const pTrig = hasT ? cfg.wTrig : 0, pZone = hasZ ? cfg.wZone : 0;
-  const score = Math.max(0, Math.min(100, Math.round(pDiv + pTrig + pZone)));
-  let key;
-  if (score >= cfg.aMin) key = 'A setup';
-  else if (score >= cfg.bMin) key = 'B setup';
-  else if (!hasZ && !hasT) key = 'No setup';
-  else key = 'حرکت اشتباه';
-  return { score, key, hasZ, hasT, pDiv, pTrig, pZone };
+function getWlWeights(){
+  const cl = getPretradeChecklist();
+  const W = { zone: 0, norm: 0, hid: 0, others: 0, max: 0 };
+  if (!cl) return W;
+  (cl.items || []).forEach(it => {
+    const hasOpts = !!(it.options && it.options.length);
+    if (it.block && !hasOpts) return;
+    if (it.id === 'pt_zone') { W.zone = Number(it.weight) || 0; W.max += W.zone; }
+    else if (it.id === 'pt_div' && hasOpts) {
+      const n = it.options.find(o => o.id === 'pt_div_norm'), h = it.options.find(o => o.id === 'pt_div_hid');
+      W.norm = n ? (Number(n.weight) || 0) : 0; W.hid = h ? (Number(h.weight) || 0) : 0;
+      W.max += Math.max(0, ...it.options.map(o => Number(o.weight) || 0));
+    } else if (hasOpts) { const m = Math.max(0, ...it.options.map(o => Number(o.weight) || 0)); W.others += m; W.max += m; }
+    else { const w = Number(it.weight) || 0; W.others += w; W.max += w; }
+  });
+  return W;
 }
-function tradeToAutoFields(t){ return { div: t.divergence_type || '', trigger: t.entry_trigger || '', zone: t.zone || '' }; }
+function setupKeyFromScore(score, cfg){
+  if (score >= cfg.aMin) return 'A setup';
+  if (score >= cfg.bMin) return 'B setup';
+  return score > 0 ? 'حرکت اشتباه' : 'No setup';
+}
+function computeAutoSetup(f, cfg, assumeOthers){
+  cfg = cfg || getAutoScoreCfg();
+  const W = getWlWeights();
+  const hasZ = isValidZoneVal(f.zone);
+  const dv = f.div || '';
+  const hasT = (dv === 'معمولی' || dv === 'مخفی');
+  const pDiv = dv === 'معمولی' ? W.norm : (dv === 'مخفی' ? W.hid : 0);
+  const pZone = hasZ ? W.zone : 0;
+  const pOther = (assumeOthers && (hasZ || hasT)) ? W.others : 0;
+  const score = Math.max(0, Math.min(100, Math.round(pDiv + pZone + pOther)));
+  return { score, key: setupKeyFromScore(score, cfg), hasZ, hasT, pDiv, pTrig: 0, pZone, pOther };
+}
+function tradeToAutoFields(t){ return { div: t.divergence_type || '', trigger: '', zone: t.zone || '' }; }
 function readAutoFieldsFromForm(){
   const g = id => { const el = document.getElementById(id); return el ? (el.value || '') : ''; };
-  return { div: g('tfDivergence'), trigger: g('tfTrigger'), zone: g('tfZone') };
+  return { div: g('tfDivergence'), trigger: '', zone: g('tfZone') };
+}
+function mergedAutoFields(){
+  const f = readAutoFieldsFromForm();
+  if (typeof editingId !== 'undefined' && editingId) return f;
+  let g = null; try { g = gateFieldsFromTicks().fields; } catch(e){}
+  if (!g) return f;
+  if (!f.zone && g.zone) f.zone = g.zone;
+  const gate = document.getElementById('pretradeGate');
+  const gateOpen = !!(gate && !gate.classList.contains('hidden-for-form'));
+  if (gateOpen && !f.div && g.div) f.div = g.div;
+  return f;
+}
+function setDivergenceChip(val){
+  const btn = document.querySelector('.chip[onclick*="tfDivergence"][data-v="' + val + '"]');
+  if (btn) selectChip(btn, 'tfDivergence');
+}
+function computeSetupScore(useForm){
+  const cl = getPretradeChecklist(); const cfg = getAutoScoreCfg();
+  const res = { score: 0, parts: [], touched: false, key: '' };
+  if (!cl) return res;
+  const st = window._tradeClChecked || {};
+  const F = useForm ? readAutoFieldsFromForm() : { div: '', zone: '' };
+  const gate = document.getElementById('pretradeGate');
+  const gateOpen = !!(gate && !gate.classList.contains('hidden-for-form'));
+  (cl.items || []).forEach(it => {
+    const hasOpts = !!(it.options && it.options.length);
+    if (it.block && !hasOpts) return;
+    const val = st[cl.id + '__' + it.id];
+    let w = 0, label = '', hit = false;
+    if (it.id === 'pt_zone') {
+      if (useForm && F.zone) { hit = true; if (isValidZoneVal(F.zone)) { w = Number(it.weight) || 0; label = 'Zone'; } }
+      else if (val) { hit = true; w = Number(it.weight) || 0; label = 'Zone'; }
+    } else if (hasOpts) {
+      let opt = null;
+      if (it.id === 'pt_div' && useForm && F.div) { hit = true; opt = it.options.find(o => o.id === (F.div === 'مخفی' ? 'pt_div_hid' : 'pt_div_norm')) || null; }
+      else if (it.id === 'pt_div' && useForm && !gateOpen) { hit = false; opt = null; }
+      else if (val) { hit = true; opt = it.options.find(o => o.id === val) || null; }
+      if (opt) { w = Number(opt.weight) || 0; label = it.id === 'pt_div' ? opt.text : (it.text + ': ' + opt.text); }
+    } else if (val) { hit = true; w = Number(it.weight) || 0; label = it.text; }
+    if (hit && (w > 0 || hasOpts || it.id === 'pt_zone')) res.touched = true;
+    if (w > 0) { res.parts.push({ label, w }); res.score += w; }
+  });
+  res.score = Math.max(0, Math.min(100, Math.round(res.score)));
+  if (useForm && (F.zone || F.div)) res.touched = true;
+  if (res.touched) res.key = setupKeyFromScore(res.score, cfg);
+  return res;
 }
 function autoSetupKeyFromForm(){
-  const f = readAutoFieldsFromForm();
-  if (!f.div && !f.trigger && !f.zone) return '';
-  return computeAutoSetup(f).key;
+  const r = computeSetupScore(true);
+  return r.touched ? r.key : '';
 }
 function refreshAutoSetupHint(){
   const box = document.getElementById('autoSetupHint'); if (!box) return;
   const sel = document.getElementById('tfSetup');
-  const f = readAutoFieldsFromForm();
-  if (!f.div && !f.trigger && !f.zone) {
-    const gk = gateView().key;
-    box.innerHTML = gk
-      ? '<span class="ash-muted">از واچ‌لیست: <b>' + escapeHtml(gk) + '</b> — Zone، تریگر و واگرایی را انتخاب کن تا نهایی شود.</span>'
-      : '<span class="ash-muted">Zone، تریگر و واگرایی را انتخاب کن تا ستاپ از روی دیتا ساخته شود.</span>';
-    window._suggestedSetup = gk;
+  const r = computeSetupScore(true);
+  if (!r.touched) {
+    box.innerHTML = '<span class="ash-muted">Zone و نوع تریگر را انتخاب کن تا ستاپ از روی دیتا ساخته شود.</span>';
+    window._suggestedSetup = '';
     return;
   }
-  const r = computeAutoSetup(f);
   window._suggestedSetup = r.key;
   const cls = r.key === 'A setup' ? 'a' : r.key === 'B setup' ? 'b' : 'bad';
   let html = '<div class="ash-row"><span class="ash-badge ' + cls + '">' + escapeHtml(r.key) + '</span><b class="ash-score">' + r.score + '٪</b></div>'
-    + '<div class="ash-detail">واگرایی ' + r.pDiv + ' + تریگر ' + r.pTrig + ' + Zone ' + r.pZone + '</div>';
+    + '<div class="ash-detail">' + (r.parts.length ? r.parts.map(x => escapeHtml(x.label) + ' ' + x.w).join(' + ') : 'هنوز امتیازی نیست') + '</div>';
   if (sel && sel.dataset.manual !== '1') {
     if (![...sel.options].some(o => o.value === r.key)) { const o = document.createElement('option'); o.value = r.key; o.textContent = r.key; sel.appendChild(o); }
     sel.value = r.key;
@@ -2183,29 +2241,24 @@ function applyAutoSetupHint(){
 
 /* ---- v27.32: ستاپ از همان تیک‌های واچ‌لیست (قبل از فرم) ---- */
 function alignPretradeItems(cl){
-  const items = cl.items || (cl.items = []);
-  const dv = items.find(it => it.id === 'pt_div');
-  if (dv && !(dv.options && dv.options.length)) {
-    dv.text = 'نوع واگرایی؟';
-    dv.options = JSON.parse(JSON.stringify(PT_DIV_OPTIONS));
-    dv.weight = 40;
-  }
-  if (!custom.wlMig2611) {
-    items.forEach(it => { if (['pt_trend','pt_emotion','pt_risk'].includes(it.id)) it.weight = 0; });
-    custom.wlMig2611 = true;
-  }
-}
-function syncWatchlistWeights(cl){
-  if (!cl) return;
-  const c = getAutoScoreCfg();
-  (cl.items || []).forEach(it => {
-    if (it.id === 'pt_zone') it.weight = c.wZone;
-    else if (it.id === 'pt_trigger') it.weight = c.wTrig;
-    else if (it.id === 'pt_div' && it.options) {
-      it.weight = c.wDiv;
-      it.options.forEach(o => { o.weight = o.id === 'pt_div_norm' ? c.wDiv : (o.id === 'pt_div_hid' ? c.wHidden : 0); });
+  let items = cl.items || (cl.items = []);
+  if (items.some(it => it.id === 'pt_trigger')) cl.items = items = items.filter(it => it.id !== 'pt_trigger');
+  let dv = items.find(it => it.id === 'pt_div');
+  if (dv && !(dv.options && dv.options.length)) dv.options = JSON.parse(JSON.stringify(PT_DIV_OPTIONS));
+  if (!custom.wlMig2611d) {
+    const z = items.find(it => it.id === 'pt_zone'); if (z) z.weight = 25;
+    if (dv) {
+      dv.text = 'نوع تریگر؟ (واگرایی)';
+      (dv.options || []).forEach(o => { const t = PT_DIV_OPTIONS.find(p => p.id === o.id); if (t) { o.text = t.text; o.weight = t.weight; } });
+      dv.weight = 50;
     }
-  });
+    let tr = items.find(it => it.id === 'pt_trend');
+    if (!tr) { tr = { id: 'pt_trend', text: 'با روند هم‌خوان است؟', weight: 25, block: false }; const at = items.findIndex(it => it.id === 'pt_div'); items.splice(at >= 0 ? at + 1 : items.length, 0, tr); }
+    else { tr.text = 'با روند هم‌خوان است؟'; tr.weight = 25; }
+    cl.items = items = items.filter(it => it.id !== 'pt_daily_sl');
+    cl.advanced = true;
+    custom.wlMig2611c = true; custom.wlMig2611d = true;
+  }
 }
 function gateFieldsFromTicks(){
   const out = { fields: { div: '', trigger: '', zone: '' }, touched: false };
@@ -2213,8 +2266,7 @@ function gateFieldsFromTicks(){
   const st = window._tradeClChecked || {};
   (cl.items || []).forEach(it => {
     const val = st[cl.id + '__' + it.id]; const txt = String(it.text || '');
-    const kind = it.id === 'pt_zone' ? 'zone' : it.id === 'pt_trigger' ? 'trigger' : it.id === 'pt_div' ? 'div'
-      : /تریگر/.test(txt) ? 'trigger' : /واگرایی/.test(txt) ? 'div' : /ناحیه|zone/i.test(txt) ? 'zone' : '';
+    const kind = it.id === 'pt_zone' ? 'zone' : it.id === 'pt_div' ? 'div' : '';
     if (!kind || !val) return;
     if (kind === 'div') {
       if (it.options && it.options.length) {
@@ -2230,25 +2282,18 @@ function gateFieldsFromTicks(){
 const GATE_SETUP_MSG = {
   'A setup': { cls: 'a', msg: 'ستاپ قوی — ریسک عادی.' },
   'B setup': { cls: 'b', msg: 'ستاپ قابل‌قبول — ریسک را کمتر کن (مثلاً نصف).' },
-  'حرکت اشتباه': { cls: 'half', msg: 'شرط‌ها ناقص است — ورود توصیه نمی‌شود.' },
-  'No setup': { cls: 'none', msg: 'بدون ستاپ — ورود توصیه نمی‌شود.' }
+  'حرکت اشتباه': { cls: 'half', msg: 'شرط‌ها ناقص است.' },
+  'No setup': { cls: 'none', msg: 'بدون ستاپ.' }
 };
-function gateView(){
-  const info = computePretradeScore();
-  const g = gateFieldsFromTicks();
-  const v = { info, blocked: !!info.blocked, touched: g.touched, key: '', score: 0, cls: 'none', label: '—', msg: 'تیک بزن تا ببینی ستاپ چی می‌شود.', weak: false };
-  if (g.touched) {
-    const r = computeAutoSetup(g.fields); const m = GATE_SETUP_MSG[r.key];
-    v.key = r.key; v.score = r.score; v.cls = m.cls; v.label = r.key; v.msg = m.msg;
-    v.weak = (r.key === 'حرکت اشتباه' || r.key === 'No setup');
-  }
-  v.showForbid = v.blocked || v.weak;
+function gateView(useForm){
+  const r = computeSetupScore(!!useForm);
+  const v = { info: computePretradeScore(), touched: r.touched, key: '', score: r.score, cls: 'none', label: '—', msg: 'تیک بزن تا ببینی ستاپ چی می‌شود.', parts: r.parts };
+  if (r.touched) { const m = GATE_SETUP_MSG[r.key]; v.key = r.key; v.cls = m.cls; v.label = r.key; v.msg = m.msg; }
   return v;
 }
 function currentSetupSuggestion(v){
-  const f = readAutoFieldsFromForm();
-  if (f.div || f.trigger || f.zone) return computeAutoSetup(f).key;
-  return (v || gateView()).key || '';
+  const r = computeSetupScore(true);
+  return r.touched ? r.key : '';
 }
 function paintSuggest(v, ids){
   const g = id => document.getElementById(id);
@@ -2257,16 +2302,12 @@ function paintSuggest(v, ids){
   pctEl.textContent = (v.touched ? v.score : 0) + '%';
   if (fill) {
     fill.style.width = (v.touched ? v.score : 0) + '%';
-    const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b', blocked: '#dc2626' };
-    fill.style.background = v.blocked ? colors.blocked : (v.touched ? (colors[v.cls] || '#94a3b8') : '#94a3b8');
+    const colors = { a: '#10b981', b: '#6366f1', half: '#0ea5e9', none: '#f59e0b' };
+    fill.style.background = v.touched ? (colors[v.cls] || '#94a3b8') : '#94a3b8';
   }
-  if (v.blocked) { badge.className = 'setup-suggest-badge blocked'; badge.textContent = '🚫 ترید ممنوع'; }
-  else { badge.className = 'setup-suggest-badge ' + v.cls; badge.textContent = v.label; }
-  if (msg) {
-    let t = v.msg;
-    if (v.blocked && v.info.blockLabels && v.info.blockLabels.length) t = 'یادآوری: «' + v.info.blockLabels.join(' · ') + '» — قفل نیست. ' + t;
-    msg.textContent = t;
-  }
+  badge.className = 'setup-suggest-badge ' + v.cls;
+  badge.textContent = v.label;
+  if (msg) msg.textContent = v.msg + ((v.touched && v.parts && v.parts.length) ? ' (' + v.parts.map(x => x.label + ' ' + x.w).join(' + ') + ')' : '');
   return true;
 }
 
@@ -2464,13 +2505,27 @@ function renderDataQuality(){
 }
 
 /* ---- تنظیمات ستاپ خودکار ---- */
-const AS_FIELDS = [['asWDiv','wDiv'],['asWHidden','wHidden'],['asWTrig','wTrig'],['asWZone','wZone'],['asAMin','aMin'],['asBMin','bMin']];
+const AS_FIELDS = [['asAMin','aMin'],['asBMin','bMin']];
 function readAutoScoreInputs(){
   const cfg = {};
   AS_FIELDS.forEach(([id, k]) => { const el = document.getElementById(id); const n = el ? Number(el.value) : NaN; cfg[k] = isNaN(n) ? DEFAULT_AUTO_SCORE[k] : Math.max(0, Math.min(100, n)); });
   return cfg;
 }
+function openPretradeEditor(){
+  const cl = getPretradeChecklist(); if (!cl) { showToast('واچ‌لیست پیدا نشد'); return; }
+  openChecklistEditor(cl.id);
+}
+function renderAutoScoreItems(){
+  const box = document.getElementById('asItems'); if (!box) return;
+  const cl = getPretradeChecklist(); if (!cl) { box.innerHTML = ''; return; }
+  box.innerHTML = (cl.items || []).filter(it => !(it.block && !(it.options && it.options.length))).map(it => {
+    const hasOpts = !!(it.options && it.options.length);
+    const w = hasOpts ? it.options.map(o => escapeHtml(o.text || '') + ' ' + (Number(o.weight) || 0)).join(' / ') : ((Number(it.weight) || 0) + '٪');
+    return '<div class="breakdown-row"><span>' + escapeHtml(it.text || '') + '</span><span style="direction:ltr;text-align:left">' + w + '</span></div>';
+  }).join('');
+}
 function renderAutoScoreSettings(){
+  renderAutoScoreItems();
   const cfg = getAutoScoreCfg();
   AS_FIELDS.forEach(([id, k]) => {
     const el = document.getElementById(id); if (!el) return;
@@ -2481,7 +2536,7 @@ function renderAutoScoreSettings(){
 }
 function renderAutoScorePreview(cfg){
   const sum = document.getElementById('asSum');
-  if (sum) { const tot = cfg.wDiv + cfg.wTrig + cfg.wZone; sum.textContent = 'جمع بیشترین امتیاز: ' + tot + '٪' + (tot === 100 ? ' ✓' : ' (بهتر است ۱۰۰ باشد)') + (cfg.aMin <= cfg.bMin ? ' — حداقل A باید از B بزرگ‌تر باشد' : ''); }
+  if (sum) { const tot = getWlWeights().max; sum.textContent = 'بیشترین امتیاز آیتم‌ها: ' + tot + '٪' + (tot === 100 ? ' ✓' : ' (بهتر است ۱۰۰ باشد)') + (cfg.aMin <= cfg.bMin ? ' — حداقل A باید از B بزرگ‌تر باشد' : ''); }
   const box = document.getElementById('asPreview'); if (!box) return;
   const tiers = {}; CANON_SETUPS.forEach(k => tiers[k] = { n: 0, w: 0, l: 0, rS: 0, rN: 0, pnl: 0 });
   let skipped = 0, diff = 0;
@@ -2489,7 +2544,7 @@ function renderAutoScorePreview(cfg){
     if (isOpenTrade(t)) return;
     const f = tradeToAutoFields(t);
     if (!f.div && !f.trigger && !f.zone) { skipped++; return; }
-    const r = computeAutoSetup(f, cfg); const o = tiers[r.key];
+    const r = computeAutoSetup(f, cfg, true); const o = tiers[r.key];
     o.n++;
     if (isModeWin(t)) o.w++; else if (isModeLoss(t)) o.l++;
     const p = calcPnL(t); o.pnl += p;
@@ -2501,7 +2556,7 @@ function renderAutoScorePreview(cfg){
     const o = tiers[k]; const wr = (o.w + o.l) ? (o.w / (o.w + o.l) * 100).toFixed(0) : 0; const r = o.rN ? o.rS / o.rN : 0;
     return '<div class="breakdown-row"><span>' + k + '</span><span>' + o.n + ' ترید · ' + wr + '٪ · <span class="' + (r >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (r >= 0 ? '+' : '') + r.toFixed(2) + 'R</span> · <span class="' + (o.pnl >= 0 ? 'pnl-pos' : 'pnl-neg') + '">' + (o.pnl >= 0 ? '+' : '') + o.pnl.toFixed(0) + '$</span></span></div>';
   }).join('');
-  html += '<div class="form-help" style="margin-top:8px">' + skipped + ' ترید قدیمی هر سه فیلد خالی دارند و حساب نشدند. ' + diff + ' ترید برچسب فعلی‌شان با پیشنهاد فرق دارد (برچسب‌های قدیمی تغییر نمی‌کنند).</div>';
+  html += '<div class="form-help" style="margin-top:8px">آیتم‌هایی که تو دیتا ثبت نمی‌شن (مثل روند) در این پیش‌نمایش «تیک‌خورده» فرض شده‌اند. ' + skipped + ' ترید قدیمی هر سه فیلد خالی دارند و حساب نشدند. ' + diff + ' ترید برچسب فعلی‌شان با پیشنهاد فرق دارد (برچسب‌های قدیمی تغییر نمی‌کنند).</div>';
   box.innerHTML = html;
 }
 function saveAutoScoreSettings(){
@@ -2570,16 +2625,13 @@ function computePretradeScore(){
   };
 }
 function updateSetupSuggestionUI(){
-  const v = gateView();
+  const v = gateView(true);
   if (!paintSuggest(v, { pct: 'setupSuggestPct', fill: 'setupSuggestFill', badge: 'setupSuggestBadge', msg: 'setupSuggestMsg' })) return;
-  window._pretradeScore = v.info.score;
-  window._pretradeBlocked = v.blocked;
+  window._pretradeScore = v.score;
+  window._pretradeBlocked = false;
   window._suggestedSetup = currentSetupSuggestion(v);
   const applyBtn = document.getElementById('btnApplySuggestedSetup');
-  if (applyBtn) {
-    applyBtn.disabled = false;
-    applyBtn.textContent = 'اعمال روی فیلد ستاپ';
-  }
+  if (applyBtn) { applyBtn.disabled = false; applyBtn.textContent = 'اعمال روی فیلد ستاپ'; }
   const auto = document.getElementById('autoApplySuggestedSetup');
   const ts = document.getElementById('tfSetup');
   if (auto && auto.checked && window._suggestedSetup && !(ts && ts.dataset.manual === '1')) applySuggestedSetup(true);
@@ -6694,34 +6746,19 @@ function renderPretradeGate(){
   updateGateSuggestionUI();
 }
 function updateGateSuggestionUI(){
-  const v = gateView();
+  const v = gateView(false);
   if (!paintSuggest(v, { pct: 'gateSuggestPct', fill: 'gateSuggestFill', badge: 'gateSuggestBadge', msg: 'gateSuggestMsg' })) return;
-  window._pretradeScore = v.info.score;
-  window._pretradeBlocked = v.blocked;
+  window._pretradeScore = v.score;
+  window._pretradeBlocked = false;
   window._suggestedSetup = currentSetupSuggestion(v);
   const box = document.getElementById('pretradeGateItems');
-  if (box) {
-    let ban = box.querySelector('.wl-forbid-banner');
-    if (v.showForbid) {
-      const why = (v.info.blockLabels && v.info.blockLabels.length)
-        ? v.info.blockLabels.join(' · ')
-        : ('ستاپ: ' + v.key + ' (' + v.score + '٪)');
-      if (!ban) {
-        ban = document.createElement('div');
-        ban.className = 'wl-forbid-banner';
-        box.appendChild(ban);
-      }
-      ban.innerHTML = '<div class="wl-forbid-icon">🚫</div><div><div class="wl-forbid-title">' + (v.blocked ? 'ترید ممنوع' : 'ستاپ ضعیف') + ' — ورود توصیه نمی‌شود</div>'
-        + '<div class="wl-forbid-msg">' + escapeHtml(why) + '<br>قفل نیست؛ فقط یادآوری. می‌توانی رد کنی یا ادامه بدهی.</div></div>';
-    } else if (ban) {
-      ban.remove();
-    }
-  }
+  if (box) { const ban = box.querySelector('.wl-forbid-banner'); if (ban) ban.remove(); }
 }
 
 function continueAfterPretrade(){
   // اعمال پیشنهاد ستاپ (اگر باشد) سپس فرم
   try { if (window._suggestedSetup) applySuggestedSetup(true); } catch(e){}
+  try { const g = gateFieldsFromTicks(); if (g.fields.div) setDivergenceChip(g.fields.div); } catch(e){}
   showPretradeGate(false);
   try { renderTradeChecklistColumns(); updateSetupSuggestionUI(); } catch(e){}
   // فوکوس روی نماد
@@ -7178,12 +7215,10 @@ function getTradeChecklistsData(){
       if (isPre) {
         const info = computePretradeScore();
         row.score = info.score;
-        row.blocked = info.blocked;
-        row.blockLabels = info.blockLabels || [];
-        const sug = mapScoreToSetup(info.score, info.blocked, cl);
-        row.suggestedSetup = sug.key;
+        const _r = computeSetupScore(true);
+        if (_r.touched) row.score = _r.score;
+        row.suggestedSetup = _r.key || '';
         row.isPretrade = true;
-        if (info.blocked) row.tradeForbidden = true;
       }
       result.push(row);
     }
@@ -7859,6 +7894,7 @@ function renderChecklistBoard(){
 function openChecklistEditor(id){
   editingChecklistId = id || null;
   const cl = id ? (custom.checklists || []).find(c => c.id === id) : null;
+  { const _m = document.getElementById('checklistModal'); if (_m) _m.classList.toggle('pre-mode', !!(cl && (cl.id === PRETRADE_CHECKLIST_ID || cl.name === 'واچ‌لیست پیش‌ترید'))); }
   document.getElementById('clModalTitle').textContent = cl ? 'ویرایش' : 'جدید';
   document.getElementById('clName').value = cl ? (cl.name || '') : '';
   document.getElementById('clAdvanced').checked = cl ? !!cl.advanced : true;
@@ -8002,7 +8038,7 @@ function renderClItemsEditor(){
         ow.addEventListener('change', syncW);
         ow.addEventListener('blur', syncW);
         wWrap.appendChild(ow); wWrap.appendChild(wLab);
-        const rej = document.createElement('label');
+        const rej = document.createElement('label'); rej.className = 'cl-edit-reject';
         rej.style.cssText = 'font-size:.72rem;display:flex;gap:4px;align-items:center;white-space:nowrap';
         const rcb = document.createElement('input'); rcb.type = 'checkbox'; rcb.className = 'cl-opt-reject'; rcb.checked = !!opt.reject;
         rcb.addEventListener('change', () => {
@@ -8162,6 +8198,7 @@ function saveChecklistEditor(){
   } else custom.checklists.push(payload);
   saveCustom();
   closeChecklistEditor();
+  try { const _ap = document.getElementById('spane-autoscore'); if (_ap && _ap.offsetParent !== null) renderAutoScoreSettings(); } catch (e) {}
   renderChecklistBoard();
   fillChecklistSelects();
   try { renderTradeChecklistColumns(); } catch (e) {}
